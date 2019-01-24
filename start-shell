@@ -1,0 +1,1 @@
+nix-shell -I nixpkgs=~/.nix-defexpr/channels/nixpkgs

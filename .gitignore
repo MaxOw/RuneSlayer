@@ -1,0 +1,9 @@
+dist
+data
+result
+ignore
+*.ignore
+*.[ao]
+*.hi
+beam
+deps

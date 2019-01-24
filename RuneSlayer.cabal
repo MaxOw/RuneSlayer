@@ -1,0 +1,76 @@
+Name          : RuneSlayer
+Version       : 0.1.0
+Build-Type    : Simple
+Cabal-Version : >= 1.18
+
+Executable RuneSlayer
+  default-language : Haskell2010
+  hs-source-dirs   : src
+  main-is          : Main.hs
+  ghc-options      :
+    -O2
+    -Wall
+    -fdiagnostics-color=always
+    -fno-warn-missing-home-modules
+    -- -fno-warn-orphans
+    -- -fno-warn-unused-imports
+    -fno-warn-missing-pattern-synonym-signatures
+    -Werror=missing-fields
+    -Werror=incomplete-patterns
+
+  default-extensions:
+    NoImplicitPrelude
+    DoAndIfThenElse
+    LambdaCase
+    MultiWayIf
+    TupleSections
+    OverloadedStrings
+
+    MultiParamTypeClasses
+    FunctionalDependencies
+    TypeSynonymInstances
+    FlexibleInstances
+    FlexibleContexts
+    RankNTypes
+
+    StandaloneDeriving
+    DeriveGeneric
+    GeneralizedNewtypeDeriving
+
+    TypeFamilies
+    TypeApplications
+    TypeOperators
+    ViewPatterns
+
+    DataKinds
+    ConstraintKinds
+    DuplicateRecordFields
+
+    StrictData
+
+  build-depends : base >= 4.5 && < 5.0
+                , relude
+                , data-default
+                , lens
+                , transformers
+                , text
+                , containers
+                , unordered-containers
+                , GLFW-b
+                , random
+                , mwc-random
+                , vector
+
+                , halive
+
+                , linear
+                , Carnot == 0.1.4.3
+                , gl
+                , colour
+                , diagrams-core
+                , diagrams-lib
+                -- , bytestring-trie
+
+                , ixset
+                -- , ixset-typed
+

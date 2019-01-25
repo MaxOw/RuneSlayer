@@ -64,7 +64,7 @@ Executable RuneSlayer
                 , halive
 
                 , linear
-                , Carnot == 0.1.4.3
+                , Carnot == 0.1.4.4
                 , gl
                 , colour
                 , diagrams-core

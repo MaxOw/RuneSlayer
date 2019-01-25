@@ -7,6 +7,7 @@ import Delude
 import qualified Linear.Matrix as Matrix
 import qualified Engine
 import Engine (graphics, context, RenderAction)
+import Engine.Layout.Render (makeRenderLayout)
 import Graphics.GL
 
 import Types (Graphics, Renderer)
@@ -49,22 +50,22 @@ renderGame _delta st = do
         & set normalization (Just Height)
         & set scale (st^.gameState.gameScale)
     let viewProjM = gameProjM !*! viewM
-    Engine.draw viewProjM =<< renderEntities st
+    Engine.draw viewProjM $ renderEntities st
 
     whenJust (focusEntity st) $ \e -> do
         menuProjM <- orthoProjection $ def
             & set scale (st^.gameState.menuScale)
-        Engine.draw menuProjM =<< renderGameMenu st e
+        Engine.draw menuProjM =<< makeRenderLayout (gameMenuLayout st e)
 
     Engine.swapBuffers
 
-renderEntities :: St -> Graphics RenderAction
-renderEntities st = do
-    let viewRange = () -- TODO
-    let eix = st^.gameState.entities
-    let es = entitiesInRange viewRange eix
-    let rs = map entityRender es
-    return $ Engine.renderComposition rs
+renderEntities :: St -> RenderAction
+renderEntities st = Engine.renderComposition rs
+    where
+    viewRange = () -- TODO
+    eix = st^.gameState.entities
+    es = entitiesInRange viewRange eix
+    rs = map entityRender es
 
 --------------------------------------------------------------------------------
 

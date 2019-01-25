@@ -22,7 +22,7 @@ import qualified Data.Map as PrefixMap
 
 import Engine (userState)
 import Types (Game)
-import Types.St (inputState)
+import Types.St (St, inputState)
 import Types.InputState
 
 --------------------------------------------------------------------------------
@@ -145,6 +145,6 @@ toggleViewPanel pname = zoomInputState $ visiblePanels %= flipView
         then Set.delete pname vp
         else Set.insert pname vp
 
-isPanelVisible :: PanelName -> Game Bool
-isPanelVisible pname = zoomInputState $ Set.member pname <$> use visiblePanels
+isPanelVisible :: PanelName -> St -> Bool
+isPanelVisible pname = Set.member pname . view (inputState.visiblePanels)
 

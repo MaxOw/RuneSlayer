@@ -8,17 +8,17 @@ import Types.GUI
 import GUI.Style
 
 simpleBox :: BoxDesc -> Layout -> Layout
-simpleBox d = Layout_Box d . (:[])
+simpleBox d = layoutBox d . (:[])
 
 fillBox :: Layout -> Layout
-fillBox = Layout_Box d . (:[])
+fillBox = layoutBox d . (:[])
     where
     d = def
         & size.width    .~ (1 @@ fill)
         & size.height   .~ (1 @@ fill)
 
 menuBox :: MenuBoxOpts -> Layout -> Layout
-menuBox opts cont = Layout_Box desc [ simpleLineupV ins ]
+menuBox opts cont = layoutBox desc [ simpleLineupV ins ]
     where
     desc = def
         & size              .~ (opts^.size)
@@ -29,7 +29,7 @@ menuBox opts cont = Layout_Box desc [ simpleLineupV ins ]
 
     ins = [ tit, contBox ]
 
-    tit = Layout_Box boxDesc [ simpleText $ opts^.title ]
+    tit = layoutBox boxDesc [ simpleText $ opts^.title ]
     boxDesc = def
         & size.width  .~ (1 @@ fill)
         & size.height .~ (34 @@ px)
@@ -37,17 +37,17 @@ menuBox opts cont = Layout_Box desc [ simpleLineupV ins ]
         & border.bottom.color .~ baseBorderColor
         & padding.each        .~ basePadding
 
-    contBox = Layout_Box contDesc [ cont ]
+    contBox = layoutBox contDesc [ cont ]
     contDesc = def
         & size.width    .~ (1 @@ fill)
         & size.height   .~ (1 @@ fill)
         & padding.each  .~ basePadding
 
 simpleLineupV :: [Layout] -> Layout
-simpleLineupV = Layout_Lineup (set direction Vertical def)
+simpleLineupV = layoutLineup (set direction Vertical def)
 
 simpleLineupH :: [Layout] -> Layout
-simpleLineupH = Layout_Lineup (set direction Horizontal def)
+simpleLineupH = layoutLineup (set direction Horizontal def)
 
 simpleText :: Text -> Layout
 simpleText = colorText textPrimaryColor
@@ -56,7 +56,7 @@ colorText :: AlphaColor -> Text -> Layout
 colorText col txt = colorTextList [(col, txt)]
 
 colorTextList :: [(AlphaColor, Text)] -> Layout
-colorTextList cs = Layout_Box bd [Layout_Text td $ map f cs]
+colorTextList cs = layoutBox bd [layoutText td $ map f cs]
     where
     f (c, t) = RichText_Span (fnt c) t
     fnt c = makeFontStyle baseFontHierarchy baseFontSize & color .~ c
@@ -65,3 +65,11 @@ colorTextList cs = Layout_Box bd [Layout_Text td $ map f cs]
         & boxAlign      .~ TopLeft
         & size.width    .~ (1 @@ fill)
         & size.height   .~ (30 @@ px)
+
+overlayLayouts :: [Layout] -> Layout
+overlayLayouts = layoutBox d
+    where
+    d = def
+        & size.width    .~ (1 @@ fill)
+        & size.height   .~ (1 @@ fill)
+

@@ -53,12 +53,15 @@ simpleText :: Text -> Layout
 simpleText = colorText textPrimaryColor
 
 colorText :: AlphaColor -> Text -> Layout
-colorText col txt = Layout_Box bd [Layout_Text td [RichText_Span f txt]]
+colorText col txt = colorTextList [(col, txt)]
+
+colorTextList :: [(AlphaColor, Text)] -> Layout
+colorTextList cs = Layout_Box bd [Layout_Text td $ map f cs]
     where
-    f = makeFontStyle baseFontHierarchy baseFontSize & color .~ col
+    f (c, t) = RichText_Span (fnt c) t
+    fnt c = makeFontStyle baseFontHierarchy baseFontSize & color .~ c
     td = def & boxAlign .~ TopLeft
     bd = def
         & boxAlign      .~ TopLeft
         & size.width    .~ (1 @@ fill)
         & size.height   .~ (30 @@ px)
-

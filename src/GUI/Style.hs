@@ -43,6 +43,12 @@ textPrimaryColor = Color.opaque $ Solarized.primaryContent smode
 textSecondaryColor :: AlphaColor
 textSecondaryColor = Color.opaque $ Solarized.secondaryContent smode
 
+textHintColor :: AlphaColor
+textHintColor = Color.opaque $ Solarized.yellow
+
+textHintHighlightColor :: AlphaColor
+textHintHighlightColor = Color.opaque $ Solarized.red
+
 baseBox :: BoxDesc
 baseBox = def
     & border.each.width .~ baseBorderWidth

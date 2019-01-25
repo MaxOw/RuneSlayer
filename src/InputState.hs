@@ -8,13 +8,15 @@ module InputState
     , getSelectState
     , matchKeymap
     , appendHist
-    , startSelect, appendSelect, endSelect
+    , startSelect, appendSelect, backspaceSelect, endSelect
     , inputActionEscape
+    , toggleViewPanel, isPanelVisible
 
     , isPartialMatch
     ) where
 
 import Delude
+import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
 
@@ -114,6 +116,12 @@ startSelect k m = zoomInputState $ selectState .= Just ss
 appendSelect :: Char -> Game (Seq Char)
 appendSelect ch = zoomInputState $ selectState._Just.currentPrefix <%= (|> ch)
 
+backspaceSelect :: Game ()
+backspaceSelect = zoomInputState $ selectState._Just.currentPrefix %= dropR1
+    where
+    dropR1 (l:>_) = l
+    dropR1 x = x
+
 endSelect :: Game ()
 endSelect = zoomInputState $ selectState .= Nothing
 
@@ -127,4 +135,16 @@ inputActionEscape = zoomInputState $ do
     where
     escapeMode = \case
         _ -> NormalMode
+
+--------------------------------------------------------------------------------
+
+toggleViewPanel :: PanelName -> Game ()
+toggleViewPanel pname = zoomInputState $ visiblePanels %= flipView
+    where
+    flipView vp = if Set.member pname vp
+        then Set.delete pname vp
+        else Set.insert pname vp
+
+isPanelVisible :: PanelName -> Game Bool
+isPanelVisible pname = zoomInputState $ Set.member pname <$> use visiblePanels
 

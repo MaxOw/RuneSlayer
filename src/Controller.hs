@@ -55,18 +55,17 @@ handleKeyPressed kp = do
 handleSelectMode :: SelectState -> Keypress -> Game ()
 handleSelectMode s kp = do
     case keyToChar $ keypressKey kp of
-        Nothing -> endSelect
+        Nothing -> case keypressKey kp of
+            -- TODO: This shouldn't be hardcoded...
+            Key'Backspace -> backspaceSelect
+            _             -> endSelect
         Just ch -> do
             let smap = s^.selectMap
             selseq <- appendSelect ch
             let selectHandler f v = selectLookup f selseq smap v
             case s^.selectKind of
-                SelectPickup v -> selectHandler handleSelectPickup v
+                SelectPickup v -> selectHandler pickupItem v
             unless (isPartialMatch smap selseq) endSelect
-
-handleSelectPickup :: EntityId -> Game ()
-handleSelectPickup eid = withFocusId $ \fi -> do
-    actOnEntity eid $ EntityAction_PickItemBy fi
 
 selectLookup :: (a -> Game ()) -> Seq Char -> SelectMap -> Vector a -> Game ()
 selectLookup f sq m v = case PrefixMap.lookup (toList sq) m of
@@ -99,9 +98,10 @@ handleKeyReleased = mapM_ handleDeactivation <=< popDeactivators
 
 handleActivation :: InputAction -> Game ()
 handleActivation = \case
-    SimpleMove  d      -> activateAction (ActiveMove d)
-    SetMode     m      -> setMode m
-    ToggleDebug f      -> toggleDebug f
+    SimpleMove       d -> activateAction (ActiveMove d)
+    SetMode          m -> setMode m
+    ToggleDebug      f -> toggleDebug f
+    ToggleViewPanel  p -> toggleViewPanel p
     PickupAllItems     -> pickupAllItems
     DropAllItems       -> dropAllItems
     SelectItemToPickUp -> selectItemToPickUp
@@ -125,6 +125,9 @@ defaultExit = \case
 toggleDebug :: DebugFlag -> Game ()
 toggleDebug = actOnFocusedEntity . EntityAction_ToggleDebug
 
+pickupItem :: EntityId -> Game ()
+pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_PickItemBy
+
 pickupAllItems :: Game ()
 pickupAllItems = withFocusId $ \fi -> do
     es <- fmap (view entityId) <$> liftGame focusItemsInRange
@@ -136,9 +139,13 @@ dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
     es <- fmap (view entityId) <$> liftGame focusItemsInRange
-    let (sv, sm)  = makeSelectMap es
-    print sm
-    startSelect (SelectPickup sv) sm
+    case es of
+        []   -> return ()
+        e:[] -> pickupItem e
+        _    -> do
+            let (sv, sm)  = makeSelectMap es
+            print sm
+            startSelect (SelectPickup sv) sm
 
 makeSelectMap :: [a] -> (Vector a, SelectMap)
 makeSelectMap es = (Vector.fromList es, selMap)

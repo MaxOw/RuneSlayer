@@ -6,19 +6,20 @@ module GameState
     , actOnFocusedEntity
     , addEntityAndFocus
     , addEntity
+    , entityIdToWithId
     ) where
 
 import Delude
 
 import Engine (userState)
 import Types (Game)
-import Types.Entity (Entity)
+import Types.Entity (Entity, EntityWithId(..))
 import Types.Entity.Common (EntityId)
 import Types.St
 import Types.GameState
 import Types.EntityAction
 
-import EntityIndex (updateIndex, addToIndex, getLastId)
+import EntityIndex
 
 --------------------------------------------------------------------------------
 
@@ -53,4 +54,9 @@ addEntityAndFocus ent g = set focusId (getLastId $ ng^.entities) ng
 
 addEntity :: Entity -> GameState -> GameState
 addEntity e g = over entities (addToIndex e) g
+
+entityIdToWithId :: EntityId -> Game (Maybe EntityWithId)
+entityIdToWithId eid = zoomGameState $ do
+    es <- use entities
+    return $ EntityWithId eid <$> lookupEntityById eid es
 

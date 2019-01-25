@@ -56,12 +56,17 @@ data MoveDirection
    | MoveRight
    deriving (Show, Eq, Ord)
 
+data PanelName
+   = GroundPreviewPanel
+   deriving (Eq, Ord, Show)
+
 --------------------------------------------------------------------------------
 
 data InputAction
    = SetMode InputMode
    | SimpleMove MoveDirection
    | ToggleDebug DebugFlag
+   | ToggleViewPanel PanelName
    | PickupAllItems
    | DropAllItems
    | SelectItemToPickUp
@@ -102,25 +107,27 @@ data SelectState = SelectState
 makeFieldsCustom ''SelectState
 
 data InputState = InputState
-   { inputState_mode         :: InputMode
-   , inputState_hist         :: Seq Keypress
-   , inputState_active       :: Map ActiveAction Int
-   , inputState_commonKeymap :: Keymap
-   , inputState_inputKeymap  :: InputKeymap
-   , inputState_deactivators :: Map Keypress [InputAction]
-   , inputState_selectState  :: Maybe SelectState
+   { inputState_mode          :: InputMode
+   , inputState_hist          :: Seq Keypress
+   , inputState_active        :: Map ActiveAction Int
+   , inputState_commonKeymap  :: Keymap
+   , inputState_inputKeymap   :: InputKeymap
+   , inputState_deactivators  :: Map Keypress [InputAction]
+   , inputState_selectState   :: Maybe SelectState
+   , inputState_visiblePanels :: Set PanelName
    } deriving (Generic)
 makeFieldsCustom ''InputState
 instance Default InputState where
     def = InputState
-        { inputState_mode         = def
-     -- { inputState_mode         = StatusMode StatusMenu_Inventory
-        , inputState_hist         = def
-        , inputState_active       = def
-        , inputState_commonKeymap = defaultCommonKeymap
-        , inputState_inputKeymap  = defaultInputKeymap
-        , inputState_deactivators = def
-        , inputState_selectState  = Nothing
+        { inputState_mode          = def
+     -- { inputState_mode          = StatusMode StatusMenu_Inventory
+        , inputState_hist          = def
+        , inputState_active        = def
+        , inputState_commonKeymap  = defaultCommonKeymap
+        , inputState_inputKeymap   = defaultInputKeymap
+        , inputState_deactivators  = def
+        , inputState_selectState   = Nothing
+        , inputState_visiblePanels = def
         }
 
 type InputStateM = Lazy.StateT InputState IO
@@ -149,7 +156,8 @@ upShift c kp@(Keypress k m)
     | otherwise = kp
 
 defaultSelectors :: [Char]
-defaultSelectors = "jfkdlsahgurieowpq"
+-- defaultSelectors = "jfkdlsahgurieowpq"
+defaultSelectors = "jf"
 
 --------------------------------------------------------------------------------
 
@@ -218,6 +226,7 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "l" (SimpleMove MoveRight)
 
         , InputStr "tr" (ToggleDebug DebugFlag_DrawPickupRange)
+        , InputStr "tg" (ToggleViewPanel GroundPreviewPanel)
 
         , InputStr "q" FastQuit
 

@@ -119,8 +119,8 @@ data InputState = InputState
 makeFieldsCustom ''InputState
 instance Default InputState where
     def = InputState
-        { inputState_mode          = def
-     -- { inputState_mode          = StatusMode StatusMenu_Inventory
+     -- { inputState_mode          = def
+        { inputState_mode          = StatusMode StatusMenu_Inventory
         , inputState_hist          = def
         , inputState_active        = def
         , inputState_commonKeymap  = defaultCommonKeymap

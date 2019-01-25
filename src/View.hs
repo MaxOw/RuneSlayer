@@ -42,9 +42,6 @@ renderGame :: Renderer
 renderGame _delta st = do
     renderSetup
 
-    -- print $ focusLocation st
-    -- print $ queryLocation . entityOracle <$> focusEntity st
-
     let viewM = viewMatrix st
     gameProjM <- orthoProjection $ def
         & set normalization (Just Height)

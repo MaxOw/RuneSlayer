@@ -41,7 +41,17 @@ menuBox opts cont = layoutBox desc [ simpleLineupV ins ]
     contDesc = def
         & size.width    .~ (1 @@ fill)
         & size.height   .~ (1 @@ fill)
-        & padding.each  .~ basePadding
+
+withTitle :: Text -> Layout -> Layout
+withTitle t lay = simpleLineupV [ tit, fillBox lay ]
+    where
+    tit = layoutBox boxDesc [ simpleText t ]
+    boxDesc = def
+        & size.width  .~ (1 @@ fill)
+        & size.height .~ (34 @@ px)
+        & border.bottom.width .~ 1
+        & border.bottom.color .~ baseBorderColor
+        & padding.each        .~ basePadding
 
 simpleLineupV :: [Layout] -> Layout
 simpleLineupV = layoutLineup (set direction Vertical def)

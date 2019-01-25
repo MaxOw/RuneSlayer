@@ -14,6 +14,7 @@ import Engine.Layout.Types hiding (content)
 import Types
 import Types.Entity
 import Types.GUI
+import Focus
 
 import Types.Entity.Common
 import Types.Equipment
@@ -34,9 +35,15 @@ inventoryLayout st e = menuBox opts $ simpleLineupH
          & title .~ "Inventory"
          & size .~ Size (0.8 @@ wpct) (0.8 @@ wpct)
 
+withPadding :: Layout -> Layout
+withPadding = simpleBox $ def
+    & padding.each .~ Style.basePadding
+    & size.width    .~ (1 @@ fill)
+    & size.height   .~ (1 @@ fill)
+
 equipmentLayout :: St -> Entity -> Layout
 equipmentLayout st e =
-    fillBox $ simpleLineupV $ map equipEntryLayout $ equipmentList st e
+    withPadding $ simpleLineupV $ map equipEntryLayout $ equipmentList st e
 
 equipEntryLayout :: (EquipmentSlot, Maybe Entity) -> Layout
 equipEntryLayout (s, me) = simpleBox boxDesc $ simpleLineupH
@@ -70,13 +77,30 @@ equipmentList st e = zip sls $ map (getEntity <=< lookupSlot) sls
     getEntity eid = lookupEntityById eid (st^.gameState.entities)
 
 containersLayout :: St -> Layout
-containersLayout st = fillBox $ simpleLineupV
-    [ fillBox $ simpleText "Containers:"
-    , fillBox $ simpleText "Items on the ground:"
+containersLayout st = simpleBox d $ simpleLineupV
+    [ withTitle "Containers:" $ layoutEmpty
+    , withTitle "Items on the ground: " $ itemsOnGroundLayout st
     ]
+    where
+    es = focusItemsInRange st
+    d = def
+        & size.width    .~ (1 @@ fill)
+        & size.height   .~ (1 @@ fill)
+        -- & border.left.width .~ 1
+        -- & border.left.color .~ Style.baseBorderColor
+
 
 -- descriptionsLayout :: Layout
 -- descriptionsLayout = fillBox $ simpleText "Descriptions"
+
+itemsOnGroundLayout :: St -> Layout
+itemsOnGroundLayout st =
+    withPadding $ pickupBoxLayout desc Nothing $ map ("",) es
+    where
+    es = focusItemsInRange st
+    desc = def
+        & size.width       .~ 1 @@ fill
+        & size.height      .~ 1 @@ fill
 
 --------------------------------------------------------------------------------
 

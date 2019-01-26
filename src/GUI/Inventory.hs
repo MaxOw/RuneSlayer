@@ -6,6 +6,7 @@ module GUI.Inventory
 
 import Delude
 import qualified Data.Text as Text
+import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
 import qualified Data.Vector as Vector
 import Data.Vector (Vector)
@@ -67,14 +68,19 @@ equipEntryLayout :: St -> (EquipmentSlot, Maybe EntityWithId) -> Layout
 equipEntryLayout st (s, me) = selectFieldEntryLayout $ def
     & label   .~ Just lb
     & prefix  .~ mpfx
-    -- & hint    .~ Just p
+    & hint    .~ mh
     & content .~ me
     where
     lb = Text.drop (length ("EquipmentList_" :: String)) $ show s
     mpfx = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
+    mh = hintForEntityId st . view entityId =<< me
 
 hintForEntityId :: St -> EntityId -> Maybe String
-hintForEntityId st eid = Nothing
+hintForEntityId st eid = case st^.inputState.selectState of
+    Nothing -> Nothing
+    Just ss -> case ss^.selectKind of
+        SelectDrop v -> Map.lookup eid (v^.hintMap)
+        _            -> Nothing
 
 equipmentList :: St -> Entity -> [(EquipmentSlot, Maybe EntityWithId)]
 equipmentList st e = zip sls $ map (lookupEntity st <=< lookupSlot) sls
@@ -116,7 +122,7 @@ itemsInRangeLayout st = pickupBoxLayout fillDesc Nothing $ map ("",) es
 
 selectLayout :: St -> SelectState -> Layout
 selectLayout st s = case s^.selectKind of
-    SelectPickup v -> selectPickupLayout st cpfx smap v
+    SelectPickup v -> selectPickupLayout st cpfx smap $ view values v
     SelectDrop   _ -> itemsInRangeLayout st
     where
     cpfx = s^.currentPrefix

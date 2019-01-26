@@ -18,6 +18,8 @@ import Data.Bimap     as All (Bimap)
 
 import qualified Data.Bimap as Bimap
 
+import qualified Data.Vector as Vector
+
 import Diagrams.Core (InSpace, Transformable)
 import Engine (Mat4, AlphaColor)
 import Engine.TH
@@ -40,4 +42,5 @@ instance Default a => Default (V2 a)
 instance Default Text where def = ""
 instance Default Bool where def = False
 instance Default (Bimap a b) where def = Bimap.empty
+instance Default (Vector.Vector a) where def = Vector.empty
 

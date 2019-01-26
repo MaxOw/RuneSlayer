@@ -7,6 +7,7 @@ import Delude
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import qualified Data.Map as PrefixMap
+import qualified Data.Map as Map
 import qualified Engine
 import Engine (userState)
 import Engine.Events.Types hiding (Event)
@@ -62,7 +63,7 @@ handleSelectMode s kp = do
         Just ch -> do
             let smap = s^.selectMap
             selseq <- appendSelect ch
-            let selectHandler f v = selectLookup f selseq smap v
+            let selectHandler f v = selectLookup f selseq smap (view values v)
             case s^.selectKind of
                 SelectPickup v -> selectHandler pickupItem v
                 SelectDrop   v -> selectHandler   dropItem v
@@ -165,9 +166,10 @@ selectItemToDrop = do
             print sm
             startSelect (SelectDrop sv) sm
 
-makeSelectMap :: [a] -> (Vector a, SelectMap)
-makeSelectMap es = (Vector.fromList es, selMap)
+makeSelectMap :: Ord a => [a] -> (SelectValues a, SelectMap)
+makeSelectMap es = (SelectValues (Vector.fromList es) revMap, selMap)
     where
+    revMap = Map.fromList $ zip es ps
     selMap = PrefixMap.fromList $ zip ps $ map fst $ zip [0..] es
     ps = allSelectors prefixDepth
     prefixDepth :: Int

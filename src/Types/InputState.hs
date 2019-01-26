@@ -24,10 +24,16 @@ pattern Inventory = StatusMenu_Inventory
 
 type SelectMap = PrefixMap Char Int
 
+data SelectValues a = SelectValues
+   { selectValues_values  :: Vector a
+   , selectValues_hintMap :: Map a [Char]
+   } deriving (Show, Generic)
+instance Default (SelectValues a)
+
 data SelectKind
-   = SelectPickup (Vector EntityId)
-   | SelectDrop   (Vector EntityId)
-   deriving (Show, Eq, Ord, Generic)
+   = SelectPickup (SelectValues EntityId)
+   | SelectDrop   (SelectValues EntityId)
+   deriving (Show, Generic)
 
 data InputMode
    = NormalMode
@@ -255,3 +261,4 @@ defaultInputKeymap = buildInputKeymap
         ]
     ]
 
+makeFieldsCustom ''SelectValues

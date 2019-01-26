@@ -1,3 +1,4 @@
+{-# Language TemplateHaskell #-}
 module GUI.Inventory
     ( inventoryLayout
     , pickupBoxPanelLayout
@@ -11,7 +12,7 @@ import Data.Vector (Vector)
 
 import Engine hiding (slots)
 -- import Engine.Layout.Render
-import Engine.Layout.Types hiding (content)
+import Engine.Layout.Types hiding (HasContent, content)
 -- import Engine.Graphics.Types (RenderAction)
 
 import Types
@@ -27,6 +28,19 @@ import GUI.Common
 import qualified Equipment
 
 import EntityIndex (lookupEntityById)
+
+--------------------------------------------------------------------------------
+
+data SelectFieldEntry = SelectFieldEntry
+   { selectFieldEntry_prefix  :: Maybe String
+   , selectFieldEntry_label   :: Maybe Text
+   , selectFieldEntry_hint    :: Maybe String
+   , selectFieldEntry_content :: Maybe EntityWithId
+   } deriving (Generic)
+makeFieldsCustom ''SelectFieldEntry
+instance Default SelectFieldEntry
+
+--------------------------------------------------------------------------------
 
 -- import qualified Data.Colour as Color
 -- import qualified Data.Colour.Names as Color
@@ -47,38 +61,29 @@ withPadding = simpleBox $ def
 
 equipmentLayout :: St -> Entity -> Layout
 equipmentLayout st e =
-    withPadding $ simpleLineupV $ map equipEntryLayout $ equipmentList st e
+    withPadding $ simpleLineupV $ map (equipEntryLayout st) $ equipmentList st e
 
-equipEntryLayout :: (EquipmentSlot, Maybe Entity) -> Layout
-equipEntryLayout (s, me) = simpleBox boxDesc $ simpleLineupH
-    [ simpleText showName
-    , colorText col showEntity
-    ]
+equipEntryLayout :: St -> (EquipmentSlot, Maybe EntityWithId) -> Layout
+equipEntryLayout st (s, me) = selectFieldEntryLayout $ def
+    & label   .~ Just lb
+    & prefix  .~ mpfx
+    -- & hint    .~ Just p
+    & content .~ me
     where
-    showName = toName $ show s
-    toName = Text.drop (length ("EquipmentList_" :: String))
-    showEntity = case me of
-        Nothing -> "None"
-        Just  e -> fromMaybe "???" (e^.oracle.name)
+    lb = Text.drop (length ("EquipmentList_" :: String)) $ show s
+    mpfx = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
 
-    col = if isJust me
-        then Style.textPrimaryColor
-        else Style.textSecondaryColor
+hintForEntityId :: St -> EntityId -> Maybe String
+hintForEntityId st eid = Nothing
 
-    boxDesc = def
-        & size.height .~ (30 @@ px)
-
-equipmentList :: St -> Entity -> [(EquipmentSlot, Maybe Entity)]
-equipmentList st e = zip sls $ map (getEntity <=< lookupSlot) sls
+equipmentList :: St -> Entity -> [(EquipmentSlot, Maybe EntityWithId)]
+equipmentList st e = zip sls $ map (lookupEntity st <=< lookupSlot) sls
     where
     sls = e^..oracle.equipment.traverse.slots.folded
     meq = e^.oracle.equipment
 
     lookupSlot :: EquipmentSlot -> Maybe EntityId
-    lookupSlot s = Equipment.lookup s =<< meq
-
-    getEntity :: EntityId -> Maybe Entity
-    getEntity eid = lookupEntityById eid (st^.gameState.entities)
+    lookupSlot s = Equipment.lookupSlot s =<< meq
 
 containersLayout :: St -> Layout
 containersLayout st = simpleBox d $ simpleLineupV
@@ -92,16 +97,10 @@ containersLayout st = simpleBox d $ simpleLineupV
         -- & border.left.width .~ 1
         -- & border.left.color .~ Style.baseBorderColor
 
-
--- descriptionsLayout :: Layout
--- descriptionsLayout = fillBox $ simpleText "Descriptions"
-
 itemsOnGroundLayout :: St -> Layout
 itemsOnGroundLayout st = withPadding $ case st^.inputState.selectState of
     Just ss -> selectLayout st ss
-    Nothing -> pickupBoxLayout fillDesc Nothing $ map ("",) es
-    where
-    es = focusItemsInRange st
+    Nothing -> itemsInRangeLayout st
 
 fillDesc :: BoxDesc
 fillDesc = def
@@ -110,9 +109,15 @@ fillDesc = def
 
 --------------------------------------------------------------------------------
 
+itemsInRangeLayout :: St -> Layout
+itemsInRangeLayout st = pickupBoxLayout fillDesc Nothing $ map ("",) es
+    where
+    es = focusItemsInRange st
+
 selectLayout :: St -> SelectState -> Layout
 selectLayout st s = case s^.selectKind of
     SelectPickup v -> selectPickupLayout st cpfx smap v
+    SelectDrop   _ -> itemsInRangeLayout st
     where
     cpfx = s^.currentPrefix
     smap = s^.selectMap
@@ -146,16 +151,28 @@ pickupBoxLayout desc mpfx
     = simpleBox desc . simpleLineupV . map (selectFieldLayout mpfx)
 
 selectFieldLayout :: Maybe String -> (String, EntityWithId) -> Layout
-selectFieldLayout mpfx (p, e) = simpleBox boxDesc $ simpleLineupH
-    [ prefixLayout , entityLayout ]
+selectFieldLayout mpfx (p, e) = selectFieldEntryLayout $ def
+    & prefix  .~ mpfx
+    & hint    .~ Just p
+    & content .~ Just e
+
+selectFieldEntryLayout :: SelectFieldEntry -> Layout
+selectFieldEntryLayout f = simpleBox boxDesc $ simpleLineupH
+    $ addLabel [ prefixLayout , entityLayout ]
     where
     prefixLayout = simpleBox prefixDesc prefixText
-    entityLayout = colorText entityColor $ fromMaybe "???" (e^.entity.oracle.name)
+    entityLayout = colorText entityColor $ case f^.content of
+        Nothing -> "None"
+        Just  e -> fromMaybe "???" (e^.entity.oracle.name)
 
-    textHint = fromString p
-    prefixText = case mpfx of
+    addLabel = case f^.label of
+        Nothing -> id
+        Just lb -> ((simpleText lb):)
+
+    textHint = fromString $ fromMaybe "" $ f^.hint
+    prefixText = case f^.prefix of
         Nothing -> colorText Style.textPrimaryColor textHint
-        Just pfx -> if isPrefixOf pfx p
+        Just pfx -> if Text.isPrefixOf (fromString pfx) textHint
             then prefixTextHighlight pfx
             else colorText Style.textSecondaryColor textHint
     prefixTextHighlight pfx = colorTextList
@@ -165,11 +182,13 @@ selectFieldLayout mpfx (p, e) = simpleBox boxDesc $ simpleLineupH
         textPfx = fromString pfx
         textRest = fromMaybe "" $ Text.stripPrefix textPfx textHint
 
-    entityColor = case mpfx of
-        Nothing -> Style.textPrimaryColor
-        Just pfx -> if isPrefixOf pfx p
-            then Style.textPrimaryColor
-            else Style.textSecondaryColor
+    entityColor
+        | isNothing (f^.content) = Style.textSecondaryColor
+        | otherwise = case f^.prefix of
+            Nothing -> Style.textPrimaryColor
+            Just pfx -> if Text.isPrefixOf (fromString pfx) textHint
+                then Style.textPrimaryColor
+                else Style.textSecondaryColor
 
     prefixDesc = def
         & size.width .~ (30 @@ px)

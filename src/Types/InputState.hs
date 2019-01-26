@@ -26,6 +26,7 @@ type SelectMap = PrefixMap Char Int
 
 data SelectKind
    = SelectPickup (Vector EntityId)
+   | SelectDrop   (Vector EntityId)
    deriving (Show, Eq, Ord, Generic)
 
 data InputMode
@@ -70,6 +71,7 @@ data InputAction
    | PickupAllItems
    | DropAllItems
    | SelectItemToPickUp
+   | SelectItemToDrop
    | InputAction_Escape
    | FastQuit
    deriving (Show)
@@ -249,6 +251,7 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "yi" SelectItemToPickUp
 
         , InputStr "pp" DropAllItems
+        , InputStr "pi" SelectItemToDrop
         ]
     ]
 

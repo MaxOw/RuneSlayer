@@ -6,6 +6,7 @@ import Types
 import Types.Entity
 import Types.Entity.Common
 import Types.GameState
+import Equipment (contentList)
 import EntityIndex
 
 liftGame :: (St -> a) -> Game a
@@ -38,3 +39,19 @@ focusItemsInRange st = queryIndex rangeQuery $ st^.gameState.entities
     withinRange loc
         = nothingFalse2 (focusLocation st) loc
         $ isWithinDistance defaultPickupRange
+
+focusItemsInInventory :: St -> [EntityWithId]
+focusItemsInInventory st = lookupEntities st es
+    where
+    es :: [EntityId]
+    es = st^.to focusEntity.traverse.oracle.equipment.traverse.to contentList
+
+lookupEntities :: St -> [EntityId] -> [EntityWithId]
+lookupEntities st = mapMaybe toEwid
+    where
+    toEwid :: EntityId -> Maybe EntityWithId
+    toEwid i = EntityWithId i <$> lookupEntityById i (st^.gameState.entities)
+
+lookupEntity :: St -> EntityId -> Maybe EntityWithId
+lookupEntity st i =
+    EntityWithId i <$> lookupEntityById i (st^.gameState.entities)

@@ -3,14 +3,18 @@ module Equipment
     ( module Types.Equipment
 
     , create
-    , lookup
+    , hasSlot, hasId
+    , lookupSlot
     , insert
-    , member
+    , deleteAll
+    , deleteId
     , emptySlots
+    , contentList
     ) where
 
 import Delude
 import qualified Data.Map as Map
+import qualified Data.Bimap as Bimap
 import qualified Data.Set as Set
 
 import Types.Equipment
@@ -19,17 +23,33 @@ import Types.Entity.Common
 create :: Set EquipmentSlot -> Equipment
 create s = set slots s def
 
-member :: EquipmentSlot -> Equipment -> Bool
-member k = Set.member k . view slots
+hasSlot :: EquipmentSlot -> Equipment -> Bool
+hasSlot k = Set.member k . view slots
 
-lookup :: EquipmentSlot -> Equipment -> Maybe EntityId
-lookup k = Map.lookup k . view content
+hasId :: EntityId -> Equipment -> Bool
+hasId v = Bimap.memberR v . view content
+
+lookupSlot :: EquipmentSlot -> Equipment -> Maybe EntityId
+lookupSlot k = Bimap.lookup k . view content
 
 insert :: EquipmentSlot -> EntityId -> Equipment -> Equipment
-insert k v e = over content (if member k e then Map.insert k v else id) e
+insert k v e = if hasSlot k e
+    then e & content %~ Bimap.insert k v
+    else e
+
+deleteAll :: Equipment -> Equipment
+deleteAll = set content Bimap.empty
+
+deleteId :: EntityId -> Equipment -> Equipment
+deleteId v = over content (Bimap.deleteR v)
 
 emptySlots :: Equipment -> Set EquipmentSlot
 emptySlots e = Set.difference ss ks
     where
     ss = view slots e
-    ks = Map.keysSet $ view content e
+    ks = Map.keysSet . Bimap.toMap $ view content e
+
+contentList :: Equipment -> [EntityId]
+contentList = Bimap.elems . view content
+
+

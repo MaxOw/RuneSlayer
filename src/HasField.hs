@@ -24,4 +24,5 @@ class HasProcessOnUpdate s t | s -> t where processOnUpdate :: Lens' s t
 class HasDebugFlags      s t | s -> t where debugFlags      :: Lens' s t
 class HasRandomSeed      s t | s -> t where randomSeed      :: Lens' s t
 class HasFrameCount      s t | s -> t where frameCount      :: Lens' s t
+class HasLabel           s t | s -> t where label           :: Lens' s t
 

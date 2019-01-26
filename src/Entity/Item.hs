@@ -31,19 +31,19 @@ itemLikeActOn
     => HasProcessOnUpdate s [EntityAction]
     => s -> EntityAction -> s
 itemLikeActOn x a = case a of
-    EntityAction_PickItemBy eid -> pickItemBy eid
-    EntityAction_DropItemAt loc -> dropItemAt loc
+    EntityAction_SelfPickupBy eid -> selfPickupBy eid
+    EntityAction_SelfDropAt   loc -> slefDropAt loc
     _ -> x
 
     where
-    pickItemBy eid = case x^.owner of
+    selfPickupBy eid = case x^.owner of
         Just _  -> x
         Nothing -> x
             & location .~ Nothing
             & owner    .~ (Just eid)
             & handleOnUpdate a
 
-    dropItemAt loc = x
+    slefDropAt loc = x
         & location .~ Just loc
         & owner    .~ Nothing
 
@@ -59,7 +59,7 @@ itemLikeUpdate
     => HasOwner           s (Maybe EntityId)
     => Update s ()
 itemLikeUpdate = do
-    anyMatch _EntityAction_PickItemBy pickUpInformOwner
+    anyMatch _EntityAction_SelfPickupBy pickUpInformOwner
     self.processOnUpdate .= mempty
 
 itemLikeRender

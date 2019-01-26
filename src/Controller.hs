@@ -65,6 +65,7 @@ handleSelectMode s kp = do
             let selectHandler f v = selectLookup f selseq smap v
             case s^.selectKind of
                 SelectPickup v -> selectHandler pickupItem v
+                SelectDrop   v -> selectHandler   dropItem v
             unless (isPartialMatch smap selseq) endSelect
 
 selectLookup :: (a -> Game ()) -> Seq Char -> SelectMap -> Vector a -> Game ()
@@ -105,6 +106,7 @@ handleActivation = \case
     PickupAllItems     -> pickupAllItems
     DropAllItems       -> dropAllItems
     SelectItemToPickUp -> selectItemToPickUp
+    SelectItemToDrop   -> selectItemToDrop
     InputAction_Escape -> inputActionEscape
     FastQuit           -> Engine.closeWindow
 
@@ -126,15 +128,18 @@ toggleDebug :: DebugFlag -> Game ()
 toggleDebug = actOnFocusedEntity . EntityAction_ToggleDebug
 
 pickupItem :: EntityId -> Game ()
-pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_PickItemBy
+pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfPickupBy
 
 pickupAllItems :: Game ()
 pickupAllItems = withFocusId $ \fi -> do
     es <- fmap (view entityId) <$> liftGame focusItemsInRange
-    mapM_ (flip actOnEntity $ EntityAction_PickItemBy fi) es
+    mapM_ (flip actOnEntity $ EntityAction_SelfPickupBy fi) es
 
 dropAllItems :: Game ()
 dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
+
+dropItem :: EntityId -> Game ()
+dropItem = actOnFocusedEntity . EntityAction_DropItem
 
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
@@ -147,6 +152,18 @@ selectItemToPickUp = do
             let (sv, sm)  = makeSelectMap es
             print sm
             startSelect (SelectPickup sv) sm
+
+selectItemToDrop :: Game ()
+selectItemToDrop = do
+    es <- fmap (view entityId) <$> liftGame focusItemsInInventory
+    case es of
+        []   -> return ()
+        e:[] -> dropItem e
+        _    -> do
+            -- setMode $ StatusMode Inventory
+            let (sv, sm)  = makeSelectMap es
+            print sm
+            startSelect (SelectDrop sv) sm
 
 makeSelectMap :: [a] -> (Vector a, SelectMap)
 makeSelectMap es = (Vector.fromList es, selMap)

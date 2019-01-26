@@ -20,6 +20,7 @@ actOn p a = case a of
     EntityAction_ToggleDebug     f -> toggleDebugFlag f p
     EntityAction_AddToInventory  _ -> handleOnUpdate a p
     EntityAction_DropAllItems      -> handleOnUpdate a p
+    EntityAction_DropItem        _ -> handleOnUpdate a p
     _ -> p
 
 update :: Player -> EntityContext -> (Maybe Player, [DirectedEntityAction])
@@ -27,7 +28,13 @@ update p ctx = runUpdate p ctx $ do
     integrateLocation
     anyMatch _EntityAction_AddToInventory addItems
     anyMatch _EntityAction_DropAllItems   dropAllItems
+    mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
+
+processAction :: EntityAction -> Update Player ()
+processAction = \case
+    EntityAction_DropItem i -> dropItem i
+    _ -> return ()
 
 --------------------------------------------------------------------------------
 

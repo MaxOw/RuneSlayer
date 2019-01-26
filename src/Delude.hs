@@ -14,6 +14,9 @@ import Control.Lens   as All hiding (uncons)
 import Data.Default   as All
 import Linear         as All hiding (trace, transpose, identity, rotate)
 import Diagrams.Angle as All ((@@))
+import Data.Bimap     as All (Bimap)
+
+import qualified Data.Bimap as Bimap
 
 import Diagrams.Core (InSpace, Transformable)
 import Engine (Mat4, AlphaColor)
@@ -36,4 +39,5 @@ type Transformable2D t = (InSpace V2 Double t, Transformable t)
 instance Default a => Default (V2 a)
 instance Default Text where def = ""
 instance Default Bool where def = False
+instance Default (Bimap a b) where def = Bimap.empty
 

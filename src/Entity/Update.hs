@@ -15,12 +15,12 @@ makeUpdateSt x ctx = UpdateSt
    { updateSt_self       = x
    , updateSt_context    = ctx
    , updateSt_deleteSelf = False
-   , updateSt_actions    = []
+   , updateSt_actions    = def
    }
 
 runUpdate
     :: x -> EntityContext -> Update x () -> (Maybe x, [DirectedEntityAction])
-runUpdate x ctx act = (mx, result^.actions)
+runUpdate x ctx act = (mx, result^..actions.traverse)
     where
     mx = if result^.deleteSelf then Nothing else Just (result^.self)
     result = execState act (makeUpdateSt x ctx)

@@ -18,12 +18,8 @@ data EquipmentSlot
 
 data Equipment = Equipment
    { equipment_slots   :: Set EquipmentSlot
-   , equipment_content :: Map EquipmentSlot EntityId
-   }
+   , equipment_content :: Bimap EquipmentSlot EntityId
+   } deriving (Generic)
 makeFieldsCustom ''Equipment
 
-instance Default Equipment where
-   def = Equipment
-    { equipment_slots   = mempty
-    , equipment_content = mempty
-    }
+instance Default Equipment

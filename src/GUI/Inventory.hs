@@ -5,6 +5,9 @@ module GUI.Inventory
 
 import Delude
 import qualified Data.Text as Text
+import qualified Data.Map as PrefixMap
+import qualified Data.Vector as Vector
+import Data.Vector (Vector)
 
 import Engine hiding (slots)
 -- import Engine.Layout.Render
@@ -13,6 +16,7 @@ import Engine.Layout.Types hiding (content)
 
 import Types
 import Types.Entity
+import Types.InputState
 import Types.GUI
 import Focus
 
@@ -82,7 +86,6 @@ containersLayout st = simpleBox d $ simpleLineupV
     , withTitle "Items on the ground: " $ itemsOnGroundLayout st
     ]
     where
-    es = focusItemsInRange st
     d = def
         & size.width    .~ (1 @@ fill)
         & size.height   .~ (1 @@ fill)
@@ -94,15 +97,39 @@ containersLayout st = simpleBox d $ simpleLineupV
 -- descriptionsLayout = fillBox $ simpleText "Descriptions"
 
 itemsOnGroundLayout :: St -> Layout
-itemsOnGroundLayout st =
-    withPadding $ pickupBoxLayout desc Nothing $ map ("",) es
+itemsOnGroundLayout st = withPadding $ case st^.inputState.selectState of
+    Just ss -> selectLayout st ss
+    Nothing -> pickupBoxLayout fillDesc Nothing $ map ("",) es
     where
     es = focusItemsInRange st
-    desc = def
-        & size.width       .~ 1 @@ fill
-        & size.height      .~ 1 @@ fill
+
+fillDesc :: BoxDesc
+fillDesc = def
+    & size.width       .~ 1 @@ fill
+    & size.height      .~ 1 @@ fill
 
 --------------------------------------------------------------------------------
+
+selectLayout :: St -> SelectState -> Layout
+selectLayout st s = case s^.selectKind of
+    SelectPickup v -> selectPickupLayout st cpfx smap v
+    where
+    cpfx = s^.currentPrefix
+    smap = s^.selectMap
+
+selectPickupLayout
+    :: St -> Seq Char -> SelectMap -> Vector EntityId -> Layout
+selectPickupLayout st cpfx smap vi =
+    pickupBoxLayout fillDesc (Just $ toList cpfx) $ fromSelectMap smap vei
+    where
+    vei = Vector.mapMaybe toEntityWithId vi
+    toEntityWithId i =
+        EntityWithId i <$> lookupEntityById i (st^.gameState.entities)
+
+fromSelectMap :: SelectMap -> Vector a -> [(String, a)]
+fromSelectMap smap v = map snd . sortOn fst . mapMaybe f $ PrefixMap.toList smap
+    where
+    f (p, i) = (i,) . (p,) <$> Vector.indexM v i
 
 pickupBoxPanelLayout
     :: Maybe String -> [(String, EntityWithId)] -> Layout

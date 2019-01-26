@@ -231,9 +231,9 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "q" FastQuit
 
         , InputStr "yy" PickupAllItems
-        , InputStr "yi" SelectItemToPickUp
+        -- , InputStr "yi" SelectItemToPickUp
 
-        , InputStr "P" DropAllItems
+        , InputStr "pp" DropAllItems
         ]
 
     , InputGroup FightMode
@@ -245,7 +245,10 @@ defaultInputKeymap = buildInputKeymap
         ]
 
     , InputGroup (StatusMode Inventory)
-        [ -- InputKey Key'Escape (SetMode NormalMode)
+        [ InputStr "yy" PickupAllItems
+        , InputStr "yi" SelectItemToPickUp
+
+        , InputStr "pp" DropAllItems
         ]
     ]
 

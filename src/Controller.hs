@@ -143,6 +143,7 @@ selectItemToPickUp = do
         []   -> return ()
         e:[] -> pickupItem e
         _    -> do
+            -- setMode $ StatusMode Inventory
             let (sv, sm)  = makeSelectMap es
             print sm
             startSelect (SelectPickup sv) sm

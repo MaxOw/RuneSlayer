@@ -50,10 +50,10 @@ setupTestGameState
         & health   .~ Health 100
 
     bagEntity = toEntity $ makeContainer testContainerType_bag
-        & location .~ (Just $ locM 2 3)
+        & location .~ (Just $ locM 0 1)
 
     helmetEntity = toEntity $ makeItem testItemType_helmet
-        & location .~ (Just $ locM 4 1)
+        & location .~ (Just $ locM 1 0)
 
     potionEntity = toEntity $ makeItem testItemType_healthPotion
-        & location .~ (Just $ locM 3 1)
+        & location .~ (Just $ locM (-1) 0.2)

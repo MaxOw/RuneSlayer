@@ -15,11 +15,13 @@ data EntityAction
    = EntityAction_SetMoveVector V2D
    | EntityAction_ToggleDebug DebugFlag
    -- tell entity that it was picked up by [EntityId]
-   | EntityAction_SelfPickupBy EntityId
+   | EntityAction_SelfAddedBy EntityId
+   -- tell entity that it was passed to [EntityId]
+   | EntityAction_SelfPassedTo EntityId
    -- tell entity that it should add [EntityId] to inventory
-   | EntityAction_AddToInventory EntityId
+   | EntityAction_AddItem EntityId
    -- tell entity that it got dropped at [Location]
-   | EntityAction_SelfDropAt Location
+   | EntityAction_SelfDroppedAt Location
    -- tell entity to drop all items
    | EntityAction_DropAllItems
    -- tell entity to drop selected item
@@ -35,4 +37,4 @@ makeFieldsCustom ''DirectedEntityAction
 
 instance Show DirectedEntityAction where
     show (DirectedEntityAction i a) =
-        "DirectedEntityAction " <> show i <> " (" <> show a <> ")"
+        show i <> " => " <> show a -- <> "."

@@ -21,10 +21,13 @@ import qualified Data.Colour.Names as Color
 
 actOn :: Container -> EntityAction -> Container
 actOn x a = case a of
+    EntityAction_AddItem  _ -> handleOnUpdate a x
+    EntityAction_DropItem _ -> handleOnUpdate a x
     _ -> itemLikeActOn x a
 
 update :: Container -> EntityContext -> (Maybe Container, [DirectedEntityAction])
 update x ctx = runUpdate x ctx $ do
+    anyMatch _EntityAction_AddItem containerAddItems
     itemLikeUpdate
 
 render :: Container -> RenderAction
@@ -60,7 +63,7 @@ makeContainer x = set containerType x def
 testContainerType_bag :: ContainerType
 testContainerType_bag = def
     & itemType.name           .~ "Bag"
-    & itemType.volume         .~ volumeL 1.5
+    & itemType.volume         .~ volumeL 15
     & itemType.itemKind       .~ ItemKind_BigItem
     & itemType.appearance     .~ ap
     & itemType.fittingSlots   .~ Set.fromList [EquipmentSlot_Backpack]

@@ -93,7 +93,7 @@ equipmentList st e = zip sls $ map (lookupEntity st <=< lookupSlot) sls
 
 containersLayout :: St -> Layout
 containersLayout st = simpleBox d $ simpleLineupV
-    [ withTitle "Containers:" $ layoutEmpty
+    [ backpackContainerLayout st
     , withTitle "Items on the ground: " $ itemsOnGroundLayout st
     ]
     where
@@ -102,6 +102,22 @@ containersLayout st = simpleBox d $ simpleLineupV
         & size.height   .~ (1 @@ fill)
         -- & border.left.width .~ 1
         -- & border.left.color .~ Style.baseBorderColor
+
+showEntityName :: Entity -> Text
+showEntityName e = fromMaybe "???" (e^.oracle.name)
+
+backpackContainerLayout :: St -> Layout
+backpackContainerLayout st = case mei of
+    Nothing -> layoutEmpty
+    Just ei -> withTitle tit
+        $ pickupBoxLayout fillDesc Nothing $ map ("",) es
+        where
+        tit = "Content of the "<> showEntityName (ei^.entity) <>":"
+        -- cs :: [EntityWithId]
+        es = lookupEntities st $ ei^..entity.oracle.content.traverse.traverse
+
+    where
+    mei = focusEquipmentSlot st EquipmentSlot_Backpack
 
 itemsOnGroundLayout :: St -> Layout
 itemsOnGroundLayout st = withPadding $ case st^.inputState.selectState of

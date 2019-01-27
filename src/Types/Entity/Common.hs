@@ -47,7 +47,7 @@ newtype Speed    = Speed    { unSpeed    :: Double }
 makeWrapped ''Speed
 
 newtype Volume   = Volume   { unVolume   :: Double }
-    deriving (Generic, Default, Show)
+    deriving (Generic, Default, Show, Num, Eq, Ord)
 makeWrapped ''Volume
 
 newtype Time     = Time     { unTime     :: Double }

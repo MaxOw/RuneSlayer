@@ -13,6 +13,7 @@ class HasItemKind        s t | s -> t where itemKind        :: Lens' s t
 class HasContent         s t | s -> t where content         :: Lens' s t
 class HasContainerType   s t | s -> t where containerType   :: Lens' s t
 class HasName            s t | s -> t where name            :: Lens' s t
+class HasVolume          s t | s -> t where volume          :: Lens' s t
 class HasMaxVolume       s t | s -> t where maxVolume       :: Lens' s t
 class HasEntityId        s t | s -> t where entityId        :: Lens' s t
 class HasEntity          s t | s -> t where entity          :: Lens' s t
@@ -25,4 +26,5 @@ class HasDebugFlags      s t | s -> t where debugFlags      :: Lens' s t
 class HasRandomSeed      s t | s -> t where randomSeed      :: Lens' s t
 class HasFrameCount      s t | s -> t where frameCount      :: Lens' s t
 class HasLabel           s t | s -> t where label           :: Lens' s t
+class HasContentVolume   s t | s -> t where contentVolume   :: Lens' s t
 

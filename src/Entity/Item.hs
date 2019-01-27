@@ -31,19 +31,24 @@ itemLikeActOn
     => HasProcessOnUpdate s [EntityAction]
     => s -> EntityAction -> s
 itemLikeActOn x a = case a of
-    EntityAction_SelfPickupBy eid -> selfPickupBy eid
-    EntityAction_SelfDropAt   loc -> slefDropAt loc
+    EntityAction_SelfPassedTo  eid -> selfPassedTo eid
+    EntityAction_SelfAddedBy   eid -> selfAddedBy eid
+    EntityAction_SelfDroppedAt loc -> slefDroppedAt loc
     _ -> x
 
     where
-    selfPickupBy eid = case x^.owner of
+    selfAddedBy eid = case x^.owner of
         Just _  -> x
         Nothing -> x
             & location .~ Nothing
             & owner    .~ (Just eid)
             & handleOnUpdate a
 
-    slefDropAt loc = x
+    selfPassedTo eid = x
+            & location .~ Nothing
+            & owner    .~ (Just eid)
+
+    slefDroppedAt loc = x
         & location .~ Just loc
         & owner    .~ Nothing
 
@@ -59,7 +64,7 @@ itemLikeUpdate
     => HasOwner           s (Maybe EntityId)
     => Update s ()
 itemLikeUpdate = do
-    anyMatch _EntityAction_SelfPickupBy pickUpInformOwner
+    anyMatch _EntityAction_SelfAddedBy pickUpInformOwner
     self.processOnUpdate .= mempty
 
 itemLikeRender
@@ -83,6 +88,7 @@ itemLikeOracle
 itemLikeOracle x = def
    & location     .~ (x^.location)
    & name         .~ Just (x^.itemType.name)
+   & volume       .~ Just (x^.itemType.volume)
    & itemKind     .~ Just (x^.itemType.itemKind)
    & fittingSlots .~ (x^.itemType.fittingSlots)
 

@@ -6,7 +6,8 @@ import Types
 import Types.Entity
 import Types.Entity.Common
 import Types.GameState
-import Equipment (contentList)
+import Equipment (EquipmentSlot, contentList)
+import qualified Equipment
 import EntityIndex
 
 liftGame :: (St -> a) -> Game a
@@ -55,3 +56,9 @@ lookupEntities st = mapMaybe toEwid
 lookupEntity :: St -> EntityId -> Maybe EntityWithId
 lookupEntity st i =
     EntityWithId i <$> lookupEntityById i (st^.gameState.entities)
+
+focusEquipmentSlot :: St -> EquipmentSlot -> Maybe EntityWithId
+focusEquipmentSlot st es = lookupEntity st
+      =<< Equipment.lookupSlot es
+      =<< st^?to focusEntity.traverse.oracle.equipment.traverse
+

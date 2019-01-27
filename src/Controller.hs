@@ -129,12 +129,12 @@ toggleDebug :: DebugFlag -> Game ()
 toggleDebug = actOnFocusedEntity . EntityAction_ToggleDebug
 
 pickupItem :: EntityId -> Game ()
-pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfPickupBy
+pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfAddedBy
 
 pickupAllItems :: Game ()
 pickupAllItems = withFocusId $ \fi -> do
     es <- fmap (view entityId) <$> liftGame focusItemsInRange
-    mapM_ (flip actOnEntity $ EntityAction_SelfPickupBy fi) es
+    mapM_ (flip actOnEntity $ EntityAction_SelfAddedBy fi) es
 
 dropAllItems :: Game ()
 dropAllItems = actOnFocusedEntity EntityAction_DropAllItems

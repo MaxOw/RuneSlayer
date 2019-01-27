@@ -12,6 +12,7 @@ data EntityOracle = EntityOracle
    , entityOracle_equipment    :: Maybe Equipment
    , entityOracle_itemKind     :: Maybe ItemKind
    , entityOracle_content      :: Maybe [EntityId]
+   , entityOracle_volume       :: Maybe Volume
    , entityOracle_maxVolume    :: Maybe Volume
    , entityOracle_fittingSlots :: Set EquipmentSlot
    } deriving (Generic)

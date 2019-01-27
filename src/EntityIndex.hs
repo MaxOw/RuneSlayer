@@ -14,6 +14,7 @@ module EntityIndex
     ) where
 
 import Delude
+import Text.Printf
 import Types.Entity
 import Types.Entity.Common (EntityId (..))
 import qualified Data.HashMap.Strict as HashMap
@@ -35,12 +36,13 @@ updateIndex
     :: MonadIO m
     => [DirectedEntityAction] -> Word32 -> EntityIndex -> m EntityIndex
 updateIndex acs fct eix = do
-    mapM_ print $ filter (noSetMoveVector . view action) directedActions
+    mapM_ prt $ filter (noSetMoveVector . view action) directedActions
     return $ eix
         { entityIndexEntities = actedOnEntities
     -- , entityIndexLocation = rebuildLocationIndex actedOnEntities
         }
     where
+    prt x = putStrLn ((printf "%d: %s" fct (show x :: String)) :: String)
     h = HashMap.mapWithKey updateEntity $ entityIndexEntities eix
     directedActions = concatMap snd (HashMap.elems h) <> acs
     updatedEntities = HashMap.mapMaybe fst h

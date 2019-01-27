@@ -14,6 +14,7 @@ data Container = Container
    , container_owner           :: Maybe EntityId
    , container_processOnUpdate :: [EntityAction]
    , container_content         :: [EntityId]
+   , container_contentVolume   :: Volume
    , container_containerType   :: ContainerType
    } deriving (Generic)
 makeFieldsCustom ''Container

@@ -6,10 +6,11 @@ module Entity.Actions
 
     -- Update Actions
     , pureIntegrateLocation, integrateLocation
-    , pureAddItems, addItems
-    , pureDropAllItems, dropAllItems
+    , addItems
+    , dropAllItems
     , purePickUpInformOwner, pickUpInformOwner
     , dropItem
+    , containerAddItems
 
     -- Render Actions
     , maybeLocate
@@ -21,12 +22,15 @@ module Entity.Actions
 
 import Delude
 import qualified Data.Set as Set
+import qualified Data.List as List
 import Random.Utils
 
 import Types.Entity
+import Types.Entity.ItemType
 import Entity.Utils
 import EntityIndex (lookupEntityById)
 import qualified Equipment
+import Types.Equipment
 import Equipment (Equipment, contentList)
 
 --------------------------------------------------------------------------------
@@ -71,31 +75,14 @@ integrateLocation = liftUpdate pureIntegrateLocation
 
 --------------------------------------------------------------------------------
 
-pureDropAllItems
-    :: HasProcessOnUpdate x [EntityAction]
-    => HasEquipment       x Equipment
-    => HasLocation        x Location
-    => x -> EntityContext -> (x, [DirectedEntityAction])
-pureDropAllItems p ctx = if any isDropAllItems $ p^.processOnUpdate
-    then (pp, is)
-    else (p,  [])
-    where
-    fct = ctx^.frameCount
-    pp = p & equipment %~ Equipment.deleteAll
-    is = map (makeDropItem fct $ p^.location) $ p^.equipment.to contentList
-
-    isDropAllItems EntityAction_DropAllItems = True
-    isDropAllItems _                         = False
-
 dropAllItems
-    :: HasProcessOnUpdate x [EntityAction]
-    => HasEquipment       x Equipment
+    :: HasEquipment       x Equipment
     => HasLocation        x Location
     => Update             x ()
 dropAllItems = do
-    (newSelf, newActions) <- pureDropAllItems <$> use self <*> use context
-    self .= newSelf
-    actions <>= fromList newActions
+    is <- use $ self.equipment.to contentList
+    self.equipment %= Equipment.deleteAll
+    mapM_ dropItemAction is
 
 --------------------------------------------------------------------------------
 
@@ -106,7 +93,7 @@ purePickUpInformOwner x ctx = case x^.owner of
     Just ownerId -> [DirectedEntityAction ownerId act]
     _            -> []
     where
-    act = EntityAction_AddToInventory $ ctx^.selfId
+    act = EntityAction_AddItem        $ ctx^.selfId
 
 pickUpInformOwner
     :: HasOwner x (Maybe EntityId)
@@ -117,69 +104,115 @@ pickUpInformOwner = do
 
 --------------------------------------------------------------------------------
 
-pureAddItems
-    :: HasProcessOnUpdate x [EntityAction]
-    => HasEquipment       x Equipment
-    => HasLocation        x Location
-    => EntityContext -> x -> (x, [DirectedEntityAction])
-pureAddItems ctx p = (pp, ds)
-    where
-    ds = map (makeDropItem (ctx^.frameCount) (p^.location) . view entityId) rs
-    (pp, rs) = equipItems (getItemsToAdd ctx p) p
-    -- for each entityId to add
-    -- lookup entity for that id
-    --
-    -- if there is no bag equiped find and equip
-    -- try to equip other equipable items
-    -- collect small items
-    -- if
-
 addItems
     :: HasProcessOnUpdate x [EntityAction]
     => HasEquipment       x Equipment
     => HasLocation        x Location
     => Update x ()
 addItems = do
-    (newSelf, newActions) <- pureAddItems <$> use context <*> use self
-    self .= newSelf
-    actions <>= fromList newActions
+    os <- equipItems =<< getItemsToAdd <$> use context <*> use self
+    let (sit, oit) = splitItemKind ItemKind_SmallItem os
+    whenJustM equippedBackpack $ \ct -> do
+        -- sendItemsToContainer ct sit
+        mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
+    mapM_ (dropItemAction . view entityId) oit
 
---------------------------------------------------------------------------------
-
-dropItem
-    :: HasEquipment       x Equipment
-    => HasLocation        x Location
-    => EntityId -> Update x ()
-dropItem i = do
-    eq <- use $ self.equipment
-    when (Equipment.hasId i eq) $ do
-        self.equipment %= Equipment.deleteId i
-        dropItemAction i
-    return ()
-
---------------------------------------------------------------------------------
-
-addAction :: DirectedEntityAction -> Update x ()
-addAction x = actions %= (:>x)
-
-dropItemAction
-    :: HasLocation x Location
-    => EntityId -> Update x ()
-dropItemAction eid = do
-    loc <- use $ self.location
-    fct <- use $ context.frameCount
-    addAction $ makeDropItem fct loc eid
-
-makeDropItem :: Word32 -> Location -> EntityId -> DirectedEntityAction
-makeDropItem rnd loc eid = DirectedEntityAction eid (EntityAction_SelfDropAt dloc)
+{-
+sendItemsToContainer :: EntityId -> [EntityWithId] -> Update x ()
+sendItemsToContainer eid es = do
+    actions <>= fromList (map f es)
     where
-    rgid = fromIntegral $ unEntityId eid
-    dloc = over _Wrapped (\v -> v + genDropOffset [rnd + rgid]) loc
+    f x = DirectedEntityAction (x^.entityId) $ EntityAction_AddItem eid
+-}
+
+containerAddItems
+    :: HasProcessOnUpdate x [EntityAction]
+    => HasContent         x [EntityId]
+    => HasContentVolume   x Volume
+    => HasContainerType   x ContainerType
+    => HasLocation        x (Maybe Location)
+    => HasOwner           x (Maybe EntityId)
+    => Update             x ()
+containerAddItems = do
+    os <- fitIntoContainer =<< getItemsToAdd <$> use context <*> use self
+    mapM_ containerDropItem os
+
+containerDropItem
+    :: HasLocation x (Maybe Location)
+    => HasOwner    x (Maybe EntityId)
+    => EntityWithId -> Update x ()
+containerDropItem e = use (self.location) >>= \case
+    Nothing -> use (self.owner) >>= \mo -> whenJust mo $ \o ->
+        addAction o $ EntityAction_DropItem eid
+    Just lc -> use (context.frameCount) >>= \fct ->
+        addAction eid $ makeDropItem fct lc eid
+    where
+    eid = e^.entityId
+
+fitIntoContainer
+    :: HasContent       x [EntityId]
+    => HasContentVolume x Volume
+    => HasContainerType x ContainerType
+    => [EntityWithId] -> Update x [EntityWithId]
+fitIntoContainer es = do
+    let (smallItems, otherItems) = splitItemKind ItemKind_SmallItem es
+    overflow <- go $ trace ("Here" :: Text) smallItems
+    return $ otherItems <> overflow
+    where
+    go [] = return []
+    go (e:es) = do
+        cv <- use (self.contentVolume)
+        mv <- use (self.containerType.maxVolume)
+        if cv >= mv
+        then return (e:es)
+        else do
+            let eid = e^.entityId
+            self.content       %= (eid:)
+            self.contentVolume += fromMaybe 0 (e^.entity.oracle.volume)
+            addAction eid . EntityAction_SelfPassedTo =<< useSelfId
+            go es
+
+useSelfId :: Update x EntityId
+useSelfId = use $ context.selfId
+
+equippedBackpack
+    :: HasEquipment x Equipment
+    => Update x (Maybe EntityId)
+equippedBackpack = do
+    Equipment.lookupSlot EquipmentSlot_Backpack <$> use (self.equipment)
+
+
+{-
+    -- if there is no container equiped find one
+    -- if found equip it and drop the rest
+    -- (newSelf, newActions) <- pureAddItems <$> use context <*> use self
+    -- self .= newSelf
+    -- actions <>= fromList newActions
+    -- return ()
+    case mb of
+        Just eb -> return (Just eb, es)
+        Nothing -> do
+            let (cs, os) = splitItemKind ItemKind_Container es
+            case map (view entityId) cs of
+                []     -> return (Nothing, [])
+                (a:as) -> do
+                    mapM_ dropItemAction as
+                    return (Just a, os)
+-}
+
+splitItemKind :: ItemKind -> [EntityWithId] -> ([EntityWithId], [EntityWithId])
+splitItemKind k = List.partition properKind
+    where
+    properKind x = x^.entity.oracle.itemKind == Just k
 
 equipItems
     :: HasEquipment x Equipment
-    => [EntityWithId] -> x -> (x, [EntityWithId])
-equipItems eis p = go p (emptySlots p) [] eis
+    => [EntityWithId] -> Update x [EntityWithId]
+equipItems eis = do
+    p <- use self
+    let (newSelf, os) = go p (emptySlots p) [] eis
+    self .= newSelf
+    return os
     where
     go x Empty bs    es  = (x, bs <> es)
     go x  _    bs    []  = (x, bs)
@@ -197,8 +230,39 @@ getItemsToAdd
 getItemsToAdd ctx = mapMaybe (f <=< g) . view processOnUpdate
     where
     f i = EntityWithId i <$> lookupEntityById i (ctx^.entities)
-    g (EntityAction_AddToInventory i) = Just i
+    g (EntityAction_AddItem        i) = Just i
     g _                               = Nothing
+
+--------------------------------------------------------------------------------
+
+dropItem
+    :: HasEquipment       x Equipment
+    => HasLocation        x Location
+    => EntityId -> Update x ()
+dropItem i = do
+    eq <- use $ self.equipment
+    when (Equipment.hasId i eq) $ do
+        self.equipment %= Equipment.deleteId i
+    dropItemAction i
+
+--------------------------------------------------------------------------------
+
+addAction :: EntityId -> EntityAction -> Update x ()
+addAction i x = actions %= (:>DirectedEntityAction i x)
+
+dropItemAction
+    :: HasLocation x Location
+    => EntityId -> Update x ()
+dropItemAction eid = do
+    loc <- use $ self.location
+    fct <- use $ context.frameCount
+    addAction eid $ makeDropItem fct loc eid
+
+makeDropItem :: Word32 -> Location -> EntityId -> EntityAction
+makeDropItem rnd loc eid = EntityAction_SelfDroppedAt dloc
+    where
+    rgid = fromIntegral $ unEntityId eid
+    dloc = over _Wrapped (\v -> v + genDropOffset [rnd + rgid]) loc
 
 --------------------------------------------------------------------------------
 -- Render Actions

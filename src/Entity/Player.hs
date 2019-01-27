@@ -15,19 +15,19 @@ import qualified Data.Colour.Names as Color
 --------------------------------------------------------------------------------
 
 actOn :: Player -> EntityAction -> Player
-actOn p a = case a of
-    EntityAction_SetMoveVector   v -> setMoveVector v p
-    EntityAction_ToggleDebug     f -> toggleDebugFlag f p
-    EntityAction_AddToInventory  _ -> handleOnUpdate a p
-    EntityAction_DropAllItems      -> handleOnUpdate a p
-    EntityAction_DropItem        _ -> handleOnUpdate a p
-    _ -> p
+actOn x a = case a of
+    EntityAction_SetMoveVector   v -> setMoveVector   v x
+    EntityAction_ToggleDebug     f -> toggleDebugFlag f x
+    EntityAction_DropAllItems      -> handleOnUpdate  a x
+    EntityAction_AddItem         _ -> handleOnUpdate  a x
+    EntityAction_DropItem        _ -> handleOnUpdate  a x
+    _ -> x
 
 update :: Player -> EntityContext -> (Maybe Player, [DirectedEntityAction])
-update p ctx = runUpdate p ctx $ do
+update x ctx = runUpdate x ctx $ do
     integrateLocation
-    anyMatch _EntityAction_AddToInventory addItems
-    anyMatch _EntityAction_DropAllItems   dropAllItems
+    anyMatch _EntityAction_AddItem  addItems
+    anyMatch _EntityAction_DropAllItems dropAllItems
     mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
 

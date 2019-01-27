@@ -12,6 +12,7 @@ data ItemKind
    = ItemKind_Container
    | ItemKind_SmallItem
    | ItemKind_BigItem
+   deriving (Eq)
 instance Default ItemKind where def = ItemKind_SmallItem
 
 data Appearance

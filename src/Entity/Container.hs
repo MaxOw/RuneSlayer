@@ -28,7 +28,13 @@ actOn x a = case a of
 update :: Container -> EntityContext -> (Maybe Container, [DirectedEntityAction])
 update x ctx = runUpdate x ctx $ do
     anyMatch _EntityAction_AddItem containerAddItems
+    mapM_ processAction =<< use (self.processOnUpdate)
     itemLikeUpdate
+
+processAction :: EntityAction -> Update Container ()
+processAction = \case
+    EntityAction_DropItem i -> containerDropItem i
+    _ -> return ()
 
 render :: Container -> RenderAction
 render x = ifJustLocation x $ renderShape shape

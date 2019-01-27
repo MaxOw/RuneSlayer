@@ -1,23 +1,14 @@
 module GUI.GameMenu where
 
 import Delude
--- import qualified Data.Map as PrefixMap
--- import qualified Data.Vector as Vector
--- import Data.Vector (Vector)
--- import qualified Data.Text as Text
 
--- import qualified Engine
 import Engine
 import Engine.Layout.Types
 
 import Types
 import Types.Entity
--- import Types.Entity.Common (EntityId)
 import Types.InputState
 import InputState (isPanelVisible)
--- import GameState (entityIdToWithId)
--- import EntityIndex (lookupEntityById)
-import Focus
 
 import GUI.Common
 import GUI.Inventory
@@ -27,7 +18,7 @@ import qualified GUI.Style as Style
 
 gameMenuLayout :: St -> Entity -> Layout
 gameMenuLayout st e = overlayLayouts
-    [ statusPanesLayout st e
+    [ statusPanesLayout st
     , overlayMenuLayout ]
     where
     overlayMenuLayout = case st^.inputState.mode of
@@ -37,12 +28,10 @@ gameMenuLayout st e = overlayLayouts
 
 --------------------------------------------------------------------------------
 
-statusPanesLayout :: St -> Entity -> Layout
-statusPanesLayout st _e = do
-    let es = focusItemsInRange st
-    if isPanelVisible GroundPreviewPanel st
-    then pickupBoxPanelLayout Nothing $ map ("",) es
-    else layoutEmpty
+statusPanesLayout :: St -> Layout
+statusPanesLayout st
+    | isPanelVisible GroundPreviewPanel st = groundPreviewPanelLayout st
+    | otherwise = layoutEmpty
 
 --------------------------------------------------------------------------------
 

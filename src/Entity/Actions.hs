@@ -9,8 +9,9 @@ module Entity.Actions
     , addItems
     , dropAllItems
     , purePickUpInformOwner, pickUpInformOwner
-    , dropItem
+    , dropItem, dropItemAction
     , containerAddItems
+    , containerDropItem
 
     -- Render Actions
     , maybeLocate
@@ -139,13 +140,17 @@ containerAddItems = do
 
 containerDropItem
     :: HasLocation x (Maybe Location)
+    => HasContent  x [EntityId]
     => HasOwner    x (Maybe EntityId)
-    => EntityWithId -> Update x ()
+    => HasEntityId i EntityId
+    => i -> Update x ()
 containerDropItem e = use (self.location) >>= \case
-    Nothing -> use (self.owner) >>= \mo -> whenJust mo $ \o ->
-        addAction o $ EntityAction_DropItem eid
-    Just lc -> use (context.frameCount) >>= \fct ->
+    Nothing -> use (self.owner) >>= \mo -> whenJust mo $ \o -> do
+        addAction o $ EntityAction_OwnerDropItem eid
+        self.content %= List.delete eid
+    Just lc -> use (context.frameCount) >>= \fct -> do
         addAction eid $ makeDropItem fct lc eid
+        self.content %= List.delete eid
     where
     eid = e^.entityId
 
@@ -241,9 +246,12 @@ dropItem
     => EntityId -> Update x ()
 dropItem i = do
     eq <- use $ self.equipment
-    when (Equipment.hasId i eq) $ do
+    if (Equipment.hasId i eq)
+    then do
         self.equipment %= Equipment.deleteId i
-    dropItemAction i
+        dropItemAction i
+    else whenJustM equippedBackpack $ \b -> do
+        addAction b $ EntityAction_DropItem i
 
 --------------------------------------------------------------------------------
 

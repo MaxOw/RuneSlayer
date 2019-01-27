@@ -24,8 +24,10 @@ data EntityAction
    | EntityAction_SelfDroppedAt Location
    -- tell entity to drop all items
    | EntityAction_DropAllItems
-   -- tell entity to drop selected item
+   -- tell entity to drop selected [EntityId]
    | EntityAction_DropItem EntityId
+   -- tell entity to that it's child container wants to drop selected [EntityId]
+   | EntityAction_OwnerDropItem EntityId
    deriving (Show)
 makePrisms ''EntityAction
 

@@ -16,6 +16,8 @@ newtype EntityId = EntityId { unEntityId :: Int }
     deriving (Eq, Ord)
 deriving instance Hashable EntityId
 
+instance HasEntityId EntityId EntityId where entityId = id
+
 instance Show EntityId where
     show (EntityId x) = "EID:" <> show x
 

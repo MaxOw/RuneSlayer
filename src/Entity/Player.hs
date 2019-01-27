@@ -21,6 +21,7 @@ actOn x a = case a of
     EntityAction_DropAllItems      -> handleOnUpdate  a x
     EntityAction_AddItem         _ -> handleOnUpdate  a x
     EntityAction_DropItem        _ -> handleOnUpdate  a x
+    EntityAction_OwnerDropItem   _ -> handleOnUpdate  a x
     _ -> x
 
 update :: Player -> EntityContext -> (Maybe Player, [DirectedEntityAction])
@@ -34,6 +35,7 @@ update x ctx = runUpdate x ctx $ do
 processAction :: EntityAction -> Update Player ()
 processAction = \case
     EntityAction_DropItem i -> dropItem i
+    EntityAction_OwnerDropItem i -> dropItemAction i
     _ -> return ()
 
 --------------------------------------------------------------------------------

@@ -143,7 +143,8 @@ handleSelectKind s selseq = do
     where
     smap = s^.selectMap
     selectLookup f v
-        | Vector.length vs == 1 = whenJust (Vector.indexM vs 0) f
+        | Vector.length vs == 1 = whenJust (Vector.indexM vs 0) $ \a -> do
+            f a >> endSelect
         | otherwise = case PrefixMap.lookup (toList selseq) smap of
             Nothing -> return ()
             Just i -> case Vector.indexM vs i of

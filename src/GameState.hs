@@ -7,6 +7,10 @@ module GameState
     , addEntityAndFocus
     , addEntity
     , entityIdToWithId
+
+    , toggleDebug
+    , pickupItem, pickupAllItems
+    , dropItem, dropAllItems
     ) where
 
 import Delude
@@ -18,6 +22,7 @@ import Types.Entity.Common (EntityId)
 import Types.St
 import Types.GameState
 import Types.EntityAction
+import Focus
 
 import EntityIndex
 
@@ -59,4 +64,23 @@ entityIdToWithId :: EntityId -> Game (Maybe EntityWithId)
 entityIdToWithId eid = zoomGameState $ do
     es <- use entities
     return $ EntityWithId eid <$> lookupEntityById eid es
+
+--------------------------------------------------------------------------------
+
+toggleDebug :: DebugFlag -> Game ()
+toggleDebug = actOnFocusedEntity . EntityAction_ToggleDebug
+
+pickupItem :: EntityId -> Game ()
+pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfAddedBy
+
+dropItem :: EntityId -> Game ()
+dropItem = actOnFocusedEntity . EntityAction_DropItem
+
+pickupAllItems :: Game ()
+pickupAllItems = withFocusId $ \fi -> do
+    es <- fmap (view entityId) <$> liftGame focusItemsInRange
+    mapM_ (flip actOnEntity $ EntityAction_SelfAddedBy fi) es
+
+dropAllItems :: Game ()
+dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
 

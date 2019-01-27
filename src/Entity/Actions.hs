@@ -112,9 +112,9 @@ addItems
 addItems = do
     os <- equipItems =<< getItemsToAdd <$> use context <*> use self
     let (sit, oit) = splitItemKind ItemKind_SmallItem os
-    whenJustM equippedBackpack $ \ct -> do
-        -- sendItemsToContainer ct sit
-        mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
+    equippedBackpack >>= \case
+        Just ct -> mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
+        Nothing -> mapM_ (dropItemAction . view entityId) sit
     mapM_ (dropItemAction . view entityId) oit
 
 {-
@@ -154,9 +154,9 @@ fitIntoContainer
     => HasContentVolume x Volume
     => HasContainerType x ContainerType
     => [EntityWithId] -> Update x [EntityWithId]
-fitIntoContainer es = do
-    let (smallItems, otherItems) = splitItemKind ItemKind_SmallItem es
-    overflow <- go $ trace ("Here" :: Text) smallItems
+fitIntoContainer ees = do
+    let (smallItems, otherItems) = splitItemKind ItemKind_SmallItem ees
+    overflow <- go smallItems
     return $ otherItems <> overflow
     where
     go [] = return []

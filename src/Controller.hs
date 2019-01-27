@@ -4,17 +4,11 @@ module Controller
     ) where
 
 import Delude
-import Data.Vector (Vector)
-import qualified Data.Vector as Vector
-import qualified Data.Map as PrefixMap
-import qualified Data.Map as Map
 import qualified Engine
 import Engine (userState)
 import Engine.Events.Types hiding (Event)
 
 import Types (Game, Event)
-import Types.Entity
-import Types.Entity.Common (EntityId)
 import Types.St
 import Types.MenuState
 import InputState
@@ -54,27 +48,10 @@ handleKeyPressed kp = do
         Nothing -> handleOtherModes kp
 
 handleSelectMode :: SelectState -> Keypress -> Game ()
-handleSelectMode s kp = do
-    case keyToChar $ keypressKey kp of
-        Nothing -> case keypressKey kp of
-            -- TODO: This shouldn't be hardcoded...
-            Key'Backspace -> backspaceSelect
-            _             -> endSelect
-        Just ch -> do
-            let smap = s^.selectMap
-            selseq <- appendSelect ch
-            let selectHandler f v = selectLookup f selseq smap (view values v)
-            case s^.selectKind of
-                SelectPickup v -> selectHandler pickupItem v
-                SelectDrop   v -> selectHandler   dropItem v
-            unless (isPartialMatch smap selseq) endSelect
-
-selectLookup :: (a -> Game ()) -> Seq Char -> SelectMap -> Vector a -> Game ()
-selectLookup f sq m v = case PrefixMap.lookup (toList sq) m of
-    Nothing -> return ()
-    Just i -> case Vector.indexM v i of
-        Nothing -> return ()
-        Just a  -> f a
+handleSelectMode s kp = case keypressKey kp of
+    k | Just ch <- keyToChar k -> handleSelectKind s =<< appendSelect ch
+    Key'Backspace -> backspaceSelect -- TODO: This shouldn't be hardcoded...
+    _             -> endSelect
 
 handleOtherModes :: Keypress -> Game ()
 handleOtherModes kp = do
@@ -125,57 +102,13 @@ defaultExit = \case
 
 --------------------------------------------------------------------------------
 
-toggleDebug :: DebugFlag -> Game ()
-toggleDebug = actOnFocusedEntity . EntityAction_ToggleDebug
-
-pickupItem :: EntityId -> Game ()
-pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfAddedBy
-
-pickupAllItems :: Game ()
-pickupAllItems = withFocusId $ \fi -> do
-    es <- fmap (view entityId) <$> liftGame focusItemsInRange
-    mapM_ (flip actOnEntity $ EntityAction_SelfAddedBy fi) es
-
-dropAllItems :: Game ()
-dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
-
-dropItem :: EntityId -> Game ()
-dropItem = actOnFocusedEntity . EntityAction_DropItem
-
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
     es <- fmap (view entityId) <$> liftGame focusItemsInRange
-    case es of
-        []   -> return ()
-        e:[] -> pickupItem e
-        _    -> do
-            -- setMode $ StatusMode Inventory
-            let (sv, sm)  = makeSelectMap es
-            print sm
-            startSelect (SelectPickup sv) sm
+    startSelect SelectPickup es
 
 selectItemToDrop :: Game ()
 selectItemToDrop = do
     es <- fmap (view entityId) <$> liftGame focusItemsInInventory
-    case es of
-        []   -> return ()
-        e:[] -> dropItem e
-        _    -> do
-            -- setMode $ StatusMode Inventory
-            let (sv, sm)  = makeSelectMap es
-            print sm
-            startSelect (SelectDrop sv) sm
+    startSelect SelectDrop es
 
-makeSelectMap :: Ord a => [a] -> (SelectValues a, SelectMap)
-makeSelectMap es = (SelectValues (Vector.fromList es) revMap, selMap)
-    where
-    revMap = Map.fromList $ zip es ps
-    selMap = PrefixMap.fromList $ zip ps $ map fst $ zip [0..] es
-    ps = allSelectors prefixDepth
-    prefixDepth :: Int
-    prefixDepth = ceiling @Float
-        $ logBase (genericLength defaultSelectors) (genericLength es)
-
-allSelectors :: Int -> [String]
-allSelectors x = if x <= 0 then [] else go x
-    where go i = if i <= 0 then [[]] else (:) <$> defaultSelectors <*> go (i-1)

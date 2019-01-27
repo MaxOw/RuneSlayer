@@ -9,6 +9,7 @@ module InputState
     , matchKeymap
     , appendHist
     , startSelect, appendSelect, backspaceSelect, endSelect
+    , handleSelectKind
     , inputActionEscape
     , toggleViewPanel, isPanelVisible
 
@@ -16,6 +17,7 @@ module InputState
     ) where
 
 import Delude
+import qualified Data.Vector as Vector
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
@@ -24,6 +26,7 @@ import Engine (userState)
 import Types (Game)
 import Types.St (St, inputState)
 import Types.InputState
+import GameState
 
 --------------------------------------------------------------------------------
 
@@ -104,14 +107,50 @@ clearHist = userState.inputState.hist .= empty
 
 --------------------------------------------------------------------------------
 
-startSelect :: SelectKind -> SelectMap -> Game ()
-startSelect k m = zoomInputState $ selectState .= Just ss
+startSelect :: Ord a => (SelectValues a -> SelectKind) -> [a] -> Game ()
+startSelect _ [] = return ()
+startSelect f vs = do
+    zoomInputState $ selectState .= Just ss
+    handleSelectKind ss Empty
     where
+    (k, m) = makeSelectMap vs
     ss = SelectState
-        { selectState_selectKind    = k
+        { selectState_selectKind    = f k
         , selectState_selectMap     = m
         , selectState_currentPrefix = empty
         }
+
+    makeSelectMap es = (SelectValues (Vector.fromList es) revMap, selMap)
+        where
+        revMap = Map.fromList $ zip es ps
+        selMap = PrefixMap.fromList $ zip ps $ map fst $ zip [0..] es
+        ps = allSelectors prefixDepth
+        prefixDepth = ceiling @Float
+            $ logBase (genericLength defaultSelectors) (genericLength es)
+
+        allSelectors :: Int -> [String]
+        allSelectors x = if x <= 0 then [] else go x
+            where
+            go i = if i <= 0 then [[]]
+                else (:) <$> defaultSelectors <*> go (i-1)
+
+handleSelectKind :: SelectState -> Seq Char -> Game ()
+handleSelectKind s selseq = do
+    case s^.selectKind of
+        SelectPickup v -> selectLookup pickupItem v
+        SelectDrop   v -> selectLookup   dropItem v
+    unless (isPartialMatch smap selseq) endSelect
+    where
+    smap = s^.selectMap
+    selectLookup f v
+        | Vector.length vs == 1 = whenJust (Vector.indexM vs 0) f
+        | otherwise = case PrefixMap.lookup (toList selseq) smap of
+            Nothing -> return ()
+            Just i -> case Vector.indexM vs i of
+                Nothing -> return ()
+                Just a  -> f a
+        where
+        vs = v^.values
 
 appendSelect :: Char -> Game (Seq Char)
 appendSelect ch = zoomInputState $ selectState._Just.currentPrefix <%= (|> ch)
@@ -147,4 +186,6 @@ toggleViewPanel pname = zoomInputState $ visiblePanels %= flipView
 
 isPanelVisible :: PanelName -> St -> Bool
 isPanelVisible pname = Set.member pname . view (inputState.visiblePanels)
+
+--------------------------------------------------------------------------------
 

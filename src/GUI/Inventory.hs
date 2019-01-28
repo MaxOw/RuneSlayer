@@ -26,10 +26,11 @@ import qualified Equipment
 --------------------------------------------------------------------------------
 
 data SelectFieldEntry = SelectFieldEntry
-   { selectFieldEntry_prefix  :: Maybe String
-   , selectFieldEntry_label   :: Maybe Text
-   , selectFieldEntry_hint    :: Maybe String
-   , selectFieldEntry_content :: Maybe EntityWithId
+   { selectFieldEntry_prefix    :: Maybe String
+   , selectFieldEntry_label     :: Maybe Text
+   , selectFieldEntry_hint      :: Maybe String
+   , selectFieldEntry_isFocused :: Bool
+   , selectFieldEntry_content   :: Maybe EntityWithId
    } deriving (Generic)
 makeFieldsCustom ''SelectFieldEntry
 instance Default SelectFieldEntry
@@ -38,32 +39,54 @@ instance Default SelectFieldEntry
 
 inventoryLayout :: St -> Entity -> Layout
 inventoryLayout st e = menuBox opts $ simpleLineupH
-    [ equipmentLayout st e, containersLayout st ] --, descriptionsLayout ]
+    [ inventoryLeftLayout st e, containersLayout st ]
     where
     opts = def
          & title .~ "Inventory"
          & size .~ Size (0.8 @@ wpct) (0.8 @@ wpct)
 
-withPadding :: Layout -> Layout
-withPadding = simpleBox $ def
-    & padding.each .~ Style.basePadding
-    & size.width    .~ (1 @@ fill)
-    & size.height   .~ (1 @@ fill)
+inventoryLeftLayout :: St -> Entity -> Layout
+inventoryLeftLayout st e = simpleBox def $ simpleLineupV
+    [ equipmentLayout st e
+    , selectedItemDescriptionLayout st
+    ]
 
 equipmentLayout :: St -> Entity -> Layout
 equipmentLayout st e =
     withPadding $ simpleLineupV $ map (equipEntryLayout st) $ equipmentList st e
 
+selectedItemDescriptionLayout :: St -> Layout
+selectedItemDescriptionLayout st = case sit of
+    Nothing -> layoutEmpty
+    Just e  -> itemDescriptionLayout st e
+    where
+    sit = lookupEntity st =<< st^.inputState.inventoryState.focusedItem
+
+itemDescriptionLayout :: HasEntity e Entity => St -> e -> Layout
+itemDescriptionLayout st (view entity -> e)
+    = simpleBox d $ withTitle "Selected item description:"
+    $ withPadding $ simpleText $ showEntityName e
+    where
+    d = def
+        & border.top.width .~ Style.baseBorderWidth
+        & border.top.color .~ Style.baseBorderColor
+
 equipEntryLayout :: St -> (EquipmentSlot, Maybe EntityWithId) -> Layout
 equipEntryLayout st (s, me) = selectFieldEntryLayout $ def
-    & label   .~ Just lb
-    & prefix  .~ mpfx
-    & hint    .~ mh
-    & content .~ me
+    & label     .~ Just lb
+    & prefix    .~ mpfx
+    & hint      .~ mh
+    & isFocused .~ fc
+    & content   .~ me
     where
     lb = Text.drop (length ("EquipmentList_" :: String)) $ show s
     mpfx = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
     mh = hintForEntityId st . view entityId =<< me
+    fc = nothingFalse me $ isItemFocused st
+
+isItemFocused :: HasEntityId e EntityId => St -> e -> Bool
+isItemFocused st e = nothingFalse mfi (e^.entityId ==)
+    where mfi = st^.inputState.inventoryState.focusedItem
 
 hintForEntityId :: HasEntityId e EntityId => St -> e -> Maybe String
 hintForEntityId st e = case st^.inputState.selectState of
@@ -71,6 +94,7 @@ hintForEntityId st e = case st^.inputState.selectState of
     Just ss -> case ss^.selectKind of
         SelectPickup v -> Map.lookup (e^.entityId) (v^.hintMap)
         SelectDrop   v -> Map.lookup (e^.entityId) (v^.hintMap)
+        SelectFocus  v -> Map.lookup (e^.entityId) (v^.hintMap)
 
 equipmentList :: St -> Entity -> [(EquipmentSlot, Maybe EntityWithId)]
 equipmentList st e = zip sls $ map (lookupEntity st <=< lookupSlot) sls
@@ -82,16 +106,10 @@ equipmentList st e = zip sls $ map (lookupEntity st <=< lookupSlot) sls
     lookupSlot s = Equipment.lookupSlot s =<< meq
 
 containersLayout :: St -> Layout
-containersLayout st = simpleBox d $ simpleLineupV
+containersLayout st = simpleBox def $ simpleLineupV
     [ backpackContainerLayout st
     , itemsOnGroundLayout st
     ]
-    where
-    d = def
-        & size.width    .~ (1 @@ fill)
-        & size.height   .~ (1 @@ fill)
-        -- & border.left.width .~ 1
-        -- & border.left.color .~ Style.baseBorderColor
 
 showEntityName :: Entity -> Text
 showEntityName e = fromMaybe "???" (e^.oracle.name)
@@ -116,9 +134,10 @@ selectEntitiesLayout st = simpleLineupV . map f
     where
     mpfx = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
     f e = selectFieldEntryLayout $ def
-        & prefix  .~ mpfx
-        & hint    .~ hintForEntityId st e
-        & content .~ Just e
+        & prefix    .~ mpfx
+        & hint      .~ hintForEntityId st e
+        & isFocused .~ isItemFocused st e
+        & content   .~ Just e
 
 --------------------------------------------------------------------------------
 
@@ -160,6 +179,7 @@ selectFieldEntryLayout f = simpleBox boxDesc $ simpleLineupH
         textRest = fromMaybe "" $ Text.stripPrefix textPfx textHint
 
     entityColor
+        | f^.isFocused           = Style.textFocusColor
         | isNothing (f^.content) = Style.textSecondaryColor
         | otherwise = case f^.prefix of
             Nothing -> Style.textPrimaryColor

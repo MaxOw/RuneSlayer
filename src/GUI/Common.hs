@@ -10,13 +10,6 @@ import GUI.Style
 simpleBox :: BoxDesc -> Layout -> Layout
 simpleBox d = layoutBox d . (:[])
 
-fillBox :: Layout -> Layout
-fillBox = layoutBox d . (:[])
-    where
-    d = def
-        & size.width    .~ (1 @@ fill)
-        & size.height   .~ (1 @@ fill)
-
 menuBox :: MenuBoxOpts -> Layout -> Layout
 menuBox opts cont = layoutBox desc [ simpleLineupV ins ]
     where
@@ -27,31 +20,28 @@ menuBox opts cont = layoutBox desc [ simpleLineupV ins ]
         & border.each.color .~ baseBorderColor
         & color             .~ baseBackgroundColor
 
-    ins = [ tit, contBox ]
+    ins = [ tit, cont ]
 
     tit = layoutBox boxDesc [ simpleText $ opts^.title ]
     boxDesc = def
-        & size.width  .~ (1 @@ fill)
         & size.height .~ (34 @@ px)
         & border.bottom.width .~ 1
         & border.bottom.color .~ baseBorderColor
         & padding.each        .~ basePadding
 
-    contBox = layoutBox contDesc [ cont ]
-    contDesc = def
-        & size.width    .~ (1 @@ fill)
-        & size.height   .~ (1 @@ fill)
-
 withTitle :: Text -> Layout -> Layout
-withTitle t lay = simpleLineupV [ tit, fillBox lay ]
+withTitle t lay = simpleLineupV [ tit, lay ]
     where
     tit = layoutBox boxDesc [ simpleText t ]
     boxDesc = def
-        & size.width  .~ (1 @@ fill)
         & size.height .~ (34 @@ px)
         & border.bottom.width .~ 1
         & border.bottom.color .~ baseBorderColor
         & padding.each        .~ basePadding
+
+withPadding :: Layout -> Layout
+withPadding = simpleBox $ def
+    & padding.each .~ basePadding
 
 simpleLineupV :: [Layout] -> Layout
 simpleLineupV = layoutLineup (set direction Vertical def)
@@ -73,13 +63,8 @@ colorTextList cs = layoutBox bd [layoutText td $ map f cs]
     td = def & boxAlign .~ TopLeft
     bd = def
         & boxAlign      .~ TopLeft
-        & size.width    .~ (1 @@ fill)
         & size.height   .~ (30 @@ px)
 
 overlayLayouts :: [Layout] -> Layout
-overlayLayouts = layoutBox d
-    where
-    d = def
-        & size.width    .~ (1 @@ fill)
-        & size.height   .~ (1 @@ fill)
+overlayLayouts = layoutBox def
 

@@ -9,6 +9,7 @@ module InputState
     , matchKeymap
     , appendHist
     , startSelect, appendSelect, backspaceSelect, endSelect
+    , unfocusItem
     , handleSelectKind
     , inputActionEscape
     , toggleViewPanel, isPanelVisible
@@ -25,6 +26,7 @@ import qualified Data.Map as PrefixMap
 import Engine (userState)
 import Types (Game)
 import Types.St (St, inputState)
+import Types.Entity.Common (EntityId)
 import Types.InputState
 import GameState
 
@@ -137,8 +139,9 @@ startSelect f vs = do
 handleSelectKind :: SelectState -> Seq Char -> Game ()
 handleSelectKind s selseq = do
     case s^.selectKind of
-        SelectPickup v -> selectLookup pickupItem v
-        SelectDrop   v -> selectLookup   dropItem v
+        SelectPickup v -> selectLookup selectPickup v
+        SelectDrop   v -> selectLookup selectDrop   v
+        SelectFocus  v -> selectLookup selectFocus  v
     unless (isPartialMatch smap selseq) endSelect
     where
     smap = s^.selectMap
@@ -152,6 +155,18 @@ handleSelectKind s selseq = do
                 Just a  -> f a
         where
         vs = v^.values
+
+selectPickup :: EntityId -> Game ()
+selectPickup eid = pickupItem eid >> selectFocus eid
+
+selectDrop :: EntityId -> Game ()
+selectDrop eid = dropItem eid >> selectFocus eid
+
+selectFocus :: EntityId -> Game ()
+selectFocus = zoomInputState . assign (inventoryState.focusedItem) . Just
+
+unfocusItem :: Game ()
+unfocusItem = zoomInputState $ inventoryState.focusedItem .= Nothing
 
 appendSelect :: Char -> Game (Seq Char)
 appendSelect ch = zoomInputState $ selectState._Just.currentPrefix <%= (|> ch)

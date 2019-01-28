@@ -7,6 +7,9 @@ module Delude
     , unwrap
     , isPrism
     , makeFieldsCustom
+
+    , nothingFalse
+    , nothingFalse2
     ) where
 
 import Relude         as All
@@ -43,4 +46,15 @@ instance Default Text where def = ""
 instance Default Bool where def = False
 instance Default (Bimap a b) where def = Bimap.empty
 instance Default (Vector.Vector a) where def = Vector.empty
+
+--------------------------------------------------------------------------------
+
+nothingFalse :: Maybe a -> (a -> Bool) -> Bool
+nothingFalse Nothing  _ = False
+nothingFalse (Just a) f = f a
+
+nothingFalse2 :: Maybe a -> Maybe b -> (a -> b -> Bool) -> Bool
+nothingFalse2 Nothing        _  _ = False
+nothingFalse2       _  Nothing  _ = False
+nothingFalse2 (Just a) (Just b) f = f a b
 

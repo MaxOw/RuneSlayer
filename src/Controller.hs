@@ -65,6 +65,7 @@ handleOtherModes kp = do
     mAction <- matchKeymap keyseq
     print $ mAction
     whenJust mAction $ \act -> do
+        handleActionFinalizers act
         handleActivation act
         registerDeactivation kp act
 
@@ -85,6 +86,7 @@ handleActivation = \case
     DropAllItems       -> dropAllItems
     SelectItemToPickUp -> selectItemToPickUp
     SelectItemToDrop   -> selectItemToDrop
+    SelectItemToFocus  -> selectItemToFocus
     InputAction_Escape -> inputActionEscape
     FastQuit           -> Engine.closeWindow
 
@@ -92,6 +94,20 @@ handleDeactivation :: InputAction -> Game ()
 handleDeactivation = \case
     SimpleMove d -> deactivateAction (ActiveMove d)
     _            -> return ()
+
+-- Some actions need to be finalized when certain actions are started
+-- We do that here:
+handleActionFinalizers :: InputAction -> Game ()
+handleActionFinalizers act = sequence_ $ map ($ act)
+    [ finalize_selectItemToFocus
+    ]
+
+finalize_selectItemToFocus :: InputAction -> Game ()
+finalize_selectItemToFocus = \case
+    SelectItemToPickUp -> return ()
+    SelectItemToDrop   -> return ()
+    SelectItemToFocus  -> return ()
+    _ -> unfocusItem
 
 --------------------------------------------------------------------------------
 
@@ -111,4 +127,10 @@ selectItemToDrop :: Game ()
 selectItemToDrop = do
     es <- fmap (view entityId) <$> liftGame focusItemsInInventory
     startSelect SelectDrop es
+
+selectItemToFocus :: Game ()
+selectItemToFocus = do
+    res <- fmap (view entityId) <$> liftGame focusItemsInRange
+    ies <- fmap (view entityId) <$> liftGame focusItemsInInventory
+    startSelect SelectFocus $ res <> ies
 

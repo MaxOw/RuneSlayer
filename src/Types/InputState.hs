@@ -33,6 +33,7 @@ instance Default (SelectValues a)
 data SelectKind
    = SelectPickup (SelectValues EntityId)
    | SelectDrop   (SelectValues EntityId)
+   | SelectFocus  (SelectValues EntityId)
    deriving (Show, Generic)
 
 data InputMode
@@ -78,6 +79,7 @@ data InputAction
    | DropAllItems
    | SelectItemToPickUp
    | SelectItemToDrop
+   | SelectItemToFocus
    | InputAction_Escape
    | FastQuit
    deriving (Show)
@@ -114,28 +116,36 @@ data SelectState = SelectState
    } deriving (Generic)
 makeFieldsCustom ''SelectState
 
+data InventoryState = InventoryState
+   { inventoryState_focusedItem :: Maybe EntityId
+   } deriving (Generic)
+makeFieldsCustom ''InventoryState
+instance Default InventoryState
+
 data InputState = InputState
-   { inputState_mode          :: InputMode
-   , inputState_hist          :: Seq Keypress
-   , inputState_active        :: Map ActiveAction Int
-   , inputState_commonKeymap  :: Keymap
-   , inputState_inputKeymap   :: InputKeymap
-   , inputState_deactivators  :: Map Keypress [InputAction]
-   , inputState_selectState   :: Maybe SelectState
-   , inputState_visiblePanels :: Set PanelName
+   { inputState_mode           :: InputMode
+   , inputState_hist           :: Seq Keypress
+   , inputState_active         :: Map ActiveAction Int
+   , inputState_commonKeymap   :: Keymap
+   , inputState_inputKeymap    :: InputKeymap
+   , inputState_deactivators   :: Map Keypress [InputAction]
+   , inputState_selectState    :: Maybe SelectState
+   , inputState_visiblePanels  :: Set PanelName
+   , inputState_inventoryState :: InventoryState
    } deriving (Generic)
 makeFieldsCustom ''InputState
 instance Default InputState where
     def = InputState
-     -- { inputState_mode          = def
-        { inputState_mode          = StatusMode StatusMenu_Inventory
-        , inputState_hist          = def
-        , inputState_active        = def
-        , inputState_commonKeymap  = defaultCommonKeymap
-        , inputState_inputKeymap   = defaultInputKeymap
-        , inputState_deactivators  = def
-        , inputState_selectState   = Nothing
-        , inputState_visiblePanels = def
+     -- { inputState_mode           = def
+        { inputState_mode           = StatusMode StatusMenu_Inventory
+        , inputState_hist           = def
+        , inputState_active         = def
+        , inputState_commonKeymap   = defaultCommonKeymap
+        , inputState_inputKeymap    = defaultInputKeymap
+        , inputState_deactivators   = def
+        , inputState_selectState    = Nothing
+        , inputState_visiblePanels  = def
+        , inputState_inventoryState = def
         }
 
 type InputStateM = Lazy.StateT InputState IO
@@ -258,6 +268,8 @@ defaultInputKeymap = buildInputKeymap
 
         , InputStr "pp" DropAllItems
         , InputStr "pi" SelectItemToDrop
+
+        , InputStr "f" SelectItemToFocus
         ]
     ]
 

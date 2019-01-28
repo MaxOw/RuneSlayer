@@ -49,6 +49,9 @@ textHintColor = Color.opaque $ Solarized.yellow
 textHintHighlightColor :: AlphaColor
 textHintHighlightColor = Color.opaque $ Solarized.red
 
+textFocusColor :: AlphaColor
+textFocusColor = Color.opaque $ Solarized.yellow
+
 baseBox :: BoxDesc
 baseBox = def
     & border.each.width .~ baseBorderWidth

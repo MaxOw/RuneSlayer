@@ -8,9 +8,6 @@ module EntityIndex
     , entitiesInRange
     , lookupEntityById
     , queryIndex
-
-    , nothingFalse
-    , nothingFalse2
     ) where
 
 import Delude
@@ -93,15 +90,4 @@ queryIndex f = filter (f . view (entity.oracle)) . allEntities
 
 allEntities :: EntityIndex -> [EntityWithId]
 allEntities = map (uncurry EntityWithId) . HashMap.toList . entityIndexEntities
-
---------------------------------------------------------------------------------
-
-nothingFalse :: Maybe a -> (a -> Bool) -> Bool
-nothingFalse Nothing  _ = False
-nothingFalse (Just a) f = f a
-
-nothingFalse2 :: Maybe a -> Maybe b -> (a -> b -> Bool) -> Bool
-nothingFalse2 Nothing        _  _ = False
-nothingFalse2       _  Nothing  _ = False
-nothingFalse2 (Just a) (Just b) f = f a b
 

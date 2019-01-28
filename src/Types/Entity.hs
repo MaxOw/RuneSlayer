@@ -39,7 +39,10 @@ data Entity = Entity
    , entitySave   :: EntitySum
    }
 
+instance HasEntity Entity Entity where entity = id
+
 makeFieldsCustom ''EntityContext
+
 
 oracle :: Getter Entity EntityOracle
 oracle = to entityOracle

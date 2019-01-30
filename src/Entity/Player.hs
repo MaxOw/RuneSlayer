@@ -40,8 +40,8 @@ processAction = \case
 
 --------------------------------------------------------------------------------
 
-render :: Player -> RenderAction
-render x = renderComposition
+render :: Player -> RenderContext -> RenderAction
+render x _ctx = renderComposition
     [ renderDebug
     , renderShape shape & scale 0.3
     ] & translate loc

@@ -14,11 +14,14 @@ module Entity.Item
 import Delude
 import qualified Data.Set as Set
 
+-- import Engine (HasTextureId(..))
 import Types.Equipment
 import Types.Entity.Item
 import Types.Entity.ItemType
 import Entity.Utils
 import Entity.Actions
+import ResourceManager (lookupResource)
+import qualified Resource
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
@@ -70,16 +73,22 @@ itemLikeUpdate = do
 itemLikeRender
     :: HasLocation x (Maybe Location)
     => HasItemType x ItemType
-    => x -> RenderAction
-itemLikeRender x = ifJustLocation x $ maybeLocate x $ case x^.itemType.appearance of
-    Appearance_SimpleCircle s c -> renderCircle s c
-    Appearance_SimpleSquare s c -> renderSquare s c
+    => x -> RenderContext -> RenderAction
+itemLikeRender x ctx = ifJustLocation x $ maybeLocate x $
+    case x^.itemType.appearance of
+        Appearance_SimpleCircle s c -> renderCircle s c
+        Appearance_SimpleSquare s c -> renderSquare s c
+        Appearance_Sprite       s r -> renderSprite s r
     where
     renderCircle = renderS SimpleCircle
     renderSquare = renderS SimpleSquare
     renderS t s c = scale s $ renderShape $ def
         & shapeType .~ t
         & color     .~ c
+
+    renderSprite s r = case lookupResource r $ ctx^.resources of
+        Nothing  -> renderCircle 1 (Color.opaque Color.red)
+        Just img -> scale s $ renderImg img
 
 itemLikeOracle
     :: HasLocation s (Maybe Location)
@@ -113,7 +122,7 @@ testItemType_helmet = def
     & name         .~ "Helmet"
     & volume       .~ volumeL 1.5
     & itemKind     .~ ItemKind_BigItem
-    & appearance   .~ Appearance_SimpleCircle 0.3 (Color.opaque Color.gray)
+    & appearance   .~ Appearance_Sprite 0.025 Resource.helmet
     & fittingSlots .~ Set.fromList [EquipmentSlot_Head]
 
 testItemType_healthPotion :: ItemType
@@ -121,6 +130,6 @@ testItemType_healthPotion = def
     & name         .~ "Health Potion"
     & volume       .~ volumeL 0.1
     & itemKind     .~ ItemKind_SmallItem
-    & appearance   .~ Appearance_SimpleCircle 0.1 (Color.opaque Color.red)
+    & appearance   .~ Appearance_Sprite 0.015 Resource.healthPotion
     & fittingSlots .~ Set.fromList []
 

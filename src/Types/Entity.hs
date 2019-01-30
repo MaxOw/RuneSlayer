@@ -3,7 +3,8 @@ module Types.Entity
     ( module All
     , Entity (..), EntityWithId (..)
     , EntityIndex (..), EntityContext (..)
-    , EntityParts (..), RenderAction (..)
+    , RenderContext (..), RenderAction (..)
+    , EntityParts (..)
 
     , oracle
     ) where
@@ -15,6 +16,7 @@ import Types.EntityOracle as All
 import Types.EntitySum    as All
 import Engine (RenderAction (..))
 
+import Types.ResourceManager (ResourceMap)
 import Types.Entity.Common (EntityId) -- , Location)
 
 --------------------------------------------------------------------------------
@@ -31,10 +33,14 @@ data EntityContext = EntityContext
    , entityContext_frameCount :: Word32
    }
 
+data RenderContext = RenderContext
+   { renderContext_resources :: ResourceMap
+   }
+
 data Entity = Entity
    { entityActOn  :: EntityAction -> Entity
    , entityUpdate :: EntityContext -> (Maybe Entity, [DirectedEntityAction])
-   , entityRender :: RenderAction
+   , entityRender :: RenderContext -> RenderAction
    , entityOracle :: EntityOracle
    , entitySave   :: EntitySum
    }
@@ -42,6 +48,7 @@ data Entity = Entity
 instance HasEntity Entity Entity where entity = id
 
 makeFieldsCustom ''EntityContext
+makeFieldsCustom ''RenderContext
 
 
 oracle :: Getter Entity EntityOracle
@@ -56,7 +63,7 @@ makeFieldsCustom ''EntityWithId
 data EntityParts p = EntityParts
    { makeActOn  :: p -> EntityAction -> p
    , makeUpdate :: p -> EntityContext -> (Maybe p, [DirectedEntityAction])
-   , makeRender :: p -> RenderAction
+   , makeRender :: p -> RenderContext -> RenderAction
    , makeOracle :: p -> EntityOracle
    , makeSave   :: p -> EntitySum
    }

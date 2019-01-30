@@ -14,8 +14,7 @@ import Types.Entity.ItemType
 import Entity.Utils
 import Entity.Actions
 import Entity.Item
-import qualified Data.Colour       as Color
-import qualified Data.Colour.Names as Color
+import qualified Resource
 
 --------------------------------------------------------------------------------
 
@@ -36,14 +35,8 @@ processAction = \case
     EntityAction_DropItem i -> containerDropItem i
     _ -> return ()
 
-render :: Container -> RenderAction
-render x = ifJustLocation x $ renderShape shape
-    & scale 0.2
-    & maybeLocate x
-    where
-    shape = def
-        & shapeType   .~ SimpleCircle
-        & color       .~ Color.opaque Color.green
+render :: Container -> RenderContext -> RenderAction
+render = itemLikeRender
 
 thisOracle :: Container -> EntityOracle
 thisOracle x = itemLikeOracle x
@@ -75,5 +68,5 @@ testContainerType_bag = def
     & itemType.fittingSlots   .~ Set.fromList [EquipmentSlot_Backpack]
     & maxVolume               .~ volumeL 15
     where
-    ap = Appearance_SimpleCircle 0.3 (Color.opaque Color.gray)
+    ap = Appearance_Sprite 0.025 Resource.bag
 

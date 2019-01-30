@@ -63,7 +63,7 @@ selectedItemDescriptionLayout st = case sit of
     sit = lookupEntity st =<< st^.inputState.inventoryState.focusedItem
 
 itemDescriptionLayout :: HasEntity e Entity => St -> e -> Layout
-itemDescriptionLayout st (view entity -> e)
+itemDescriptionLayout _st (view entity -> e)
     = simpleBox d $ withTitle "Selected item description:"
     $ withPadding $ simpleText $ showEntityName e
     where

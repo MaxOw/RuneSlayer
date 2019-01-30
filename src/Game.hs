@@ -3,7 +3,9 @@ module Game
     ) where
 
 import Delude
+import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
+import Engine (Img)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine)
 import Types.St
@@ -15,13 +17,27 @@ import Entity.Item
 import GameState
 import EntityLike
 
+import qualified Resource
+
 -- import GameState
 
 initSt :: Engine () St
 initSt = do
     st <- defaultSt
     loadFontFamily "Arial"
-    return $ over gameState setupTestGameState st
+    rs <- catMaybes <$> mapM loadResource
+        (ordNub $ map (view path) Resource.allSprites)
+    Engine.fullyUpdateAtlas
+    return $ st
+        & gameState %~ setupTestGameState
+        & resources .~ HashMap.fromList rs
+
+loadResource :: Text -> Engine us (Maybe (Text, Img))
+loadResource r = do
+    -- putStr $ "Loading resource: " <> r -- Resource.resource_path r
+    mi <- Engine.loadTextureToAtlas $ toString $ r -- Resource.resource_path r
+    -- putStrLn $ if isJust mi then " [Success]" else " [Failure]" :: Text
+    return $ (r,) <$> mi
 
 loadFontFamily :: FontName -> Engine us ()
 loadFontFamily fname = void $ Engine.loadFontFamily fname $ def

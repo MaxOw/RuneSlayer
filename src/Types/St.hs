@@ -11,16 +11,17 @@ module Types.St
     ) where
 
 import Delude
+import qualified Data.HashMap.Strict as HashMap
 -- import Random.Utils (pureRandomSeed)
 -- import qualified System.Random.MWC as MWC
 
 import Types.MenuState
 import Types.InputState
 import Types.GameState
+import Types.ResourceManager (ResourceMap)
 
-type Resources  = ()
 data St = St
-   { stResources  :: Resources
+   { stResources  :: ResourceMap
    , stMenuState  :: MenuState
    , stInputState :: InputState
    , stGameState  :: GameState
@@ -30,7 +31,7 @@ makeFields ''St
 
 defaultSt :: MonadIO m => m St
 defaultSt = return $ St
-    { stResources  = def
+    { stResources  = HashMap.empty
     , stInputState = def
     , stGameState  = def
     , stMenuState  = def

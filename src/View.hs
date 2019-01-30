@@ -62,7 +62,10 @@ renderEntities st = Engine.renderComposition rs
     viewRange = () -- TODO
     eix = st^.gameState.entities
     es = entitiesInRange viewRange eix
-    rs = map entityRender es
+    rs = map (flip entityRender ctx) es
+    ctx = RenderContext
+        { renderContext_resources = st^.resources
+        }
 
 --------------------------------------------------------------------------------
 

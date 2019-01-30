@@ -5,6 +5,7 @@ import Delude
 
 import Types.Equipment
 import Types.Entity.Common
+import Types.ResourceManager (Resource)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 
@@ -18,6 +19,7 @@ instance Default ItemKind where def = ItemKind_SmallItem
 data Appearance
    = Appearance_SimpleCircle Double AlphaColor
    | Appearance_SimpleSquare Double AlphaColor
+   | Appearance_Sprite       Double Resource
 instance Default Appearance where
     def = Appearance_SimpleCircle 1 $ Color.opaque Color.red
 

@@ -1,7 +1,9 @@
-module HasField where
+module HasField (module HasField) where
 
 import Control.Lens
 -- import Types.Entity.Common
+import Engine.Graphics as HasField (HasPart(..))
+
 
 class HasLocation        s t | s -> t where location        :: Lens' s t
 class HasVelocity        s t | s -> t where velocity        :: Lens' s t
@@ -27,4 +29,7 @@ class HasRandomSeed      s t | s -> t where randomSeed      :: Lens' s t
 class HasFrameCount      s t | s -> t where frameCount      :: Lens' s t
 class HasLabel           s t | s -> t where label           :: Lens' s t
 class HasContentVolume   s t | s -> t where contentVolume   :: Lens' s t
+class HasResources       s t | s -> t where resources       :: Lens' s t
+class HasPath            s t | s -> t where path            :: Lens' s t
+-- class HasPart            s t | s -> t where part            :: Lens' s t
 

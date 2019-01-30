@@ -18,8 +18,8 @@ actOn x _ = x
 update :: Wall -> EntityContext -> (Maybe Wall, [DirectedEntityAction])
 update x _ = (Just x, [])
 
-render :: Wall -> RenderAction
-render x = renderShape shape
+render :: Wall -> RenderContext -> RenderAction
+render x _ctx = renderShape shape
     & translate loc
     where
     Location loc = x^.location

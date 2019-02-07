@@ -12,7 +12,8 @@ let ghc = nixpkgs.haskell.packages.${compiler}.override {
         # concat-graphics       = loadLocal self "concat/graphics";
         # concat-examples       = loadLocal self "concat/examples";
 
-        halive          = loadDirec self "${~/Projects/Gridlock/halive}";
+        # halive          = loadDirec self "${~/Projects/Gridlock/halive}";
+        reload-utils    = loadDirec self "${./../reload-utils}";
         Carnot          = loadDirec self "${./../Carnot}";
       };
     };
@@ -26,7 +27,7 @@ let ghc = nixpkgs.haskell.packages.${compiler}.override {
       self.callPackage (cabal2nixResult (./deps + "/${name}")) {};
     loadDirec = self: name:
       self.callPackage (cabal2nixResult (name)) {};
-    tools = with ghc; [ cabal-install ghcid halive ];
+    tools = with ghc; [ cabal-install ghcid ];
     overrideCabal = pkg: nixpkgs.haskell.lib.overrideCabal pkg
       ({buildDepends ? [], ...}: {
         buildDepends = buildDepends ++ tools;

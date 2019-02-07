@@ -25,7 +25,7 @@ instance Default GameState where
         { gameState_entities   = emptyIndex
         , gameState_actions    = []
         , gameState_focusId    = Nothing
-        , gameState_gameScale  = 0.05
+        , gameState_gameScale  = 64
         , gameState_menuScale  = 1.0
         , gameState_frameCount = 0
         }

@@ -62,10 +62,8 @@ Executable RuneSlayer
                 , mwc-random
                 , vector
 
-                , halive
-
                 , linear
-                , Carnot == 0.1.5.2
+                , Carnot == 0.1.7.0
                 , gl
                 , colour
                 , diagrams-core
@@ -75,3 +73,5 @@ Executable RuneSlayer
                 , ixset
                 -- , ixset-typed
 
+
+                , reload-utils

@@ -281,7 +281,6 @@ maybeLocate
     => x -> (t -> t)
 maybeLocate x = fromMaybe id $ x^?location.traverse._Wrapped.to translate
 
-
 --------------------------------------------------------------------------------
 -- Utils
 

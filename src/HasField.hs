@@ -2,8 +2,7 @@ module HasField (module HasField) where
 
 import Control.Lens
 -- import Types.Entity.Common
-import Engine.Graphics as HasField (HasPart(..))
-
+import Engine.HasField as HasField
 
 class HasLocation        s t | s -> t where location        :: Lens' s t
 class HasVelocity        s t | s -> t where velocity        :: Lens' s t

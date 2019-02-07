@@ -9,6 +9,9 @@ import Entity.Utils
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
+import qualified Resource
+import Resource (Resource)
+import ResourceManager (lookupResource, ResourceMap)
 
 --------------------------------------------------------------------------------
 
@@ -19,17 +22,24 @@ update :: Wall -> EntityContext -> (Maybe Wall, [DirectedEntityAction])
 update x _ = (Just x, [])
 
 render :: Wall -> RenderContext -> RenderAction
-render x _ctx = renderShape shape
+-- render x ctx = renderSprite ctx (Resource.mkEnvPart 40 11)
+render x ctx = renderSprite ctx (Resource.mkEnvRect 36 10 2 2)
     & translate loc
     where
     Location loc = x^.location
-    shape = def
-        & shapeType   .~ SimpleSquare
-        & color       .~ Color.opaque Color.gray
 
 oracle :: Wall -> EntityOracle
 oracle x = def
    & location .~ Just (x^.location)
+
+renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
+renderSprite ctx r = case lookupResource r $ ctx^.resources of
+    Nothing  -> renderShape shape
+    Just img -> scale (1/32) $ renderImg img
+    where
+    shape = def
+        & shapeType   .~ SimpleSquare
+        & color       .~ Color.opaque Color.gray
 
 --------------------------------------------------------------------------------
 

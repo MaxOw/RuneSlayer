@@ -68,5 +68,5 @@ testContainerType_bag = def
     & itemType.fittingSlots   .~ Set.fromList [EquipmentSlot_Backpack]
     & maxVolume               .~ volumeL 15
     where
-    ap = Appearance_Sprite 0.025 Resource.bag
+    ap = Appearance_Sprite (1/32) Resource.bag
 

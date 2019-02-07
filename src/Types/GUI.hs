@@ -3,7 +3,6 @@ module Types.GUI where
 
 import Delude
 
-import Engine
 import Engine.Layout.Types
 
 --------------------------------------------------------------------------------

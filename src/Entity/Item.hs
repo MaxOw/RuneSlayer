@@ -33,6 +33,7 @@ itemLikeActOn
     => HasOwner           s (Maybe EntityId)
     => HasProcessOnUpdate s [EntityAction]
     => s -> EntityAction -> s
+
 itemLikeActOn x a = case a of
     EntityAction_SelfPassedTo  eid -> selfPassedTo eid
     EntityAction_SelfAddedBy   eid -> selfAddedBy eid
@@ -122,7 +123,7 @@ testItemType_helmet = def
     & name         .~ "Helmet"
     & volume       .~ volumeL 1.5
     & itemKind     .~ ItemKind_BigItem
-    & appearance   .~ Appearance_Sprite 0.025 Resource.helmet
+    & appearance   .~ Appearance_Sprite (1/32) Resource.helmet
     & fittingSlots .~ Set.fromList [EquipmentSlot_Head]
 
 testItemType_healthPotion :: ItemType
@@ -130,6 +131,6 @@ testItemType_healthPotion = def
     & name         .~ "Health Potion"
     & volume       .~ volumeL 0.1
     & itemKind     .~ ItemKind_SmallItem
-    & appearance   .~ Appearance_Sprite 0.015 Resource.healthPotion
+    & appearance   .~ Appearance_Sprite (1/64) Resource.healthPotion
     & fittingSlots .~ Set.fromList []
 

@@ -8,6 +8,7 @@ import qualified Engine
 import Engine (Img)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine)
+import Engine.Graphics.Scroller (newScroller, bufferSize)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
@@ -23,7 +24,8 @@ import qualified Resource
 
 initSt :: Engine () St
 initSt = do
-    st <- defaultSt
+    scro <- newScroller $ def & bufferSize .~ 2048
+    st <- defaultSt scro
     loadFontFamily "Arial"
     rs <- catMaybes <$> mapM loadResource
         (ordNub $ map (view path) Resource.allSprites)
@@ -73,3 +75,4 @@ setupTestGameState
 
     potionEntity = toEntity $ makeItem testItemType_healthPotion
         & location .~ (Just $ locM (-1) 0.2)
+

@@ -9,7 +9,7 @@ import Controller (handleEvent)
 import Model      (integrate)
 import View       (renderView)
 import Game       (initSt)
-import Halive.Utils (reacquire)
+import Reload.Utils (reacquire)
 
 import qualified Graphics.UI.GLFW as GLFW
 

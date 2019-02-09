@@ -30,5 +30,6 @@ class HasLabel           s t | s -> t where label           :: Lens' s t
 class HasContentVolume   s t | s -> t where contentVolume   :: Lens' s t
 class HasResources       s t | s -> t where resources       :: Lens' s t
 class HasPath            s t | s -> t where path            :: Lens' s t
+class HasLastId          s t | s -> t where lastId          :: Lens' s t
 -- class HasPart            s t | s -> t where part            :: Lens' s t
 

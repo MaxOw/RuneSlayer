@@ -8,12 +8,13 @@ module GameState
     , addEntity
     , entityIdToWithId
 
-    , toggleDebug
+    , toggleDebug, isDebugFlagOn
     , pickupItem, pickupAllItems
     , dropItem, dropAllItems
     ) where
 
 import Delude
+import qualified Data.Set as Set
 
 import Engine (userState)
 import Types (Game)
@@ -21,6 +22,7 @@ import Types.Entity (Entity, EntityWithId(..))
 import Types.Entity.Common (EntityId)
 import Types.St
 import Types.GameState
+import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Focus
 
@@ -68,7 +70,17 @@ entityIdToWithId eid = zoomGameState $ do
 --------------------------------------------------------------------------------
 
 toggleDebug :: DebugFlag -> Game ()
-toggleDebug = actOnFocusedEntity . EntityAction_ToggleDebug
+toggleDebug x = do
+    userState.debugFlags %= toggleSet x
+    case x of
+      DebugFlag_DrawPickupRange -> debugFocus EntityDebugFlag_DrawPickupRange
+      _ -> return ()
+    where
+    debugFocus = actOnFocusedEntity . EntityAction_ToggleDebug
+    -- toggleShowScroller =
+
+isDebugFlagOn :: DebugFlag -> Game Bool
+isDebugFlagOn x = uses (userState.debugFlags) (Set.member x)
 
 pickupItem :: EntityId -> Game ()
 pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfAddedBy

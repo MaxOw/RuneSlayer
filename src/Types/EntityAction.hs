@@ -7,13 +7,13 @@ import Types.Entity.Common
 
 --------------------------------------------------------------------------------
 
-data DebugFlag
-   = DebugFlag_DrawPickupRange
+data EntityDebugFlag
+   = EntityDebugFlag_DrawPickupRange
    deriving (Show)
 
 data EntityAction
    = EntityAction_SetMoveVector V2D
-   | EntityAction_ToggleDebug DebugFlag
+   | EntityAction_ToggleDebug EntityDebugFlag
    -- tell entity that it was picked up by [EntityId]
    | EntityAction_SelfAddedBy EntityId
    -- tell entity that it was passed to [EntityId]

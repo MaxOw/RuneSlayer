@@ -10,6 +10,8 @@ module Delude
 
     , nothingFalse
     , nothingFalse2
+
+    , toggleSet
     ) where
 
 import Relude         as All
@@ -22,6 +24,7 @@ import Data.Bimap     as All (Bimap)
 import qualified Data.Bimap as Bimap
 
 import qualified Data.Vector as Vector
+import qualified Data.Set    as Set
 
 import Diagrams.Core (InSpace, Transformable)
 import Engine (Mat4, AlphaColor)
@@ -58,3 +61,7 @@ nothingFalse2 Nothing        _  _ = False
 nothingFalse2       _  Nothing  _ = False
 nothingFalse2 (Just a) (Just b) f = f a b
 
+toggleSet :: Ord a => a -> Set a -> Set a
+toggleSet a s
+    | Set.member a s = Set.delete a s
+    | otherwise      = Set.insert a s

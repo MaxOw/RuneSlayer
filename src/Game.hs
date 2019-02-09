@@ -8,15 +8,17 @@ import qualified Engine
 import Engine (Img)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine)
-import Engine.Graphics.Scroller (newScroller, bufferSize)
+import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
 import Types.Entity.Wall
 import Entity.Container
 import Entity.Item
+import EntityIndex (rebuildIndex)
 import GameState
 import EntityLike
+import WorldGen (generateWorld, genTest)
 
 import qualified Resource
 
@@ -24,7 +26,8 @@ import qualified Resource
 
 initSt :: Engine () St
 initSt = do
-    scro <- newScroller $ def & bufferSize .~ 2048
+    genTest
+    scro <- newScroller $ def
     st <- defaultSt scro
     loadFontFamily "Arial"
     rs <- catMaybes <$> mapM loadResource
@@ -52,7 +55,8 @@ loadFontFamily fname = void $ Engine.loadFontFamily fname $ def
 
 setupTestGameState :: GameState -> GameState
 setupTestGameState
-    = addEntityAndFocus playerEntity
+    = over entities rebuildIndex
+    . addEntityAndFocus playerEntity
     . flip (foldr addEntity)
         [ wallEntity
         , bagEntity

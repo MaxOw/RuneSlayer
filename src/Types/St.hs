@@ -9,6 +9,7 @@ module Types.St
     , menuState
     , randomSeed
     , scroller
+    , debugFlags
     ) where
 
 import Delude
@@ -22,6 +23,7 @@ import Types.MenuState
 import Types.InputState
 import Types.GameState
 import Types.ResourceManager (ResourceMap)
+import Types.Debug (DebugFlag)
 
 data St = St
    { st_resources  :: ResourceMap
@@ -29,6 +31,7 @@ data St = St
    , st_inputState :: InputState
    , st_gameState  :: GameState
    , st_scroller   :: Scroller
+   , st_debugFlags :: Set DebugFlag
    -- , st_randomSeed :: MWC.Seed
    }
 makeFieldsCustom ''St
@@ -40,6 +43,7 @@ defaultSt scro = return $ St
     , st_gameState  = def
     , st_menuState  = def
     , st_scroller   = scro
+    , st_debugFlags = def
     -- , st_randomSeed = pureRandomSeed
     }
 

@@ -46,9 +46,9 @@ setMoveVector moveVector s = set velocity vel s
     Speed speed = view maxSpeed s
     vel = velocityInMetersPerSecond $ normalize moveVector ^* speed
 
-toggleDebugFlag :: HasDebugFlags x EntityDebugFlags => DebugFlag -> x -> x
+toggleDebugFlag :: HasDebugFlags x EntityDebugFlags => EntityDebugFlag -> x -> x
 toggleDebugFlag = \case
-    DebugFlag_DrawPickupRange -> flipFlag drawPickupRange
+    EntityDebugFlag_DrawPickupRange -> flipFlag drawPickupRange
     where
     flipFlag f = over (debugFlags.f) not
 

@@ -15,6 +15,7 @@ data EntityOracle = EntityOracle
    , entityOracle_volume       :: Maybe Volume
    , entityOracle_maxVolume    :: Maybe Volume
    , entityOracle_fittingSlots :: Set EquipmentSlot
+   , entityOracle_static       :: Bool
    } deriving (Generic)
 makeFieldsCustom ''EntityOracle
 

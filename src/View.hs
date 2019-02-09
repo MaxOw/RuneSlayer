@@ -16,7 +16,9 @@ import Types.Entity
 import Types.St
 import Types.MenuState
 import Types.GameState
-import EntityIndex (entitiesInRange)
+import Types.Debug
+import EntityIndex (dynamicEntitiesInRange, staticEntitiesInRange)
+import GameState (isDebugFlagOn)
 
 import GUI.GameMenu
 
@@ -29,11 +31,11 @@ import Engine.Graphics
 import Engine.Common.Types
 import Engine.Graphics.Scroller (updateScroller, makeRenderScroller)
 
-import qualified Resource
+-- import qualified Resource
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
-import Resource (Resource)
-import ResourceManager (lookupResource, ResourceMap)
+-- import Resource (Resource)
+-- import ResourceManager (lookupResource, ResourceMap)
 
 --------------------------------------------------------------------------------
 
@@ -52,20 +54,37 @@ renderGame _delta st = do
     renderScroller <- prerenderUpdate st
     renderSetup
 
-    let viewScale = 64
+    (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
+
+    let viewScale = st^.gameState.gameScale
+
+    let viewPos      = focusPos st
+    let viewportPos  = viewPos ^* (realToFrac viewScale)
+    let viewportSize = Size (fromIntegral w) (fromIntegral h)
+
+    let viewRange = mkBBoxCenter viewPos (viewportSize ^/ (realToFrac viewScale))
+
+    zoomOutScrollerDebug   <- isDebugFlagOn DebugFlag_ZoomOutScroller
+    hideScrollerDebug      <- isDebugFlagOn DebugFlag_HideScroller
+    showDynamicBBoxesDebug <- isDebugFlagOn DebugFlag_ShowDynamicBoundingBoxes
+
+    let magScale = if zoomOutScrollerDebug then 0.5 else 1
+
     let viewM = viewMatrix viewScale st
     gameProjM <- orthoProjection $ def
-        -- & set normalization (Just Height)
-        -- & set scale viewScale -- 1 -- (st^.gameState.gameScale)
+        & set scale magScale
     let viewProjM = gameProjM !*! viewM
-    -- let lc = fromMaybe def $ focusLocation st
-    -- let rc = Rect (pure (-11) + (realToFrac <$> lc^._Wrapped)) (pure 10)
-    -- Engine.draw viewProjM $ T.scale viewScale $ renderComposition
+
+    let es = dynamicEntitiesInRange viewRange $ st^.gameState.entities
+
     Engine.draw viewProjM $ renderComposition
         [ mempty
-        , renderScroller
-        -- , randomTilesGen st rc
-        , T.scale viewScale $ renderEntities st
+        , renderUnless hideScrollerDebug renderScroller
+        , T.scale viewScale $ renderComposition
+            [ renderEntities es st
+            , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
+            ]
+        , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
         ]
 
     whenJust (focusEntity st) $ \e -> do
@@ -75,6 +94,27 @@ renderGame _delta st = do
 
     Engine.swapBuffers
 
+renderIf :: Bool -> RenderAction -> RenderAction
+renderIf True  x = x
+renderIf False x = mempty
+
+renderUnless :: Bool -> RenderAction -> RenderAction
+renderUnless False x = x
+renderUnless True  x = mempty
+
+renderViewportDebug :: Bool -> V2 Float -> Size Float -> RenderAction
+renderViewportDebug False _ _ = mempty
+renderViewportDebug True  p s = renderShape $ def
+    & shapeType .~ SimpleSquare
+    & color     .~ Color.withOpacity Color.gray 0.3
+    & T.scaleX (realToFrac $ s^.width)
+    & T.scaleY (realToFrac $ s^.height)
+    & T.translate (fmap realToFrac p)
+
+renderBBoxesDebug :: HasEntity e Entity => [e] -> St -> RenderAction
+renderBBoxesDebug _ _ = mempty
+
+{-
 randomTilesGen :: St -> BBox Float -> RenderAction
 randomTilesGen st b = renderComposition $ map (renderTile st) ps
     where
@@ -101,14 +141,12 @@ renderSprite ctx r = case lookupResource r $ ctx^.resources of
     shape = def
         & shapeType   .~ SimpleSquare
         & color       .~ Color.opaque Color.gray
+-}
 
-renderEntities :: St -> RenderAction
-renderEntities st = Engine.renderComposition rs
+renderEntities :: HasEntity e Entity => [e] -> St -> RenderAction
+renderEntities es st = Engine.renderComposition rs
     where
-    viewRange = () -- TODO
-    eix = st^.gameState.entities
-    es = entitiesInRange viewRange eix
-    rs = map (flip entityRender ctx) es
+    rs = map (flip entityRender ctx . view entity) es
     ctx = RenderContext
         { renderContext_resources = st^.resources
         }
@@ -131,15 +169,20 @@ viewMatrix s
 
 --------------------------------------------------------------------------------
 
+focusPos :: St -> V2 Float
+focusPos st = fmap realToFrac $ fromMaybe 0 $ view _Wrapped <$> focusLocation st
+
 prerenderUpdate :: St -> Graphics RenderAction
 prerenderUpdate st = do
     let s = st^.scroller
     let vscale = realToFrac $ st^.gameState.gameScale
-    let vpos = fmap realToFrac $ fromMaybe 0 $ view _Wrapped <$> focusLocation st
+    let vpos = focusPos st
     (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
     let vsize = Size (fromIntegral w) (fromIntegral h)
     updateScroller s vscale vpos vsize $ \bb -> do
-        randomTilesGen st bb
+        let es = staticEntitiesInRange bb $ st^.gameState.entities
+        renderEntities es st
+        -- randomTilesGen st bb
     makeRenderScroller s
 
 renderSetup :: Graphics ()

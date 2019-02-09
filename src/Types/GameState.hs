@@ -9,12 +9,13 @@ import Types.EntityAction (DirectedEntityAction)
 import EntityIndex (emptyIndex)
 
 data GameState = GameState
-   { gameState_entities   :: EntityIndex
-   , gameState_actions    :: [DirectedEntityAction]
-   , gameState_focusId    :: Maybe EntityId
-   , gameState_gameScale  :: Double
-   , gameState_menuScale  :: Double
-   , gameState_frameCount :: Word32
+   { gameState_entities    :: EntityIndex
+   , gameState_actions     :: [DirectedEntityAction]
+   , gameState_focusId     :: Maybe EntityId
+   , gameState_gameScale   :: Double
+   , gameState_menuScale   :: Double
+   , gameState_frameCount  :: Word32
+   , gameState_changeCache :: HashMap String Int
    }
 makeFieldsCustom ''GameState
 
@@ -22,11 +23,12 @@ type GameStateM = Lazy.StateT GameState IO
 
 instance Default GameState where
     def = GameState
-        { gameState_entities   = emptyIndex
-        , gameState_actions    = []
-        , gameState_focusId    = Nothing
-        , gameState_gameScale  = 64
-        , gameState_menuScale  = 1.0
-        , gameState_frameCount = 0
+        { gameState_entities    = emptyIndex
+        , gameState_actions     = []
+        , gameState_focusId     = Nothing
+        , gameState_gameScale   = 64
+        , gameState_menuScale   = 1.0
+        , gameState_frameCount  = 0
+        , gameState_changeCache = mempty
         }
 

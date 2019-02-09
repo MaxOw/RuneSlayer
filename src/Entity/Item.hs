@@ -33,7 +33,6 @@ itemLikeActOn
     => HasOwner           s (Maybe EntityId)
     => HasProcessOnUpdate s [EntityAction]
     => s -> EntityAction -> s
-
 itemLikeActOn x a = case a of
     EntityAction_SelfPassedTo  eid -> selfPassedTo eid
     EntityAction_SelfAddedBy   eid -> selfAddedBy eid

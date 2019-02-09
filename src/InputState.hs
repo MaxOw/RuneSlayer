@@ -194,11 +194,7 @@ inputActionEscape = zoomInputState $ do
 --------------------------------------------------------------------------------
 
 toggleViewPanel :: PanelName -> Game ()
-toggleViewPanel pname = zoomInputState $ visiblePanels %= flipView
-    where
-    flipView vp = if Set.member pname vp
-        then Set.delete pname vp
-        else Set.insert pname vp
+toggleViewPanel x = zoomInputState $ visiblePanels %= toggleSet x
 
 isPanelVisible :: PanelName -> St -> Bool
 isPanelVisible pname = Set.member pname . view (inputState.visiblePanels)

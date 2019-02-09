@@ -1,30 +1,37 @@
 {-# Language TemplateHaskell #-}
 module Types.Entity
     ( module All
-    , Entity (..), EntityWithId (..)
-    , EntityIndex (..), EntityContext (..)
-    , RenderContext (..), RenderAction (..)
-    , EntityParts (..)
+    -- , Entity (..), EntityWithId (..)
+    -- , EntityIndex (..), EntityContext (..)
+    -- , RenderContext (..), RenderAction (..)
+    -- , EntityParts (..)
 
-    , oracle
+    , module Types.Entity
     ) where
 
 import Delude
+-- import Data.Vector (Vector)
 
 import Types.EntityAction as All
 import Types.EntityOracle as All
 import Types.EntitySum    as All
 import Engine (RenderAction (..))
+import Engine.Common.Types (BBox)
 
 import Types.ResourceManager (ResourceMap)
 import Types.Entity.Common (EntityId) -- , Location)
+import Engine.KDTree (KDTree)
 
 --------------------------------------------------------------------------------
 
+type ViewRange = BBox Float
 data EntityIndex = EntityIndex
-   { entityIndexLastId   :: EntityId
-   , entityIndexEntities :: HashMap EntityId Entity
--- , entityIndexLocation :: SPTree Location EntityId
+   { entityIndex_lastId              :: EntityId
+   , entityIndex_entities            :: HashMap EntityId Entity
+   , entityIndex_staticIndex         :: HashSet EntityId
+   , entityIndex_dynamicIndex        :: HashSet EntityId
+   , entityIndex_activatedIndex      :: HashSet EntityId
+   , entityIndex_staticLocationIndex :: KDTree EntityId
    }
 
 data EntityContext = EntityContext
@@ -47,6 +54,7 @@ data Entity = Entity
 
 instance HasEntity Entity Entity where entity = id
 
+makeFieldsCustom ''EntityIndex
 makeFieldsCustom ''EntityContext
 makeFieldsCustom ''RenderContext
 

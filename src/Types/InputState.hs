@@ -8,7 +8,7 @@ import Data.Char (isUpper, toLower)
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
 import Types.Entity.Common (EntityId)
-import Types.EntityAction (DebugFlag(..))
+import Types.Debug (DebugFlag(..))
 import Engine.Events.Types
 import qualified Control.Monad.Trans.State.Lazy as Lazy
 -- import Engine (defaultModifierKeys)
@@ -245,6 +245,9 @@ defaultInputKeymap = buildInputKeymap
 
         , InputStr "tr" (ToggleDebug DebugFlag_DrawPickupRange)
         , InputStr "tg" (ToggleViewPanel GroundPreviewPanel)
+        , InputStr "ts" (ToggleDebug DebugFlag_ZoomOutScroller)
+        , InputStr "tb" (ToggleDebug DebugFlag_HideScroller)
+        , InputStr "td" (ToggleDebug DebugFlag_ShowDynamicBoundingBoxes)
 
         , InputStr "q" FastQuit
 

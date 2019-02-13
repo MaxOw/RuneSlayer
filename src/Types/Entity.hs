@@ -10,7 +10,7 @@ module Types.Entity
     ) where
 
 import Delude
--- import Data.Vector (Vector)
+import Data.Vector (Vector)
 
 import Types.EntityAction as All
 import Types.EntityOracle as All
@@ -24,14 +24,21 @@ import Engine.KDTree (KDTree)
 
 --------------------------------------------------------------------------------
 
+data EntityWithId = EntityWithId
+   { entityWithId_entityId :: EntityId
+   , entityWithId_entity   :: Entity
+   }
+
 type ViewRange = BBox Float
 data EntityIndex = EntityIndex
-   { entityIndex_lastId              :: EntityId
-   , entityIndex_entities            :: HashMap EntityId Entity
+   { entityIndex_lastId              :: Maybe EntityId
+   , entityIndex_emptyOffsets        :: [Int]
+   , entityIndex_entities            :: Vector (Maybe EntityWithId)
    , entityIndex_staticIndex         :: HashSet EntityId
    , entityIndex_dynamicIndex        :: HashSet EntityId
    , entityIndex_activatedIndex      :: HashSet EntityId
    , entityIndex_staticLocationIndex :: KDTree EntityId
+   -- , entityIndex_entities            :: HashMap EntityId Entity
    }
 
 data EntityContext = EntityContext
@@ -62,10 +69,6 @@ makeFieldsCustom ''RenderContext
 oracle :: Getter Entity EntityOracle
 oracle = to entityOracle
 
-data EntityWithId = EntityWithId
-   { entityWithId_entityId :: EntityId
-   , entityWithId_entity   :: Entity
-   }
 makeFieldsCustom ''EntityWithId
 
 data EntityParts p = EntityParts

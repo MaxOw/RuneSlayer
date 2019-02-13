@@ -2,6 +2,7 @@ module Focus where
 
 import Delude
 import Engine (userState)
+import Engine.Common.Types (mkBBoxCenter)
 import Types
 import Types.Entity
 import Types.Entity.Common
@@ -25,7 +26,7 @@ withFocusId = whenJustM (liftGame focusEntityId)
 
 -- Get focused entity (if any)
 focusEntity :: St -> Maybe Entity
-focusEntity st = me
+focusEntity st = view entity <$> me
     where
     mid = st^.gameState.focusId
     eix = st^.gameState.entities
@@ -33,9 +34,17 @@ focusEntity st = me
 
 -- Get items within pickup range of a focused entity
 focusItemsInRange :: St -> [EntityWithId]
-focusItemsInRange st = queryIndex rangeQuery $ st^.gameState.entities
+focusItemsInRange st = case focusLocation st of
+    Nothing -> []
+    Just loc -> queryItemsInPickupRange loc
     where
-    rangeQuery x = withinRange (x^.location) && isJust (x^.itemKind)
+    queryItemsInPickupRange loc
+        = filter (isItemInRange . view (entity.oracle))
+        $ dynamicEntitiesInRange (queryRange loc) $ st^.gameState.entities
+
+    isItemInRange x = withinRange (x^.location) && isJust (x^.itemKind)
+    queryRange loc = mkBBoxCenter (fmap realToFrac $ loc^._Wrapped)
+        (fmap realToFrac $ pure $ defaultPickupRange^._Wrapped)
 
     withinRange loc
         = nothingFalse2 (focusLocation st) loc
@@ -49,14 +58,10 @@ focusItemsInInventory st = lookupEntities st (es <> bs)
     es = st^.to focusEntity.traverse.oracle.equipment.traverse.to contentList
 
 lookupEntities :: St -> [EntityId] -> [EntityWithId]
-lookupEntities st = mapMaybe toEwid
-    where
-    toEwid :: EntityId -> Maybe EntityWithId
-    toEwid i = EntityWithId i <$> lookupEntityById i (st^.gameState.entities)
+lookupEntities st = mapMaybe $ \i -> lookupEntityById i (st^.gameState.entities)
 
 lookupEntity :: St -> EntityId -> Maybe EntityWithId
-lookupEntity st i =
-    EntityWithId i <$> lookupEntityById i (st^.gameState.entities)
+lookupEntity st i = lookupEntityById i (st^.gameState.entities)
 
 focusEquipmentSlot :: St -> EquipmentSlot -> Maybe EntityWithId
 focusEquipmentSlot st es = lookupEntity st

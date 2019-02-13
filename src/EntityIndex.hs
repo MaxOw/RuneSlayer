@@ -10,7 +10,6 @@ module EntityIndex
     , staticEntitiesInRange
     , dynamicEntitiesInRange
     , lookupEntityById
-    , queryIndex
     ) where
 
 import Delude
@@ -18,19 +17,21 @@ import Data.List (partition)
 import qualified Data.HashSet as HashSet
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Vector as Vector
+import Data.Vector (Vector)
 import Text.Printf
 import Types.Entity
 import Types.Entity.Common (EntityId (..))
 import Engine.KDTree (buildKDTree)
 import qualified Engine.KDTree as KDTree
--- import Engine.Common.Types (BBox)
+import Engine.Common.Types
 
 --------------------------------------------------------------------------------
 
 emptyIndex :: EntityIndex
 emptyIndex = EntityIndex
-   { entityIndex_lastId              = EntityId 0
-   , entityIndex_entities            = HashMap.empty
+   { entityIndex_lastId              = Nothing
+   , entityIndex_emptyOffsets        = []
+   , entityIndex_entities            = Vector.empty
    , entityIndex_staticIndex         = mempty
    , entityIndex_dynamicIndex        = mempty
    , entityIndex_activatedIndex      = mempty
@@ -45,52 +46,72 @@ updateIndex
     :: MonadIO m
     => [DirectedEntityAction] -> Word32 -> EntityIndex -> m EntityIndex
 updateIndex globalActions fct eix = do
-    let prt x = putStrLn ((printf "%d: %s" fct (show x :: String)) :: String)
-    mapM_ prt $ filter (noSetMoveVector . view action) directedActions
-    -- mapM_ prt directedActions
+    debugPrintDirectedActions
     return $ eix
-        & entities       .~ HashMap.union changedMap toLeaveMap
-        & staticIndex    .~ HashSet.difference newStaticSet    toDeleteSet
-        & dynamicIndex   .~ HashSet.difference newDynamicSet   toDeleteSet
+        & entities       .~ actedOnEntities
         & activatedIndex .~ newActivatedSet
-    -- , entityIndexLocation = rebuildLocationIndex actedOnEntities
     where
 
     -- Set of entity ids to process in this update O(n+m)
     toProcSet  = HashSet.union (eix^.activatedIndex) (eix^.dynamicIndex)
-    -- Map of entities to process O(n*log m)
-    toProcMap  = HashMap.intersection (eix^.entities) (HashSet.toMap toProcSet)
-    -- Map of entities not in need of processing O(n*log m)
-    toLeaveMap = HashMap.difference   (eix^.entities) (HashSet.toMap toProcSet)
+    -- List of entities in need of processing O(n)
+    toProcList = selectEntities toProcSet eix
 
-    -- List of result after applying update function on each entity toProc O(n)
+    -- List of results after applying update function on each entity toProc O(n)
     updateResult :: [(EntityId, (Maybe Entity, [DirectedEntityAction]))]
-    updateResult = map (uncurry updateEntity) $ HashMap.toList toProcMap
+    updateResult = map updateEntity toProcList
+    updateEntity (EntityWithId k v) = (k, entityUpdate v ctx)
+        where
+        ctx = EntityContext
+            { entityContext_entities   = eix
+            , entityContext_selfId     = k
+            , entityContext_frameCount = fct
+            }
 
+    -- Vector of all entities after update O(k)
+    updatedEntities :: Vector (Maybe EntityWithId)
+    updatedEntities = updateEntitiesVector (map f updateResult) (eix^.entities)
+        where f (i,(me,_)) = (i,me)
+
+    -- List of directed actions resulting from update + global ones
+    directedActions = concatMap (snd.snd) updateResult <> globalActions
+
+    -- Map of entity action grouped by target entity id
+    directedActionsMap :: HashMap EntityId [EntityAction]
+    directedActionsMap = HashMap.fromListWith (<>) $ map f directedActions
+        where
+        f d = (d^.entityId, [d^.action])
+
+    performActions :: (EntityId, [EntityAction]) -> Maybe EntityWithId
+    performActions (eid, as) = fmap f $ lookupVector eid updatedEntities
+        where f = over entity (flip (foldl' entityActOn) as)
+
+    actOnResult :: [(Int, Maybe EntityWithId)]
+    actOnResult = mapMaybe (\p -> (p^._1.offset,) . Just <$> performActions p)
+                $ HashMap.toList directedActionsMap
+
+    -- Vector of all entities after update and directed actions O(k)
+    actedOnEntities :: Vector (Maybe EntityWithId)
+    actedOnEntities
+        = Vector.update updatedEntities $ Vector.fromList actOnResult
+
+    -- Set of static entities that were newly activated in this step
+    newActivatedSet
+        = HashSet.fromList
+        $ map (view entityId) . filter (view (entity.oracle.static))
+        $ selectEntities (HashMap.keys directedActionsMap) eix
+
+    ----------------------------------------------------------------------------
+    debugPrintDirectedActions
+        = mapM_ prt $ filter (noSetMoveVector . view action) directedActions
+    prt x = putStrLn ((printf "%d: %s" fct (show x :: String)) :: String)
+
+
+
+{-
     -- Set of entities to delete from all indexes
     toDeleteSet = HashSet.fromList
         $ map fst $ filter (isNothing . fst . snd) updateResult
-
-    -- Map of entities that were updated and didn't die in the process
-    onlyUpdatedMap = HashMap.fromList
-        $ mapMaybe (\(i,(me,_)) -> (i,) <$> me) updateResult
-
-    -- Map of all entities after update
-    updatedMap = HashMap.union onlyUpdatedMap toLeaveMap
-    -- List of directed actions resulting from update + global ones
-    directedActions = concatMap (snd.snd) updateResult <> globalActions
-    -- Set of entities to be acted on in this update step
-    toActOnSet = HashSet.fromList $ map (view entityId) directedActions
-    -- Map of entities to be acted on in this update step
-    toActOnMap = HashMap.intersection updatedMap $ HashSet.toMap toActOnSet
-    -- Final map of entities after performing all directed actions on them
-    actedOnMap = foldr performAction toActOnMap directedActions
-
-    -- Set of static entities that were newly activated in this step
-    newActivatedSet = HashSet.intersection toActOnSet (eix^.staticIndex)
-
-    -- Map of all entities that could possibly change it this step
-    changedMap = HashMap.union actedOnMap onlyUpdatedMap
 
     changedStaticMap = HashMap.filter (view (oracle.static)) changedMap
     newStaticSet
@@ -99,25 +120,6 @@ updateIndex globalActions fct eix = do
     changedDynamicMap = HashMap.filter (not . view (oracle.static)) changedMap
     newDynamicSet
         = HashSet.union (hashMap_keysSet changedDynamicMap) (eix^.dynamicIndex)
-
-    hashMap_keysSet x = HashSet.fromMap (() <$ x)
-
-    updateEntity k v = (k, entityUpdate v ctx)
-        where
-        ctx = EntityContext
-            { entityContext_entities   = eix
-            , entityContext_selfId     = k
-            , entityContext_frameCount = fct
-            }
-
-    performAction (DirectedEntityAction eid act)
-        = HashMap.adjust (flip entityActOn act) eid
-
-{-
-    h = HashMap.mapWithKey updateEntity $ view entities eix
-    directedActions = concatMap snd (HashMap.elems h) <> globalActions
-    updatedEntities = HashMap.mapMaybe fst h
-    actedOnEntities = foldr performAction updatedEntities directedActions
 -}
 
 rebuildIndex :: EntityIndex -> EntityIndex
@@ -133,27 +135,33 @@ rebuildIndex eix = eix
     statLocs = Vector.fromList $ mapMaybe toKDEntry allStatic
 
 getLastId :: EntityIndex -> Maybe EntityId
-getLastId eix
-    | eid <= EntityId 0 = Nothing
-    | otherwise         = Just eid
-    where eid = eix^.lastId
+getLastId = view lastId
 
 addToIndex :: Entity -> EntityIndex -> EntityIndex
 addToIndex e eix = eix
-    & lastId   .~ newId
-    & entities .~ newMap
+    & lastId       .~ Just newId
+    & emptyOffsets %~ drop 1
+    & entities     .~ newVec
  -- , entityIndexLocation = addLocationIndex (queryLocation e) newId
     where
-    newId  = EntityId $ unEntityId (eix^.lastId) + 1
-    newMap = HashMap.insert newId e $ eix^.entities
+    newId     = EntityId newCount vecOffset
+    newCount  = maybe 0 (\(EntityId c _) -> c+1) (eix^.lastId)
+    eos       = eix^.emptyOffsets
+    vec       = eix^.entities
+    vecOffset = fromMaybe (Vector.length vec) (viaNonEmpty head eos)
+    newEid    = EntityWithId newId e
+    newVec    = case viaNonEmpty head eos of
+        Nothing -> Vector.snoc   vec $ Just newEid
+        Just vo -> Vector.update vec $ Vector.singleton (vo, Just newEid)
 
-lookupEntityById :: EntityId -> EntityIndex -> Maybe Entity
-lookupEntityById eid eix = HashMap.lookup eid $ view entities eix
+lookupEntityById :: EntityId -> EntityIndex -> Maybe EntityWithId
+lookupEntityById eid = lookupVector eid . view entities
 
--- TODO: For not this just returs list of all entities but in the future we
--- should be quering for only visible entities within ViewRange from a space
--- partitioning tree of entities.
--- type ViewRange = BBox Float
+lookupVector :: EntityId -> Vector (Maybe EntityWithId) -> Maybe EntityWithId
+lookupVector eid v = case join $ Vector.indexM v (eid^.offset) of
+    Just x | x^.entityId.unique == eid^.unique -> Just x
+    _ -> Nothing
+
 entitiesInRange :: ViewRange -> EntityIndex -> [EntityWithId]
 entitiesInRange r e
     = dynamicEntitiesInRange r e
@@ -161,30 +169,47 @@ entitiesInRange r e
 
 staticEntitiesInRange :: ViewRange -> EntityIndex -> [EntityWithId]
 staticEntitiesInRange r e =
-    selectEntities (KDTree.lookup r $ e^.staticLocationIndex) e
- -- selectEntities (e^.staticIndex) e
+    selectEntities (KDTree.lookup er $ e^.staticLocationIndex) e
     where
-    -- er = expandRange r maxEntitySize
-    -- maxEntitySize = 3 -- meters
+    er = expandRange maxEntitySize r
 
 dynamicEntitiesInRange :: ViewRange -> EntityIndex -> [EntityWithId]
 dynamicEntitiesInRange _r e = selectEntities (e^.dynamicIndex) e
     where
-    -- er = expandRange r maxEntitySize
-    -- maxEntitySize = 3 -- meters
+    -- er = expandRange maxEntitySize r
+
+expandRange :: Num x => x -> BBox x -> BBox x
+expandRange e bb = bb
+    & minPoint %~ fmap (\x -> x-e)
+    & maxPoint %~ fmap (\x -> x+e)
+
+maxEntitySize :: Float
+maxEntitySize = 2 -- meters
 
 -- TODO: this again is a naive filtering of all entities without emploing any
 -- sort of index what so ever. Obviously this needs to be improved in the future
 -- once it will become a bottleneck.
-queryIndex :: (EntityOracle -> Bool) -> EntityIndex -> [EntityWithId]
-queryIndex f = filter (f . view (entity.oracle)) . allEntities
+-- queryIndex :: (EntityOracle -> Bool) -> EntityIndex -> [EntityWithId]
+-- queryIndex f = filter (f . view (entity.oracle)) . allEntities
 
 allEntities :: EntityIndex -> [EntityWithId]
-allEntities = map (uncurry EntityWithId) . HashMap.toList . view entities
+allEntities = catMaybes . toList . view entities
 
 selectEntities :: Foldable t => t EntityId -> EntityIndex -> [EntityWithId]
-selectEntities s e
-    = mapMaybe (\k -> EntityWithId k <$> HashMap.lookup k (e^.entities))
-    $ toList s
+selectEntities s e = mapMaybe (flip lookupEntityById e) $ toList s
+
+{-
+selectVector :: Foldable t
+    => t EntityId -> Vector (Maybe EntityWithId) -> [EntityWithId]
+selectVector s e = mapMaybe (flip lookupVector e) $ toList s
+-}
+
+updateEntitiesVector
+    :: [(EntityId, Maybe Entity)]
+    -> Vector (Maybe EntityWithId)
+    -> Vector (Maybe EntityWithId)
+updateEntitiesVector us v = Vector.update v $ Vector.fromList $ map f us
+    where
+    f (i, me) = (i^.offset, EntityWithId i <$> me)
 
 

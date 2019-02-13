@@ -13,10 +13,13 @@ import Reload.Utils (reacquire)
 
 import qualified Graphics.UI.GLFW as GLFW
 
+import WorldGen (worldGenTest)
+
 -- import qualified Data.Map as PrefixMap
 
 main :: IO ()
 main = do
+    worldGenTest
     win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (400, 400)
     GLFW.makeContextCurrent $ Just win
     -- win <- Engine.initWindow "RuneSlayer" (400, 400)

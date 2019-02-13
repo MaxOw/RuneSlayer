@@ -5,7 +5,7 @@ module GameState
     , actOnEntity
     , actOnFocusedEntity
     , addEntityAndFocus
-    , addEntity
+    , addEntity, addEntities
     , entityIdToWithId
 
     , toggleDebug, isDebugFlagOn
@@ -62,10 +62,14 @@ addEntityAndFocus ent g = set focusId (getLastId $ ng^.entities) ng
 addEntity :: Entity -> GameState -> GameState
 addEntity e g = over entities (addToIndex e) g
 
+addEntities :: Foldable f => f Entity -> GameState -> GameState
+-- addEntities = flip $ foldl' (flip addEntity)
+addEntities = flip (foldr addEntity)
+
 entityIdToWithId :: EntityId -> Game (Maybe EntityWithId)
 entityIdToWithId eid = zoomGameState $ do
     es <- use entities
-    return $ EntityWithId eid <$> lookupEntityById eid es
+    return $ lookupEntityById eid es
 
 --------------------------------------------------------------------------------
 

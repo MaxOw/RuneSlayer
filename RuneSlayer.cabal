@@ -62,6 +62,10 @@ Executable RuneSlayer
                 , random
                 , mwc-random
                 , vector
+                , grids
+                , reflection
+                , repa
+                , repa-algorithms
 
                 , linear
                 , Carnot == 0.1.8.1

@@ -31,5 +31,6 @@ class HasContentVolume   s t | s -> t where contentVolume   :: Lens' s t
 class HasResources       s t | s -> t where resources       :: Lens' s t
 class HasPath            s t | s -> t where path            :: Lens' s t
 class HasLastId          s t | s -> t where lastId          :: Lens' s t
+class HasUnique          s t | s -> t where unique          :: Lens' s t
 -- class HasPart            s t | s -> t where part            :: Lens' s t
 

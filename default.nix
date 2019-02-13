@@ -11,6 +11,7 @@ let ghc = nixpkgs.haskell.packages.${compiler}.override {
         # concat-plugin         = loadLocal self "concat/plugin";
         # concat-graphics       = loadLocal self "concat/graphics";
         # concat-examples       = loadLocal self "concat/examples";
+        grids           = loadLocal self "grids";
 
         # halive          = loadDirec self "${~/Projects/Gridlock/halive}";
         reload-utils    = loadDirec self "${./../reload-utils}";

@@ -12,14 +12,18 @@ import Text.Printf
 
 --------------------------------------------------------------------------------
 
-newtype EntityId = EntityId { unEntityId :: Int }
-    deriving (Eq, Ord)
-deriving instance Hashable EntityId
+data EntityId = EntityId
+   { entityId_unique :: Word64
+   , entityId_offset :: Int
+   }
+   deriving (Eq, Ord, Generic)
+instance Hashable EntityId
+makeFieldsCustom ''EntityId
 
 instance HasEntityId EntityId EntityId where entityId = id
 
 instance Show EntityId where
-    show (EntityId x) = "EID:" <> show x
+    show (EntityId x _) = "EID:" <> show x
 
 type V2D = V2 Double
 

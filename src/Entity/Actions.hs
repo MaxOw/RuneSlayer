@@ -25,6 +25,7 @@ import Delude
 import qualified Data.Set as Set
 import qualified Data.List as List
 import Random.Utils
+import Data.Hashable (hash)
 
 import Types.Entity
 import Types.Entity.ItemType
@@ -234,7 +235,7 @@ getItemsToAdd
     => EntityContext -> x -> [EntityWithId]
 getItemsToAdd ctx = mapMaybe (f <=< g) . view processOnUpdate
     where
-    f i = EntityWithId i <$> lookupEntityById i (ctx^.entities)
+    f i = lookupEntityById i (ctx^.entities)
     g (EntityAction_AddItem        i) = Just i
     g _                               = Nothing
 
@@ -269,7 +270,7 @@ dropItemAction eid = do
 makeDropItem :: Word32 -> Location -> EntityId -> EntityAction
 makeDropItem rnd loc eid = EntityAction_SelfDroppedAt dloc
     where
-    rgid = fromIntegral $ unEntityId eid
+    rgid = fromIntegral $ hash eid
     dloc = over _Wrapped (\v -> v + genDropOffset [rnd + rgid]) loc
 
 --------------------------------------------------------------------------------

@@ -8,11 +8,13 @@ import qualified Engine
 import Engine (Img)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine)
+import Engine.Common.Types
 import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
-import Types.Entity.Wall
+-- import Types.Entity.Wall
+-- import Entity.Tile
 import Entity.Container
 import Entity.Item
 import EntityIndex (rebuildIndex)
@@ -33,8 +35,9 @@ initSt = do
     rs <- catMaybes <$> mapM loadResource
         (ordNub $ map (view path) Resource.allSprites)
     Engine.fullyUpdateAtlas
+    world <- generateWorld $ Size 30 30
     return $ st
-        & gameState %~ setupTestGameState
+        & gameState %~ (setupTestGameState . addEntities world)
         & resources .~ HashMap.fromList rs
 
 loadResource :: Text -> Engine us (Maybe (Text, Img))
@@ -57,19 +60,16 @@ setupTestGameState :: GameState -> GameState
 setupTestGameState
     = over entities rebuildIndex
     . addEntityAndFocus playerEntity
-    . flip (foldr addEntity)
-        [ wallEntity
-        , bagEntity
+    . addEntities
+     -- [ tileEntity
+        [ bagEntity
         , helmetEntity
         , potionEntity
+     -- , wallEntity
         ]
     where
     playerEntity = toEntity @Player $ def
         & location .~ locM 0 0
-
-    wallEntity = toEntity @Wall $ def
-        & location .~ locM 0 3
-        & health   .~ Health 100
 
     bagEntity = toEntity $ makeContainer testContainerType_bag
         & location .~ (Just $ locM 0 1)
@@ -79,4 +79,12 @@ setupTestGameState
 
     potionEntity = toEntity $ makeItem testItemType_healthPotion
         & location .~ (Just $ locM (-1) 0.2)
+
+    -- tileEntity = toEntity $ makeSimpleTile $ Resource.mkEnvRect 42 10 2 2
+
+{-
+    wallEntity = toEntity @Wall $ def
+        & location .~ locM 0 3
+        & health   .~ Health 100
+-}
 

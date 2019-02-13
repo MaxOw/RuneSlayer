@@ -96,11 +96,11 @@ renderGame _delta st = do
 
 renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  x = x
-renderIf False x = mempty
+renderIf False _ = mempty
 
 renderUnless :: Bool -> RenderAction -> RenderAction
 renderUnless False x = x
-renderUnless True  x = mempty
+renderUnless True  _ = mempty
 
 renderViewportDebug :: Bool -> V2 Float -> Size Float -> RenderAction
 renderViewportDebug False _ _ = mempty

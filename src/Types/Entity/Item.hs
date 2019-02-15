@@ -6,6 +6,7 @@ import Delude
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ItemType
+import Types.Entity.ZIndex
 
 --------------------------------------------------------------------------------
 
@@ -18,3 +19,4 @@ data Item = Item
 makeFieldsCustom ''Item
 
 instance Default Item
+instance GetZIndex Item Word32 where get_zindex _ = toZIndex EntityZIndex_Item

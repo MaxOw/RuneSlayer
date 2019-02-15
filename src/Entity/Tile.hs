@@ -1,18 +1,16 @@
 module Entity.Tile
     ( Tile, tileToEntity
 
-    , makeTile, makeSimpleTile
+    , makeTile, makeSimpleTile, makeSimpleFullTile
     ) where
 
 import Delude
 
 import Types.Entity.Tile
 import Entity.Utils
+import Entity.Actions
 
-import qualified Data.Colour       as Color
-import qualified Data.Colour.Names as Color
 import Resource (Resource)
-import ResourceManager (lookupResource, ResourceMap)
 
 --------------------------------------------------------------------------------
 
@@ -24,7 +22,7 @@ update x _ = (Just x, [])
 
 render :: Tile -> RenderContext -> RenderAction
 -- render x ctx = renderSprite ctx (Resource.mkEnvPart 40 11)
-render x ctx = loc $ case x^.tileType.resource of
+render x ctx = withZIndex x $ loc $ case x^.tileType.sprite of
     Nothing -> mempty
     Just rs -> renderSprite ctx rs
     where
@@ -34,15 +32,6 @@ oracle :: Tile -> EntityOracle
 oracle x = def
    & location .~ Just (x^.location)
    & static   .~ True
-
-renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
-renderSprite ctx r = case lookupResource r $ ctx^.resources of
-    Nothing  -> renderShape shape
-    Just img -> scale (1/32) $ renderImg img
-    where
-    shape = def
-        & shapeType   .~ SimpleSquare
-        & color       .~ Color.opaque Color.gray
 
 --------------------------------------------------------------------------------
 
@@ -56,9 +45,14 @@ tileToEntity = makeEntity $ EntityParts
    }
 
 makeTile :: TileType -> Tile
-makeTile tt = set tileType tt def
+makeTile tt = (def :: TileN ()) { tile_tileType = tt }
 
 makeSimpleTile :: Resource -> Tile
-makeSimpleTile r = makeTile $ def
-    & resource .~ Just r
+makeSimpleTile r = makeTile $ namedTileType "Simple"
+    & sprite .~ Just r
+
+makeSimpleFullTile :: Resource -> Tile
+makeSimpleFullTile r = makeTile $ namedTileType "Simple"
+    & sprite .~ Just r
+    & zindex   .~ 0
 

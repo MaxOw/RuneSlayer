@@ -15,6 +15,8 @@ module Entity.Actions
 
     -- Render Actions
     , maybeLocate
+    , withZIndex
+    , renderSprite
 
     -- Utils
     , anyMatch
@@ -34,6 +36,11 @@ import EntityIndex (lookupEntityById)
 import qualified Equipment
 import Types.Equipment
 import Equipment (Equipment, contentList)
+
+import qualified Data.Colour       as Color
+import qualified Data.Colour.Names as Color
+import Resource (Resource)
+import ResourceManager (lookupResource, ResourceMap)
 
 --------------------------------------------------------------------------------
 -- ActOn Actions
@@ -281,6 +288,19 @@ maybeLocate
     => Transformable2D t
     => x -> (t -> t)
 maybeLocate x = fromMaybe id $ x^?location.traverse._Wrapped.to translate
+
+withZIndex :: GetZIndex x Word32
+    => x -> (RenderAction -> RenderAction)
+withZIndex x = setZIndexAtLeast (get_zindex x)
+
+renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
+renderSprite ctx r = case lookupResource r $ ctx^.resources of
+    Nothing  -> renderShape shape
+    Just img -> scale (1/32) $ renderImg img
+    where
+    shape = def
+        & shapeType   .~ SimpleSquare
+        & color       .~ Color.opaque Color.gray
 
 --------------------------------------------------------------------------------
 -- Utils

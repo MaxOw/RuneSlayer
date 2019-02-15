@@ -1,22 +1,26 @@
 {-# Language TemplateHaskell #-}
-module Types.Entity.Tile where
+module Types.Entity.Tile
+    ( module Types.Entity.Tile
+    , module Types.Entity.TileType
+    ) where
 
 import Delude
 
-import Types.ResourceManager (Resource)
 import Types.Entity.Common (Location)
+import Types.Entity.TileType
+import Types.Entity.ZIndex
 
 --------------------------------------------------------------------------------
 
-data TileType = TileType
-   { tileType_resource :: Maybe Resource
-   } deriving (Generic)
-instance Default TileType
-makeFieldsCustom ''TileType
-
-data Tile = Tile
+data TileN t = Tile
    { tile_location :: Location
-   , tile_tileType :: TileType
+   , tile_tileType :: t
    } deriving (Generic)
-instance Default Tile
-makeFieldsCustom ''Tile
+instance Default t => Default (TileN t)
+makeFieldsCustom ''TileN
+
+type Tile     = TileN TileType
+type TileNorm = TileN TileName
+
+instance GetZIndex Tile Word32 where
+    get_zindex = toZIndex . view (tileType.zindex)

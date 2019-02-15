@@ -6,6 +6,7 @@ import qualified Data.Set as Set
 
 import Types.EntityAction
 import Types.Entity.Common
+import Types.Entity.ZIndex
 import Types.Equipment
 import qualified Equipment
 
@@ -30,6 +31,9 @@ instance Default Player where
     , player_debugFlags      = def
     , player_processOnUpdate = def
     }
+
+instance GetZIndex Player Word32 where
+    get_zindex _ = toZIndex EntityZIndex_Vertical
 
 playerSlots :: Set EquipmentSlot
 playerSlots = Set.fromList

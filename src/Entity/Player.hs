@@ -41,7 +41,7 @@ processAction = \case
 --------------------------------------------------------------------------------
 
 render :: Player -> RenderContext -> RenderAction
-render x _ctx = renderComposition
+render x _ctx = withZIndex x $ renderComposition
     [ renderDebug
     , renderShape shape & scale 0.3
     ] & translate loc

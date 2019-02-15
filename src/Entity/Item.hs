@@ -73,22 +73,19 @@ itemLikeUpdate = do
 itemLikeRender
     :: HasLocation x (Maybe Location)
     => HasItemType x ItemType
+    => GetZIndex   x Word32
     => x -> RenderContext -> RenderAction
-itemLikeRender x ctx = ifJustLocation x $ maybeLocate x $
+itemLikeRender x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x $
     case x^.itemType.appearance of
         Appearance_SimpleCircle s c -> renderCircle s c
         Appearance_SimpleSquare s c -> renderSquare s c
-        Appearance_Sprite       s r -> renderSprite s r
+        Appearance_Sprite       s r -> renderSprite ctx r & scale (s*32)
     where
     renderCircle = renderS SimpleCircle
     renderSquare = renderS SimpleSquare
     renderS t s c = scale s $ renderShape $ def
         & shapeType .~ t
         & color     .~ c
-
-    renderSprite s r = case lookupResource r $ ctx^.resources of
-        Nothing  -> renderCircle 1 (Color.opaque Color.red)
-        Just img -> scale s $ renderImg img
 
 itemLikeOracle
     :: HasLocation s (Maybe Location)

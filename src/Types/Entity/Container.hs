@@ -6,6 +6,7 @@ import Delude
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ItemType
+import Types.Entity.ZIndex
 
 --------------------------------------------------------------------------------
 
@@ -21,3 +22,5 @@ makeFieldsCustom ''Container
 instance HasItemType Container ItemType where itemType = containerType.itemType
 
 instance Default Container
+instance GetZIndex Container Word32 where
+    get_zindex _ = toZIndex EntityZIndex_Item

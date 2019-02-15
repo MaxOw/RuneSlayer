@@ -12,7 +12,7 @@ import Engine.Common.Types
 import Types.Entity (Entity)
 import Types.Entity.Common
 import Types.Entity.TileType
-import Entity.Tile (makeSimpleTile)
+import Entity.Tile (makeSimpleTile, makeSimpleFullTile)
 import EntityLike (toEntity)
 import qualified Resource
 import Resource (Resource)
@@ -205,7 +205,16 @@ mkGrass pos@(V2 x y) = mkLocEnt pos tile
     mkTile i = Resource.mkEnvRect (42 + i*2) 10 2 2
 
 mkRoleL :: V2 Int -> (V2 Int, [TileRole]) -> [Entity]
-mkRoleL pp (pos, mr) = mapMaybe (mkRole $ pp+pos) mr
+mkRoleL pp (pos, mr) = condAddDirt $ mapMaybe (mkRole $ pp+pos) mr
+    where
+    isFull = any (== TileRole_Full) mr
+    condAddDirt = if isFull then id else (dirtTile (pp+pos):)
+
+dirtTile :: V2 Int -> Entity
+dirtTile p = toEntity . set location loc . makeSimpleFullTile
+    $ Resource.mkEnvRect 38 10 2 2
+    where
+    loc = Location $ fmap fromIntegral p
 
 mkRole :: V2 Int -> TileRole -> Maybe Entity
 mkRole pos r = mkLocEnt pos <$> roleToOffset r

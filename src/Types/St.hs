@@ -9,7 +9,6 @@ module Types.St
     , menuState
     , randomSeed
     , scroller
-    , debugFlags
     ) where
 
 import Delude

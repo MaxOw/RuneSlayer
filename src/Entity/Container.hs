@@ -11,6 +11,7 @@ import qualified Data.Set as Set
 import Types.Equipment
 import Types.Entity.Container
 import Types.Entity.ItemType
+import Types.Entity.Appearance
 import Entity.Utils
 import Entity.Actions
 import Entity.Item
@@ -51,7 +52,8 @@ containerToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = thisOracle
-   , makeSave   = EntityContainer
+   , makeSave   = EntitySum_Container
+   , makeKind   = EntityKind_Item
    }
 
 makeContainer :: ContainerType -> Container
@@ -68,5 +70,5 @@ testContainerType_bag = def
     & itemType.fittingSlots   .~ Set.fromList [EquipmentSlot_Backpack]
     & maxVolume               .~ volumeL 15
     where
-    ap = Appearance_Sprite (1/32) Resource.bag
+    ap = Appearance_Sprite Resource.bag
 

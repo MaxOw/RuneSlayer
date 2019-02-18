@@ -144,8 +144,8 @@ addToIndex e eix = eix
     & entities     .~ newVec
  -- , entityIndexLocation = addLocationIndex (queryLocation e) newId
     where
-    newId     = EntityId newCount vecOffset
-    newCount  = maybe 0 (\(EntityId c _) -> c+1) (eix^.lastId)
+    newId     = EntityId newCount (entityKind e) vecOffset
+    newCount  = maybe 0 (\x -> x^.unique+1) (eix^.lastId)
     eos       = eix^.emptyOffsets
     vec       = eix^.entities
     vecOffset = fromMaybe (Vector.length vec) (viaNonEmpty head eos)
@@ -184,7 +184,7 @@ expandRange e bb = bb
     & maxPoint %~ fmap (\x -> x+e)
 
 maxEntitySize :: Float
-maxEntitySize = 2 -- meters
+maxEntitySize = 4 -- meters
 
 -- TODO: this again is a naive filtering of all entities without emploing any
 -- sort of index what so ever. Obviously this needs to be improved in the future

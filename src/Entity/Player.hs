@@ -41,12 +41,11 @@ processAction = \case
 --------------------------------------------------------------------------------
 
 render :: Player -> RenderContext -> RenderAction
-render x _ctx = withZIndex x $ renderComposition
+render x _ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
     , renderShape shape & scale 0.3
-    ] & translate loc
+    ]
     where
-    loc = x^.location._Wrapped
     shape = def
         & shapeType   .~ SimpleCircle
         & color       .~ Color.opaque Color.blue
@@ -75,5 +74,6 @@ playerToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = thisOracle
-   , makeSave   = EntityPlayer
+   , makeSave   = EntitySum_Player
+   , makeKind   = EntityKind_Dynamic
    }

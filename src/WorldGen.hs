@@ -12,6 +12,7 @@ import Engine.Common.Types
 import Types.Entity (Entity)
 import Types.Entity.Common
 import Types.Entity.TileType
+import Entity.StaticEntity
 import Entity.Tile (makeSimpleTile, makeSimpleFullTile)
 import EntityLike (toEntity)
 import qualified Resource
@@ -52,7 +53,9 @@ generateWorld worldSize = do
     -- return $ Vector.fromList $ take 10 $ zipWith mkBool ps $ cycle [True, False]
     -- return $ Vector.fromList $ concat $ take 51 $ zipWith mk3x3 ps [0..]
     let pp = V2 ox oy
-    return $ Vector.fromList $ concatMap (mkRoleL pp) $ rndRoleGrid 18 (V2 w h)
+    let tiles = concatMap (mkRoleL pp) $ rndRoleGrid 18 (V2 w h)
+    let trees = map (placeTree pp) $ rndTreeGrid 18 (V2 w h)
+    return $ Vector.fromList $ tiles <> trees
 
 --------------------------------------------------------------------------------
 
@@ -72,8 +75,8 @@ partCell s = Repa.traverse s e f
         ]
 -}
 
-rndBool :: Int -> DIM2 -> Array D DIM2 Bool
-rndBool seed sh = intToBool $ Repa.randomishIntArray sh 0 2 seed
+rndBool :: Int -> Int -> DIM2 -> Array D DIM2 Bool
+rndBool seed rng sh = intToBool $ Repa.randomishIntArray sh 0 rng seed
     -- where seed = 4
 
 intToBool :: Source x Int => Array x DIM2 Int -> Array D DIM2 Bool
@@ -86,7 +89,22 @@ rndRoleGrid :: Int -> V2 Int -> [(V2 Int, [TileRole])]
 rndRoleGrid seed (V2 x y) = Repa.toList imtr
     where
     imtr :: Array V DIM2 (V2 Int, [TileRole])
-    imtr = Repa.computeS $ makeRoleGrid $ rndBool seed (Z :. x :. y)
+    imtr = Repa.computeS $ makeRoleGrid $ rndBool seed 2 (Z :. x :. y)
+
+rndTreeGrid :: Int -> V2 Int -> [V2 Int]
+rndTreeGrid seed (V2 x y) = map fst $ filter snd $ Repa.toList imtr
+    where
+    grassGrid = rndBool seed 2 (Z :. x :. y)
+    topGrid   = rndBool 8 (seed+1) (Z :. x :. y)
+    andGrid   = Repa.zipWith (&&) grassGrid topGrid
+    imtr :: Array V DIM2 (V2 Int, Bool)
+    imtr = Repa.computeS $ addOffset andGrid
+
+placeTree :: V2 Int -> V2 Int -> Entity
+placeTree pp p = toEntity $ makeStaticEntity testStaticEntityType_tree
+    & location .~ locM x y
+    where
+    V2 x y = fmap fromIntegral (pp + p)
 
 worldGenTest :: IO ()
 worldGenTest = do

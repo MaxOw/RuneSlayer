@@ -14,9 +14,11 @@ module Entity.Actions
     , containerDropItem
 
     -- Render Actions
-    , maybeLocate
+    , maybeLocate, locate
     , withZIndex
     , renderSprite
+    , renderAppearance
+    , renderBBox
 
     -- Utils
     , anyMatch
@@ -28,9 +30,13 @@ import qualified Data.Set as Set
 import qualified Data.List as List
 import Random.Utils
 import Data.Hashable (hash)
+import Engine.Common.Types (BBox, bboxToRect)
+import Engine.Layout.Render (renderSimpleBox)
+import Engine.Layout.Types (border)
 
 import Types.Entity
 import Types.Entity.ItemType
+import Types.Entity.Appearance
 import Entity.Utils
 import EntityIndex (lookupEntityById)
 import qualified Equipment
@@ -41,6 +47,7 @@ import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import Resource (Resource)
 import ResourceManager (lookupResource, ResourceMap)
+import Types.ResourceManager (unitsPerPixel)
 
 --------------------------------------------------------------------------------
 -- ActOn Actions
@@ -289,6 +296,12 @@ maybeLocate
     => x -> (t -> t)
 maybeLocate x = fromMaybe id $ x^?location.traverse._Wrapped.to translate
 
+locate
+    :: HasLocation x Location
+    => Transformable2D t
+    => x -> (t -> t)
+locate x = x^.location._Wrapped.to translate
+
 withZIndex :: GetZIndex x Word32
     => x -> (RenderAction -> RenderAction)
 withZIndex x = setZIndexAtLeast (get_zindex x)
@@ -296,11 +309,31 @@ withZIndex x = setZIndexAtLeast (get_zindex x)
 renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
 renderSprite ctx r = case lookupResource r $ ctx^.resources of
     Nothing  -> renderShape shape
-    Just img -> scale (1/32) $ renderImg img
+    Just img -> renderImg img & scale (r^.unitsPerPixel)
     where
     shape = def
         & shapeType   .~ SimpleSquare
         & color       .~ Color.opaque Color.gray
+
+renderAppearance :: HasResources c ResourceMap => c -> Appearance -> RenderAction
+renderAppearance ctx = \case
+    Appearance_SimpleCircle s c -> renderCircle s c
+    Appearance_SimpleSquare s c -> renderSquare s c
+    Appearance_Sprite         r -> renderSprite ctx r
+    Appearance_Translate    t a -> translate t $ renderAppearance ctx a
+    Appearance_Compose as -> renderComposition $ map (renderAppearance ctx) as
+    where
+    renderCircle = renderS SimpleCircle
+    renderSquare = renderS SimpleSquare
+    renderS t s c = scale s $ renderShape $ def
+        & shapeType .~ t
+        & color     .~ c
+
+renderBBox :: BBox Double -> RenderAction
+renderBBox bb = renderSimpleBox $ def
+    & size .~ (view size $ bboxToRect bb)
+    & border.each.color .~ Color.opaque Color.gray
+    & border.each.width .~ (1/32)
 
 --------------------------------------------------------------------------------
 -- Utils

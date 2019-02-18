@@ -50,5 +50,6 @@ wallToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntityWall
+   , makeSave   = EntitySum_Wall
+   , makeKind   = EntityKind_Static
    }

@@ -18,13 +18,12 @@ import qualified Data.Set as Set
 import Types.Equipment
 import Types.Entity.Item
 import Types.Entity.ItemType
+import Types.Entity.Appearance
+import Types.Debug
+import Engine.Common.Types (BBox(..))
 import Entity.Utils
 import Entity.Actions
-import ResourceManager (lookupResource)
 import qualified Resource
-
-import qualified Data.Colour       as Color
-import qualified Data.Colour.Names as Color
 
 --------------------------------------------------------------------------------
 
@@ -75,17 +74,21 @@ itemLikeRender
     => HasItemType x ItemType
     => GetZIndex   x Word32
     => x -> RenderContext -> RenderAction
-itemLikeRender x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x $
-    case x^.itemType.appearance of
-        Appearance_SimpleCircle s c -> renderCircle s c
-        Appearance_SimpleSquare s c -> renderSquare s c
-        Appearance_Sprite       s r -> renderSprite ctx r & scale (s*32)
+itemLikeRender x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
+    $ renderComposition
+    [ itemRenderAction
+    , renderDebug
+    ]
     where
-    renderCircle = renderS SimpleCircle
-    renderSquare = renderS SimpleSquare
-    renderS t s c = scale s $ renderShape $ def
-        & shapeType .~ t
-        & color     .~ c
+    itemRenderAction = renderAppearance ctx $ x^.itemType.appearance
+
+    renderDebug
+        = renderComposition $ map snd
+        $ filter (\(f, _) -> Set.member f $ ctx^.debugFlags)
+        [ (DebugFlag_ShowDynamicBoundingBoxes, renderBBox itemBBox)
+        ]
+
+    itemBBox = BBox (-0.5) (0.5)
 
 itemLikeOracle
     :: HasLocation s (Maybe Location)
@@ -106,7 +109,8 @@ itemToEntity = makeEntity $ EntityParts
    , makeUpdate = itemLikeUpdatePure
    , makeRender = itemLikeRender
    , makeOracle = itemLikeOracle
-   , makeSave   = EntityItem
+   , makeSave   = EntitySum_Item
+   , makeKind   = EntityKind_Item
    }
 
 makeItem :: ItemType -> Item
@@ -119,7 +123,7 @@ testItemType_helmet = def
     & name         .~ "Helmet"
     & volume       .~ volumeL 1.5
     & itemKind     .~ ItemKind_BigItem
-    & appearance   .~ Appearance_Sprite (1/32) Resource.helmet
+    & appearance   .~ Appearance_Sprite Resource.helmet
     & fittingSlots .~ Set.fromList [EquipmentSlot_Head]
 
 testItemType_healthPotion :: ItemType
@@ -127,6 +131,6 @@ testItemType_healthPotion = def
     & name         .~ "Health Potion"
     & volume       .~ volumeL 0.1
     & itemKind     .~ ItemKind_SmallItem
-    & appearance   .~ Appearance_Sprite (1/64) Resource.healthPotion
+    & appearance   .~ Appearance_Sprite Resource.healthPotion
     & fittingSlots .~ Set.fromList []
 

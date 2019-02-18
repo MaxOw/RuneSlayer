@@ -65,6 +65,7 @@ setupTestGameState
         [ bagEntity
         , helmetEntity
         , potionEntity
+     -- , treeEntity
      -- , wallEntity
         ]
     where
@@ -79,6 +80,9 @@ setupTestGameState
 
     potionEntity = toEntity $ makeItem testItemType_healthPotion
         & location .~ (Just $ locM (-1) 0.2)
+
+    -- treeEntity = toEntity $ makeStaticEntity testStaticEntityType_tree
+        -- & location .~ locM 1 3
 
     -- tileEntity = toEntity $ makeSimpleTile $ Resource.mkEnvRect 42 10 2 2
 

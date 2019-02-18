@@ -12,8 +12,9 @@ allSprites =
     , atlasEnv1
     ]
 
-mkResourcePng :: Text -> Resource
-mkResourcePng p = def
+mkResourcePng :: Double -> Text -> Resource
+mkResourcePng ppu p = def
+    & unitsPerPixel .~ (1/ppu)
     & path .~ "data/imgs/" <> p <> ".png"
 
 {-
@@ -42,15 +43,15 @@ mkRectOf (Size w h) (Rect (V2 x y) (Size ww hh)) = Rect (V2 fx fy) (Size fw fh)
     -- sh = 1 / fromIntegral h
 
 healthPotion :: Resource
-healthPotion = mkResourcePng "items0/P_Red07"
+healthPotion = mkResourcePng 64 "items0/P_Red07"
 
 atlasItems1 :: Resource
-atlasItems1 = mkResourcePng "items1/items1"
+atlasItems1 = mkResourcePng 32 "items1/items1"
     -- & gridSize .~ pure 16
     & gridSize .~ pure 32
 
 atlasEnv1 :: Resource
-atlasEnv1 = mkResourcePng "environment/base_out_atlas"
+atlasEnv1 = mkResourcePng 32 "environment/base_out_atlas"
     -- & gridSize .~ pure 64
     & gridSize .~ pure 16
 
@@ -65,3 +66,9 @@ mkEnvPart = mkAtlasPart atlasEnv1
 
 mkEnvRect :: Int -> Int -> Int -> Int -> Resource
 mkEnvRect = mkAtlasRect atlasEnv1
+
+treeTrunk :: Resource
+treeTrunk = mkEnvRect 50 38 6 6
+
+treeFoliage :: Resource
+treeFoliage = mkEnvRect 48 24 6 6

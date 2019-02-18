@@ -6,18 +6,20 @@ import Engine (Img)
 import Engine.Common.Types (Size, Rect)
 
 data Resource = Resource
-   { resource_path     :: Text
-   , resource_part     :: Maybe (Rect Int)
-   , resource_gridSize :: Size Int
+   { resource_path          :: Text
+   , resource_part          :: Maybe (Rect Int)
+   , resource_gridSize      :: Size Int
+   , resource_unitsPerPixel :: Double
    }
    deriving (Show, Generic)
 -- instance Hashable Resource
 makeFieldsCustom ''Resource
 instance Default Resource where
     def = Resource
-        { resource_path     = def
-        , resource_part     = Nothing
-        , resource_gridSize = pure 1
+        { resource_path          = def
+        , resource_part          = Nothing
+        , resource_gridSize      = pure 1
+        , resource_unitsPerPixel = 1
         }
 
 type ResourceMap = HashMap Text Img

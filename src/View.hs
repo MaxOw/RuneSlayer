@@ -17,6 +17,7 @@ import Types.St
 import Types.MenuState
 import Types.GameState
 import Types.Debug
+import Types.Entity.ZIndex
 import EntityIndex (dynamicEntitiesInRange, staticEntitiesInRange)
 import GameState (isDebugFlagOn)
 
@@ -76,12 +77,14 @@ renderGame _delta st = do
     let viewProjM = gameProjM !*! viewM
 
     let es = dynamicEntitiesInRange viewRange $ st^.gameState.entities
+    let ss = [] -- filter isVerticalEntity
+           -- $ staticEntitiesInRange viewRange $ st^.gameState.entities
 
     Engine.draw viewProjM $ renderComposition
         [ mempty
         , renderUnless hideScrollerDebug renderScroller
         , T.scale viewScale $ renderComposition
-            [ renderEntities es st
+            [ renderEntities (es <> ss) st
             , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
@@ -93,6 +96,11 @@ renderGame _delta st = do
         Engine.draw menuProjM =<< makeRenderLayout (gameMenuLayout st e)
 
     Engine.swapBuffers
+
+isVerticalEntity :: HasEntity x Entity => x -> Bool
+isVerticalEntity x = and $ (>= EntityZIndex_Vertical) <$> mzi
+    where
+    mzi = x^.entity.oracle.zindex
 
 renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  x = x
@@ -146,9 +154,12 @@ renderSprite ctx r = case lookupResource r $ ctx^.resources of
 renderEntities :: HasEntity e Entity => [e] -> St -> RenderAction
 renderEntities es st = Engine.renderComposition rs
     where
-    rs = map (flip entityRender ctx . view entity) es
+    rs = map (flip entityRender ctx . view entity) ese
+    ese = sortWith f es
+    f x = Down $ fromMaybe 0 $ x^?entity.oracle.location.traverse._Wrapped._y
     ctx = RenderContext
-        { renderContext_resources = st^.resources
+        { renderContext_resources  = st^.resources
+        , renderContext_debugFlags = st^.debugFlags
         }
 
 --------------------------------------------------------------------------------

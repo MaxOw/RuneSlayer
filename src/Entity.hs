@@ -15,5 +15,6 @@ makeEntity me = f
         , entityRender = makeRender me p
         , entityOracle = makeOracle me p
         , entitySave   = makeSave me p
+        , entityKind   = makeKind me
         }
 

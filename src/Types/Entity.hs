@@ -12,6 +12,7 @@ module Types.Entity
 import Delude
 import Data.Vector (Vector)
 
+import Types.Debug (DebugFlag)
 import Types.EntityAction as All
 import Types.EntityOracle as All
 import Types.EntitySum    as All
@@ -19,7 +20,7 @@ import Engine (RenderAction (..))
 import Engine.Common.Types (BBox)
 
 import Types.ResourceManager (ResourceMap)
-import Types.Entity.Common (EntityId) -- , Location)
+import Types.Entity.Common (EntityId, EntityKind) -- , Location)
 import Engine.KDTree (KDTree)
 
 --------------------------------------------------------------------------------
@@ -48,7 +49,8 @@ data EntityContext = EntityContext
    }
 
 data RenderContext = RenderContext
-   { renderContext_resources :: ResourceMap
+   { renderContext_resources  :: ResourceMap
+   , renderContext_debugFlags :: Set DebugFlag
    }
 
 data Entity = Entity
@@ -57,6 +59,7 @@ data Entity = Entity
    , entityRender :: RenderContext -> RenderAction
    , entityOracle :: EntityOracle
    , entitySave   :: EntitySum
+   , entityKind   :: EntityKind
    }
 
 instance HasEntity Entity Entity where entity = id
@@ -77,5 +80,6 @@ data EntityParts p = EntityParts
    , makeRender :: p -> RenderContext -> RenderAction
    , makeOracle :: p -> EntityOracle
    , makeSave   :: p -> EntitySum
+   , makeKind   :: EntityKind
    }
 

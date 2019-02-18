@@ -16,6 +16,7 @@ data EntityZIndex
    = EntityZIndex_Tile TileZIndex
    | EntityZIndex_Item
    | EntityZIndex_Vertical
+   deriving (Eq, Ord)
 
 class ToZIndex a where
     toZIndex :: a -> Word32

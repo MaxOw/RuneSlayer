@@ -22,11 +22,9 @@ update x _ = (Just x, [])
 
 render :: Tile -> RenderContext -> RenderAction
 -- render x ctx = renderSprite ctx (Resource.mkEnvPart 40 11)
-render x ctx = withZIndex x $ loc $ case x^.tileType.sprite of
+render x ctx = withZIndex x $ locate x $ case x^.tileType.sprite of
     Nothing -> mempty
     Just rs -> renderSprite ctx rs
-    where
-    loc = translate (x^.location._Wrapped)
 
 oracle :: Tile -> EntityOracle
 oracle x = def
@@ -41,7 +39,8 @@ tileToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntityTile
+   , makeSave   = EntitySum_Tile
+   , makeKind   = EntityKind_Tile
    }
 
 makeTile :: TileType -> Tile

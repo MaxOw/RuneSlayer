@@ -17,7 +17,7 @@ import Types.Entity.Player
 -- import Entity.Tile
 import Entity.Container
 import Entity.Item
-import EntityIndex (rebuildIndex)
+-- import EntityIndex (rebuildIndex)
 import GameState
 import EntityLike
 import WorldGen (generateWorld, genTest)
@@ -58,8 +58,8 @@ loadFontFamily fname = void $ Engine.loadFontFamily fname $ def
 
 setupTestGameState :: GameState -> GameState
 setupTestGameState
-    = over entities rebuildIndex
-    . addEntityAndFocus playerEntity
+    -- = over entities rebuildIndex
+    = addEntityAndFocus playerEntity
     . addEntities
      -- [ tileEntity
         [ bagEntity

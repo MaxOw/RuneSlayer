@@ -22,7 +22,6 @@ instance Hashable EntityKind
 
 data EntityId = EntityId
    { entityId_unique :: Word64
-   , entityId_kind   :: EntityKind
    , entityId_offset :: Int
    }
    deriving (Eq, Ord, Generic)
@@ -32,7 +31,7 @@ makeFieldsCustom ''EntityId
 instance HasEntityId EntityId EntityId where entityId = id
 
 instance Show EntityId where
-    show (EntityId x _ _) = "EID:" <> show x
+    show (EntityId x _) = "EID:" <> show x
 
 type V2D = V2 Double
 

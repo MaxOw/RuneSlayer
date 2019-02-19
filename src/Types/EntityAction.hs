@@ -31,6 +31,13 @@ data EntityAction
    deriving (Show)
 makePrisms ''EntityAction
 
+{-
+data WorldAction = WorldAction
+data DirectedAction
+   = DirectedAtEntity DirectedEntityAction
+   | DirectedAtWorld  WorldAction
+-}
+
 data DirectedEntityAction = DirectedEntityAction
    { directedEntity_entityId :: EntityId
    , directedEntity_action   :: EntityAction

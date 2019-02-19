@@ -36,14 +36,16 @@ data St = St
 makeFieldsCustom ''St
 
 defaultSt :: MonadIO m => Scroller -> m St
-defaultSt scro = return $ St
-    { st_resources  = HashMap.empty
-    , st_inputState = def
-    , st_gameState  = def
-    , st_menuState  = def
-    , st_scroller   = scro
-    , st_debugFlags = def
-    -- , st_randomSeed = pureRandomSeed
-    }
+defaultSt scro = do
+    gs <- defaultGameState
+    return $ St
+        { st_resources  = HashMap.empty
+        , st_inputState = def
+        , st_gameState  = gs
+        , st_menuState  = def
+        , st_scroller   = scro
+        , st_debugFlags = def
+        -- , st_randomSeed = pureRandomSeed
+        }
 
 

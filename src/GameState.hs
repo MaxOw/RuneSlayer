@@ -36,10 +36,11 @@ zoomGameState = zoom (userState.gameState)
 updateGameState :: Game ()
 updateGameState = zoomGameState $ do
     as <- use actions
-    es <- use entities
     fct <- use frameCount
-    assign entities =<< updateIndex as fct es
-    -- entities %= updateIndex as
+    esIO <- use entitiesIO
+    newEsIO <- updateIndex as fct esIO
+    assign entitiesIO newEsIO
+    assign entities =<< unsafeFreezeEntityIndex newEsIO
     actions  .= []
 
 addDirectedAction :: DirectedEntityAction -> Game ()

@@ -11,60 +11,66 @@ import Equipment (EquipmentSlot(..), contentList)
 import qualified Equipment
 import EntityIndex
 
-liftGame :: (St -> a) -> Game a
-liftGame f = f <$> use userState
-
--- Get location of a focused entity (if any)
-focusLocation :: St -> Maybe Location
-focusLocation st = view location =<< entityOracle <$> focusEntity st
-
-focusEntityId :: St -> Maybe EntityId
-focusEntityId = view (gameState.focusId)
-
-withFocusId :: (EntityId -> Game ()) -> Game ()
-withFocusId = whenJustM (liftGame focusEntityId)
+--------------------------------------------------------------------------------
 
 -- Get focused entity (if any)
-focusEntity :: St -> Maybe Entity
-focusEntity st = view entity <$> me
-    where
-    mid = st^.gameState.focusId
-    eix = st^.gameState.entities
-    me = flip lookupEntityById eix =<< mid
+focusEntity :: Game (Maybe Entity)
+focusEntity = do
+    mfi <- use $ userState.gameState.focusId
+    case mfi of
+        Nothing -> return Nothing
+        Just fi -> fmap (view entity) <$> lookupEntity fi
+
+-- Get location of a focused entity (if any)
+focusLocation :: Game (Maybe Location)
+focusLocation = (view (oracle.location) =<<) <$> focusEntity
+
+focusEntityId :: Game (Maybe EntityId)
+focusEntityId = use (userState.gameState.focusId)
+
+withFocusId :: (EntityId -> Game ()) -> Game ()
+withFocusId = whenJustM focusEntityId
 
 -- Get items within pickup range of a focused entity
-focusItemsInRange :: St -> [EntityWithId]
-focusItemsInRange st = case focusLocation st of
-    Nothing -> []
-    Just loc -> queryItemsInPickupRange loc
+focusItemsInRange :: Game [EntityWithId]
+focusItemsInRange = focusLocation >>= \case
+    Nothing -> return []
+    Just lc -> do
+        eix <- use $ userState.gameState.entities
+        es <- lookupInRange EntityKind_Item (queryRange lc) eix
+        return $ filter (isItemInRange lc . view (entity.oracle)) es
     where
-    queryItemsInPickupRange loc
-        = filter (isItemInRange . view (entity.oracle))
-        $ dynamicEntitiesInRange (queryRange loc) $ st^.gameState.entities
-
-    isItemInRange x = withinRange (x^.location) && isJust (x^.itemKind)
     queryRange loc = mkBBoxCenter (fmap realToFrac $ loc^._Wrapped)
         (fmap realToFrac $ pure $ defaultPickupRange^._Wrapped)
 
-    withinRange loc
-        = nothingFalse2 (focusLocation st) loc
-        $ isWithinDistance defaultPickupRange
+    isItemInRange loc x = withinRange loc (x^.location) && isJust (x^.itemKind)
+    withinRange l xl = nothingFalse xl $ isWithinDistance defaultPickupRange l
 
-focusItemsInInventory :: St -> [EntityWithId]
-focusItemsInInventory st = lookupEntities st (es <> bs)
-    where
-    mbp = focusEquipmentSlot st EquipmentSlot_Backpack
-    bs = mbp^..traverse.entity.oracle.content.traverse.traverse
-    es = st^.to focusEntity.traverse.oracle.equipment.traverse.to contentList
+focusItemsInInventory :: Game [EntityWithId]
+focusItemsInInventory = do
+    mbp <- focusEquipmentSlot EquipmentSlot_Backpack
+    mf <- focusEntity
+    let es = mf^.traverse.oracle.equipment.traverse.to contentList
+    let bs = mbp^..traverse.entity.oracle.content.traverse.traverse
+    lookupEntities (es <> bs)
 
-lookupEntities :: St -> [EntityId] -> [EntityWithId]
-lookupEntities st = mapMaybe $ \i -> lookupEntityById i (st^.gameState.entities)
+focusEquipmentSlot :: EquipmentSlot -> Game (Maybe EntityWithId)
+focusEquipmentSlot es = do
+    mf <- focusEntity
+    let meq = mf^?traverse.oracle.equipment.traverse
+    case Equipment.lookupSlot es =<< meq of
+        Nothing -> return Nothing
+        Just  i -> lookupEntity i
 
-lookupEntity :: St -> EntityId -> Maybe EntityWithId
-lookupEntity st i = lookupEntityById i (st^.gameState.entities)
+--------------------------------------------------------------------------------
 
-focusEquipmentSlot :: St -> EquipmentSlot -> Maybe EntityWithId
-focusEquipmentSlot st es = lookupEntity st
-      =<< Equipment.lookupSlot es
-      =<< st^?to focusEntity.traverse.oracle.equipment.traverse
+lookupEntities :: Foldable t => t EntityId -> Game [EntityWithId]
+lookupEntities is = do
+    es <- use $ userState.gameState.entities
+    EntityIndex.lookupManyById is es
+
+lookupEntity :: EntityId -> Game (Maybe EntityWithId)
+lookupEntity i = do
+    es <- use $ userState.gameState.entities
+    EntityIndex.lookupById i es
 

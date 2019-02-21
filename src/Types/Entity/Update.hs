@@ -14,5 +14,5 @@ data UpdateSt x = UpdateSt
    }
 makeFieldsCustom ''UpdateSt
 
-type Update x = State (UpdateSt x)
+type Update x = StateT (UpdateSt x) Q
 

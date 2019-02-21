@@ -4,17 +4,12 @@ module Types.GameState where
 import Delude
 import qualified Control.Monad.Trans.State.Lazy as Lazy
 import Types.Entity.Common (EntityId)
-import Types.Entity (EntityIndexIO, EntityIndex)
+import Types.Entity (EntityIndex)
 import Types.EntityAction (DirectedEntityAction)
-import EntityIndex (newIndex, unsafeFreezeEntityIndex)
+import qualified EntityIndex
 
 data GameState = GameState
-   { gameState_entitiesIO     :: EntityIndexIO
-   , gameState_entities       :: EntityIndex
-   -- ^ Frozen version of EntityIndexIO that should only by used for queries and
-   -- should not be saved anywhere. Any assumptions of referential transparency
-   -- should be thrown out of the window when using it. It should be assumed
-   -- that it's only valid and unchanged for a period of a given frame.
+   { gameState_entities       :: EntityIndex
    , gameState_actions        :: [DirectedEntityAction]
    , gameState_focusId        :: Maybe EntityId
    , gameState_gameScale      :: Double
@@ -28,11 +23,9 @@ type GameStateM = Lazy.StateT GameState IO
 
 defaultGameState :: MonadIO m => m GameState
 defaultGameState = do
-    eix <- newIndex
-    fx  <- unsafeFreezeEntityIndex eix
+    eix <- EntityIndex.new
     return $ GameState
-        { gameState_entitiesIO     = eix
-        , gameState_entities       = fx
+        { gameState_entities       = eix
         , gameState_actions        = []
         , gameState_focusId        = Nothing
         , gameState_gameScale      = 64

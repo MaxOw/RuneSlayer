@@ -17,8 +17,7 @@ import Types.St
 import Types.MenuState
 import Types.GameState
 import Types.Debug
-import Types.Entity.ZIndex
-import EntityIndex (dynamicEntitiesInRange, staticEntitiesInRange)
+import EntityIndex (lookupInRange)
 import GameState (isDebugFlagOn)
 
 import GUI.GameMenu
@@ -59,7 +58,7 @@ renderGame _delta st = do
 
     let viewScale = st^.gameState.gameScale
 
-    let viewPos      = focusPos st
+    viewPos <- focusPos
     let viewportPos  = viewPos ^* (realToFrac viewScale)
     let viewportSize = Size (fromIntegral w) (fromIntegral h)
 
@@ -71,36 +70,31 @@ renderGame _delta st = do
 
     let magScale = if zoomOutScrollerDebug then 0.5 else 1
 
-    let viewM = viewMatrix viewScale st
+    viewM <- viewMatrix viewScale
     gameProjM <- orthoProjection $ def
         & set scale magScale
     let viewProjM = gameProjM !*! viewM
 
-    let es = dynamicEntitiesInRange viewRange $ st^.gameState.entities
-    let ss = [] -- filter isVerticalEntity
-           -- $ staticEntitiesInRange viewRange $ st^.gameState.entities
+    es <- lookupInRange EntityKind_Dynamic viewRange $ st^.gameState.entities
+    is <- lookupInRange EntityKind_Item    viewRange $ st^.gameState.entities
+    ss <- lookupInRange EntityKind_Static  viewRange $ st^.gameState.entities
 
     Engine.draw viewProjM $ renderComposition
         [ mempty
         , renderUnless hideScrollerDebug renderScroller
         , T.scale viewScale $ renderComposition
-            [ renderEntities (es <> ss) st
+            [ renderEntities (es <> is <> ss) st
             , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
         ]
 
-    whenJust (focusEntity st) $ \e -> do
+    whenJustM focusEntity $ \_ -> do
         menuProjM <- orthoProjection $ def
             & set scale (st^.gameState.menuScale)
-        Engine.draw menuProjM =<< makeRenderLayout (gameMenuLayout st e)
+        Engine.draw menuProjM =<< makeRenderLayout =<< gameMenuLayout
 
     Engine.swapBuffers
-
-isVerticalEntity :: HasEntity x Entity => x -> Bool
-isVerticalEntity x = and $ (>= EntityZIndex_Vertical) <$> mzi
-    where
-    mzi = x^.entity.oracle.zindex
 
 renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  x = x
@@ -164,11 +158,11 @@ renderEntities es st = Engine.renderComposition rs
 
 --------------------------------------------------------------------------------
 
-viewMatrix :: Double -> St -> Mat4
+viewMatrix :: Double -> Graphics Mat4
 viewMatrix s
     = fromMaybe Matrix.identity
     . fmap locationToViewMatrix
-    . focusLocation
+    <$> focusLocation
     where
     locationToViewMatrix :: Location -> Mat4
     locationToViewMatrix
@@ -180,19 +174,21 @@ viewMatrix s
 
 --------------------------------------------------------------------------------
 
-focusPos :: St -> V2 Float
-focusPos st = fmap realToFrac $ fromMaybe 0 $ view _Wrapped <$> focusLocation st
+focusPos :: Graphics (V2 Float)
+focusPos = do
+    mloc <- focusLocation
+    return $ fmap realToFrac $ fromMaybe 0 $ view _Wrapped <$> mloc
 
 prerenderUpdate :: St -> Graphics RenderAction
 prerenderUpdate st = do
     let s = st^.scroller
     let vscale = realToFrac $ st^.gameState.gameScale
-    let vpos = focusPos st
+    vpos <- focusPos
     (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
     let vsize = Size (fromIntegral w) (fromIntegral h)
     updateScroller s vscale vpos vsize $ \bb -> do
-        let es = staticEntitiesInRange bb $ st^.gameState.entities
-        renderEntities es st
+        es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
+        return $ renderEntities es st
         -- randomTilesGen st bb
     makeRenderScroller s
 

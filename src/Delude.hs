@@ -8,6 +8,8 @@ module Delude
     , isPrism
     , makeFieldsCustom
 
+    , boundedRange
+
     , nothingFalse
     , nothingFalse2
 
@@ -49,6 +51,11 @@ instance Default Text where def = ""
 instance Default Bool where def = False
 instance Default (Bimap a b) where def = Bimap.empty
 instance Default (Vector.Vector a) where def = Vector.empty
+
+--------------------------------------------------------------------------------
+
+boundedRange :: (Bounded a, Enum a) => [a]
+boundedRange = [minBound .. maxBound]
 
 --------------------------------------------------------------------------------
 

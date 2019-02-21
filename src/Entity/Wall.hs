@@ -18,8 +18,8 @@ import ResourceManager (lookupResource, ResourceMap)
 actOn :: Wall -> EntityAction -> Wall
 actOn x _ = x
 
-update :: Wall -> EntityContext -> (Maybe Wall, [DirectedEntityAction])
-update x _ = (Just x, [])
+update :: Wall -> EntityContext -> Q (Maybe Wall, [DirectedEntityAction])
+update x _ = return (Just x, [])
 
 render :: Wall -> RenderContext -> RenderAction
 -- render x ctx = renderSprite ctx (Resource.mkEnvPart 40 11)

@@ -17,8 +17,8 @@ import Resource (Resource)
 actOn :: Tile -> EntityAction -> Tile
 actOn x _ = x
 
-update :: Tile -> EntityContext -> (Maybe Tile, [DirectedEntityAction])
-update x _ = (Just x, [])
+update :: Tile -> EntityContext -> Q (Maybe Tile, [DirectedEntityAction])
+update x _ = return (Just x, [])
 
 render :: Tile -> RenderContext -> RenderAction
 -- render x ctx = renderSprite ctx (Resource.mkEnvPart 40 11)

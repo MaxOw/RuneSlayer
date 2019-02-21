@@ -57,7 +57,7 @@ itemLikeActOn x a = case a of
 itemLikeUpdatePure
     :: HasProcessOnUpdate s [EntityAction]
     => HasOwner           s (Maybe EntityId)
-    => s -> EntityContext -> (Maybe s, [DirectedEntityAction])
+    => s -> EntityContext -> Q (Maybe s, [DirectedEntityAction])
 itemLikeUpdatePure x ctx = runUpdate x ctx $ do
     itemLikeUpdate
 

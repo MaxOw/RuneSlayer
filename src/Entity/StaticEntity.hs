@@ -22,8 +22,8 @@ actOn x _ = x
 update
     :: StaticEntity
     -> EntityContext
-    -> (Maybe StaticEntity, [DirectedEntityAction])
-update x _ = (Just x, [])
+    -> Q (Maybe StaticEntity, [DirectedEntityAction])
+update x _ = return (Just x, [])
 
 render :: StaticEntity -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderAppearance ctx

@@ -11,7 +11,7 @@ makeEntity me = f
     where
     f p = Entity
         { entityActOn  = f . makeActOn me p
-        , entityUpdate = over _1 (fmap f) . makeUpdate me p
+        , entityUpdate = fmap (over _1 (fmap f)) . makeUpdate me p
         , entityRender = makeRender me p
         , entityOracle = makeOracle me p
         , entitySave   = makeSave me p

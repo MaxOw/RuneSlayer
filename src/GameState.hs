@@ -4,8 +4,6 @@ module GameState
     , updateGameState
     , actOnEntity
     , actOnFocusedEntity
-    , addEntityAndFocus
-    , addEntity, addEntities
     , entityIdToWithId
 
     , toggleDebug, isDebugFlagOn
@@ -18,7 +16,7 @@ import qualified Data.Set as Set
 
 import Engine (userState)
 import Types (Game)
-import Types.Entity (Entity, EntityWithId(..))
+import Types.Entity (EntityWithId(..))
 import Types.Entity.Common (EntityId)
 import Types.St
 import Types.GameState
@@ -26,7 +24,7 @@ import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Focus
 
-import EntityIndex
+import qualified EntityIndex
 
 --------------------------------------------------------------------------------
 
@@ -35,13 +33,12 @@ zoomGameState = zoom (userState.gameState)
 
 updateGameState :: Game ()
 updateGameState = zoomGameState $ do
-    as <- use actions
-    fct <- use frameCount
-    esIO <- use entitiesIO
-    newEsIO <- updateIndex as fct esIO
-    assign entitiesIO newEsIO
-    assign entities =<< unsafeFreezeEntityIndex newEsIO
-    actions  .= []
+    join $ EntityIndex.update
+        <$> use actions
+        <*> use frameCount
+        <*> use entities
+
+    actions .= []
 
 addDirectedAction :: DirectedEntityAction -> Game ()
 addDirectedAction a = userState.gameState.actions %= (a:)
@@ -55,22 +52,10 @@ actOnFocusedEntity act = zoomGameState $ do
         Just fi -> actions %= (DirectedEntityAction fi act:)
         Nothing -> return ()
 
-addEntityAndFocus :: Entity -> GameState -> GameState
-addEntityAndFocus ent g = set focusId (getLastId $ ng^.entities) ng
-    where
-    ng = addEntity ent g
-
-addEntity :: Entity -> GameState -> GameState
-addEntity e g = over entities (addToIndex e) g
-
-addEntities :: Foldable f => f Entity -> GameState -> GameState
--- addEntities = flip $ foldl' (flip addEntity)
-addEntities = flip (foldr addEntity)
-
 entityIdToWithId :: EntityId -> Game (Maybe EntityWithId)
 entityIdToWithId eid = zoomGameState $ do
     es <- use entities
-    return $ lookupEntityById eid es
+    EntityIndex.lookupById eid es
 
 --------------------------------------------------------------------------------
 
@@ -95,7 +80,7 @@ dropItem = actOnFocusedEntity . EntityAction_DropItem
 
 pickupAllItems :: Game ()
 pickupAllItems = withFocusId $ \fi -> do
-    es <- fmap (view entityId) <$> liftGame focusItemsInRange
+    es <- fmap (view entityId) <$> focusItemsInRange
     mapM_ (flip actOnEntity $ EntityAction_SelfAddedBy fi) es
 
 dropAllItems :: Game ()

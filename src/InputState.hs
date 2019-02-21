@@ -25,7 +25,7 @@ import qualified Data.Map as PrefixMap
 
 import Engine (userState)
 import Types (Game)
-import Types.St (St, inputState)
+import Types.St (inputState)
 import Types.Entity.Common (EntityId)
 import Types.InputState
 import GameState
@@ -196,8 +196,8 @@ inputActionEscape = zoomInputState $ do
 toggleViewPanel :: PanelName -> Game ()
 toggleViewPanel x = zoomInputState $ visiblePanels %= toggleSet x
 
-isPanelVisible :: PanelName -> St -> Bool
-isPanelVisible pname = Set.member pname . view (inputState.visiblePanels)
+isPanelVisible :: PanelName -> Game Bool
+isPanelVisible pname = zoomInputState $ uses visiblePanels (Set.member pname)
 
 --------------------------------------------------------------------------------
 

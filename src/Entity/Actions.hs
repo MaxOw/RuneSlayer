@@ -38,7 +38,7 @@ import Types.Entity
 import Types.Entity.ItemType
 import Types.Entity.Appearance
 import Entity.Utils
-import EntityIndex (lookupEntityById)
+import qualified EntityIndex
 import qualified Equipment
 import Types.Equipment
 import Equipment (Equipment, contentList)
@@ -126,7 +126,7 @@ addItems
     => HasLocation        x Location
     => Update x ()
 addItems = do
-    os <- equipItems =<< getItemsToAdd <$> use context <*> use self
+    os <- equipItems =<< getItemsToAdd
     let (sit, oit) = splitItemKind ItemKind_SmallItem os
     equippedBackpack >>= \case
         Just ct -> mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
@@ -150,7 +150,7 @@ containerAddItems
     => HasOwner           x (Maybe EntityId)
     => Update             x ()
 containerAddItems = do
-    os <- fitIntoContainer =<< getItemsToAdd <$> use context <*> use self
+    os <- fitIntoContainer =<< getItemsToAdd
     mapM_ containerDropItem os
 
 containerDropItem
@@ -246,10 +246,12 @@ equipItems eis = do
 
 getItemsToAdd
     :: HasProcessOnUpdate x [EntityAction]
-    => EntityContext -> x -> [EntityWithId]
-getItemsToAdd ctx = mapMaybe (f <=< g) . view processOnUpdate
+    => Update x [EntityWithId]
+getItemsToAdd = do
+    ps <- mapMaybe g <$> use (self.processOnUpdate)
+    eix <- use $ context.entities
+    catMaybes <$> mapM (flip EntityIndex.lookupById eix) ps
     where
-    f i = lookupEntityById i (ctx^.entities)
     g (EntityAction_AddItem        i) = Just i
     g _                               = Nothing
 

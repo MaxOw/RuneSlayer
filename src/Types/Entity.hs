@@ -10,7 +10,7 @@ module Types.Entity
     ) where
 
 import Delude
-import Data.Vector (Vector)
+import qualified Control.Monad.Trans.State.Lazy as Lazy
 
 import Types.Debug (DebugFlag)
 import Types.EntityAction as All
@@ -18,12 +18,12 @@ import Types.EntityOracle as All
 import Types.EntitySum    as All
 import Engine (RenderAction (..))
 import Engine.Common.Types (BBox)
-import Data.ArrayType (R, RW)
 import Data.VectorIndex (VectorIndex)
 
 import Types.ResourceManager (ResourceMap)
 import Types.Entity.Common (EntityId, EntityKind) -- , Location)
-import Engine.KDTree (KDTree)
+import Data.SpatialIndex (SpatialIndex)
+import Data.FullMap (FullMap)
 
 --------------------------------------------------------------------------------
 
@@ -33,25 +33,24 @@ data EntityWithId = EntityWithId
    }
 
 -- EntityIndex Query Monad
-newtype Q a = Q { runQ :: IO a } deriving (Functor, Applicative, Monad)
-class MonadQ m where liftQ :: Q a -> m a
-instance MonadQ Q  where liftQ = id
+newtype Q a = Q { unQ :: IO a } deriving (Functor, Applicative, Monad)
+runQ :: MonadIO m => Q a -> m a
+runQ = liftIO . unQ
+class Monad m => MonadQ m where liftQ :: Q a -> m a
 instance MonadQ IO where liftQ = runQ
+instance MonadQ Q  where liftQ = id
+instance MonadQ (Lazy.StateT us IO) where liftQ = runQ
+instance MonadQ (StateT us Q) where liftQ = lift
 
-type ViewRange = BBox Float
-data EntityIndexT t = EntityIndex
-   { entityIndex_lastId              :: Maybe EntityId
-   , entityIndex_entities            :: VectorIndex t EntityWithId
+type RangeBBox = BBox Float
+data EntityIndex = EntityIndex
+   { entityIndex_lastId              :: IORef (Maybe EntityId)
+   , entityIndex_entities            :: VectorIndex EntityWithId
 
-   , entityIndex_staticIndex         :: HashSet EntityId
-   , entityIndex_dynamicIndex        :: HashSet EntityId
-   , entityIndex_activatedIndex      :: HashSet EntityId
-   , entityIndex_staticLocationIndex :: KDTree EntityId
-   -- , entityIndex_entities            :: HashMap EntityId Entity
+   , entityIndex_dynamicIndex        :: IORef (HashSet EntityId)
+   , entityIndex_activatedList       :: IORef [EntityId]
+   , entityIndex_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
    }
-
-type EntityIndex   = EntityIndexT R
-type EntityIndexIO = EntityIndexT RW
 
 data EntityContext = EntityContext
    { entityContext_entities   :: EntityIndex
@@ -66,7 +65,7 @@ data RenderContext = RenderContext
 
 data Entity = Entity
    { entityActOn  :: EntityAction -> Entity
-   , entityUpdate :: EntityContext -> (Maybe Entity, [DirectedEntityAction])
+   , entityUpdate :: EntityContext -> Q (Maybe Entity, [DirectedEntityAction])
    , entityRender :: RenderContext -> RenderAction
    , entityOracle :: EntityOracle
    , entitySave   :: EntitySum
@@ -75,7 +74,7 @@ data Entity = Entity
 
 instance HasEntity Entity Entity where entity = id
 
-makeFieldsCustom ''EntityIndexT
+makeFieldsCustom ''EntityIndex
 makeFieldsCustom ''EntityContext
 makeFieldsCustom ''RenderContext
 
@@ -87,7 +86,7 @@ makeFieldsCustom ''EntityWithId
 
 data EntityParts p = EntityParts
    { makeActOn  :: p -> EntityAction -> p
-   , makeUpdate :: p -> EntityContext -> (Maybe p, [DirectedEntityAction])
+   , makeUpdate :: p -> EntityContext -> Q (Maybe p, [DirectedEntityAction])
    , makeRender :: p -> RenderContext -> RenderAction
    , makeOracle :: p -> EntityOracle
    , makeSave   :: p -> EntitySum

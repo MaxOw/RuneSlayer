@@ -120,17 +120,17 @@ defaultExit = \case
 
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
-    es <- fmap (view entityId) <$> liftGame focusItemsInRange
+    es <- fmap (view entityId) <$> focusItemsInRange
     startSelect SelectPickup es
 
 selectItemToDrop :: Game ()
 selectItemToDrop = do
-    es <- fmap (view entityId) <$> liftGame focusItemsInInventory
+    es <- fmap (view entityId) <$> focusItemsInInventory
     startSelect SelectDrop es
 
 selectItemToFocus :: Game ()
 selectItemToFocus = do
-    res <- fmap (view entityId) <$> liftGame focusItemsInRange
-    ies <- fmap (view entityId) <$> liftGame focusItemsInInventory
+    res <- fmap (view entityId) <$> focusItemsInRange
+    ies <- fmap (view entityId) <$> focusItemsInInventory
     startSelect SelectFocus $ res <> ies
 

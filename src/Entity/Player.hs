@@ -24,7 +24,7 @@ actOn x a = case a of
     EntityAction_OwnerDropItem   _ -> handleOnUpdate  a x
     _ -> x
 
-update :: Player -> EntityContext -> (Maybe Player, [DirectedEntityAction])
+update :: Player -> EntityContext -> Q (Maybe Player, [DirectedEntityAction])
 update x ctx = runUpdate x ctx $ do
     integrateLocation
     anyMatch _EntityAction_AddItem  addItems

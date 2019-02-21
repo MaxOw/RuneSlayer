@@ -17,7 +17,7 @@ data EntityKind
    | EntityKind_Static
    | EntityKind_Item
    | EntityKind_Dynamic
-   deriving (Eq, Ord, Generic)
+   deriving (Eq, Ord, Enum, Bounded, Generic)
 instance Hashable EntityKind
 
 data EntityId = EntityId

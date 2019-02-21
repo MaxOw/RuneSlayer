@@ -13,18 +13,15 @@ import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
--- import Types.Entity.Wall
--- import Entity.Tile
 import Entity.Container
 import Entity.Item
--- import EntityIndex (rebuildIndex)
 import GameState
 import EntityLike
 import WorldGen (generateWorld, genTest)
 
 import qualified Resource
-
--- import GameState
+import qualified EntityIndex
+import EntityIndex (EntityIndex)
 
 initSt :: Engine () St
 initSt = do
@@ -36,9 +33,16 @@ initSt = do
         (ordNub $ map (view path) Resource.allSprites)
     Engine.fullyUpdateAtlas
     world <- generateWorld $ Size 30 30
+    let eix = st^.gameState.entities
+    forM_ world $ \e -> EntityIndex.insert e eix
+    pid <- EntityIndex.insert playerEntity eix
+    setupTestGameState eix
     return $ st
-        & gameState %~ (setupTestGameState . addEntities world)
+        & gameState.focusId .~ Just pid
         & resources .~ HashMap.fromList rs
+    where
+    playerEntity = toEntity @Player $ def
+        & location .~ locM 0 0
 
 loadResource :: Text -> Engine us (Maybe (Text, Img))
 loadResource r = do
@@ -56,22 +60,13 @@ loadFontFamily fname = void $ Engine.loadFontFamily fname $ def
     where
     mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ".ttf"
 
-setupTestGameState :: GameState -> GameState
-setupTestGameState
-    -- = over entities rebuildIndex
-    = addEntityAndFocus playerEntity
-    . addEntities
-     -- [ tileEntity
-        [ bagEntity
-        , helmetEntity
-        , potionEntity
-     -- , treeEntity
-     -- , wallEntity
-        ]
+setupTestGameState :: MonadIO m => EntityIndex -> m ()
+setupTestGameState eix = mapM_ (flip EntityIndex.insert eix)
+    [ bagEntity
+    , helmetEntity
+    , potionEntity
+    ]
     where
-    playerEntity = toEntity @Player $ def
-        & location .~ locM 0 0
-
     bagEntity = toEntity $ makeContainer testContainerType_bag
         & location .~ (Just $ locM 0 1)
 
@@ -80,15 +75,3 @@ setupTestGameState
 
     potionEntity = toEntity $ makeItem testItemType_healthPotion
         & location .~ (Just $ locM (-1) 0.2)
-
-    -- treeEntity = toEntity $ makeStaticEntity testStaticEntityType_tree
-        -- & location .~ locM 1 3
-
-    -- tileEntity = toEntity $ makeSimpleTile $ Resource.mkEnvRect 42 10 2 2
-
-{-
-    wallEntity = toEntity @Wall $ def
-        & location .~ locM 0 3
-        & health   .~ Health 100
--}
-

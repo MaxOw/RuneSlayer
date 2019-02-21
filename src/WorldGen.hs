@@ -287,9 +287,9 @@ allRoles =
    [ TileRole_Full
    , TileRole_Path
    , TileRole_Hole ]
-   <> fmap TileRole_Edge        Enum.universe
-   <> fmap TileRole_OuterCorner Enum.universe
-   <> fmap TileRole_InnerCorner Enum.universe
+   <> fmap TileRole_Edge        boundedRange
+   <> fmap TileRole_OuterCorner boundedRange
+   <> fmap TileRole_InnerCorner boundedRange
 
 roleToOffset :: TileRole -> Maybe Resource
 roleToOffset = \case

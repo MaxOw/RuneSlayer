@@ -43,7 +43,7 @@ unwrap = view _Wrapped
 isPrism :: APrism s t a b -> s -> Bool
 isPrism p = not . isn't p
 
-type Transformable2D t = (InSpace V2 Double t, Transformable t)
+type Transformable2D t = (InSpace V2 Float t, Transformable t)
 
 --------------------------------------------------------------------------------
 

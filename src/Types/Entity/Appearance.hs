@@ -7,10 +7,10 @@ import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 
 data Appearance
-   = Appearance_SimpleCircle Double AlphaColor
-   | Appearance_SimpleSquare Double AlphaColor
+   = Appearance_SimpleCircle Float AlphaColor
+   | Appearance_SimpleSquare Float AlphaColor
    | Appearance_Sprite       Resource
-   | Appearance_Translate (V2 Double) Appearance
+   | Appearance_Translate (V2 Float) Appearance
    | Appearance_Compose [Appearance]
 instance Default Appearance where
     def = Appearance_SimpleCircle 1 $ Color.opaque Color.red

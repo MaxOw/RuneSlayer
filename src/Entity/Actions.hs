@@ -342,7 +342,7 @@ renderAppearance ctx = \case
         & shapeType .~ t
         & color     .~ c
 
-renderBBox :: BBox Double -> RenderAction
+renderBBox :: BBox Float -> RenderAction
 renderBBox bb = renderSimpleBox $ def
     & size .~ (view size $ bboxToRect bb)
     & border.each.color .~ Color.opaque Color.gray

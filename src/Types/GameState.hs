@@ -12,8 +12,8 @@ data GameState = GameState
    { gameState_entities       :: EntityIndex
    , gameState_actions        :: [DirectedEntityAction]
    , gameState_focusId        :: Maybe EntityId
-   , gameState_gameScale      :: Double
-   , gameState_menuScale      :: Double
+   , gameState_gameScale      :: Float
+   , gameState_menuScale      :: Float
    , gameState_frameCount     :: Word32
    , gameState_changeCache    :: HashMap String Int
    }

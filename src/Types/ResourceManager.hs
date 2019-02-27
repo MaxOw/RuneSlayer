@@ -9,7 +9,7 @@ data Resource = Resource
    { resource_path          :: Text
    , resource_part          :: Maybe (Rect Int)
    , resource_gridSize      :: Size Int
-   , resource_unitsPerPixel :: Double
+   , resource_unitsPerPixel :: Float
    }
    deriving (Show, Generic)
 -- instance Hashable Resource

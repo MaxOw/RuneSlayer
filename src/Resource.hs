@@ -12,7 +12,7 @@ allSprites =
     , atlasEnv1
     ]
 
-mkResourcePng :: Double -> Text -> Resource
+mkResourcePng :: Float -> Text -> Resource
 mkResourcePng ppu p = def
     & unitsPerPixel .~ (1/ppu)
     & path .~ "data/imgs/" <> p <> ".png"

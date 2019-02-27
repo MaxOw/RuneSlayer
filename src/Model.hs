@@ -29,12 +29,12 @@ preformActiveActions = do
     moveVector <- makeMoveVector
     whenChanged_ moveVector $ actOnFocusedEntity . EntityAction_SetMoveVector
 
-makeMoveVector :: Game (V2 Double)
+makeMoveVector :: Game (V2 Float)
 makeMoveVector = V2
     <$> makeActiveMove MoveRight MoveLeft
     <*> makeActiveMove MoveUp    MoveDown
 
-makeActiveMove :: MoveDirection -> MoveDirection -> Game Double
+makeActiveMove :: MoveDirection -> MoveDirection -> Game Float
 makeActiveMove d0 d1 = do
     let f x = if x then 1 else 0
     m0 <- isActionActive (ActiveMove d0)

@@ -47,8 +47,8 @@ render x ctx = withZIndex x $ locate x $ renderComposition
         Collider.Circle d -> renderShape $ def
             & shapeType .~ SimpleCircle
             & color     .~ Color.withOpacity Color.red 0.3
-            & scale     (realToFrac $ d^.Collider.radius)
-            & translate (fmap realToFrac $ d^.Collider.center)
+            & scale     (d^.Collider.radius)
+            & translate (d^.Collider.center)
             & zindex    .~ 10000
 
 oracle :: StaticEntity -> EntityOracle

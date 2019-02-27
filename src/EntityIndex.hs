@@ -183,7 +183,7 @@ reindex eix (i, mo, mn) = case (mo, mn) of
                 (Just _P, Nothing) -> deleteFromIndex ov
                 (Just oP, Just nP) -> SpatialIndex.move oP nP i ki
 
-    getPosM x = fmap realToFrac <$> x^?oracle.location.traverse._Wrapped
+    getPosM x = x^?oracle.location.traverse._Wrapped
 
 insert :: MonadIO m => Entity -> EntityIndex -> m EntityId
 insert e eix = do

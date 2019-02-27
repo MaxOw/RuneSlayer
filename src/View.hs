@@ -59,10 +59,10 @@ renderGame _delta st = do
     let viewScale = st^.gameState.gameScale
 
     viewPos <- focusPos
-    let viewportPos  = viewPos ^* (realToFrac viewScale)
+    let viewportPos  = viewPos ^* viewScale
     let viewportSize = Size (fromIntegral w) (fromIntegral h)
 
-    let viewRange = mkBBoxCenter viewPos (viewportSize ^/ (realToFrac viewScale))
+    let viewRange = mkBBoxCenter viewPos (viewportSize ^/ viewScale)
 
     zoomOutScrollerDebug   <- isDebugFlagOn DebugFlag_ZoomOutScroller
     hideScrollerDebug      <- isDebugFlagOn DebugFlag_HideScroller
@@ -109,9 +109,9 @@ renderViewportDebug False _ _ = mempty
 renderViewportDebug True  p s = renderShape $ def
     & shapeType .~ SimpleSquare
     & color     .~ Color.withOpacity Color.gray 0.3
-    & T.scaleX (realToFrac $ s^.width)
-    & T.scaleY (realToFrac $ s^.height)
-    & T.translate (fmap realToFrac p)
+    & T.scaleX (s^.width)
+    & T.scaleY (s^.height)
+    & T.translate p
 
 renderBBoxesDebug :: HasEntity e Entity => [e] -> St -> RenderAction
 renderBBoxesDebug _ _ = mempty
@@ -158,7 +158,7 @@ renderEntities es st = Engine.renderComposition rs
 
 --------------------------------------------------------------------------------
 
-viewMatrix :: Double -> Graphics Mat4
+viewMatrix :: Float -> Graphics Mat4
 viewMatrix s
     = fromMaybe Matrix.identity
     . fmap locationToViewMatrix
@@ -177,12 +177,12 @@ viewMatrix s
 focusPos :: Graphics (V2 Float)
 focusPos = do
     mloc <- focusLocation
-    return $ fmap realToFrac $ fromMaybe 0 $ view _Wrapped <$> mloc
+    return $ fromMaybe 0 $ view _Wrapped <$> mloc
 
 prerenderUpdate :: St -> Graphics RenderAction
 prerenderUpdate st = do
     let s = st^.scroller
-    let vscale = realToFrac $ st^.gameState.gameScale
+    let vscale = st^.gameState.gameScale
     vpos <- focusPos
     (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
     let vsize = Size (fromIntegral w) (fromIntegral h)

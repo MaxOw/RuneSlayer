@@ -40,8 +40,8 @@ focusItemsInRange = focusLocation >>= \case
         es <- lookupInRange EntityKind_Item (queryRange lc) eix
         return $ filter (isItemInRange lc . view (entity.oracle)) es
     where
-    queryRange loc = mkBBoxCenter (fmap realToFrac $ loc^._Wrapped)
-        (fmap realToFrac $ pure $ defaultPickupRange^._Wrapped)
+    queryRange loc = mkBBoxCenter (loc^._Wrapped)
+        (pure $ defaultPickupRange^._Wrapped)
 
     isItemInRange loc x = withinRange loc (x^.location) && isJust (x^.itemKind)
     withinRange l xl = nothingFalse xl $ isWithinDistance defaultPickupRange l

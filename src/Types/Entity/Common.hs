@@ -36,7 +36,7 @@ instance HasEntityId EntityId EntityId where entityId = id
 instance Show EntityId where
     show (EntityId x _) = "EID:" <> show x
 
-type V2D = V2 Double
+type V2D = V2 Float
 
 -- type Basic a = (Generic a, Default a)
 
@@ -47,7 +47,7 @@ makeWrapped ''Location
 instance Show Location where
     show (Location (V2 x y)) = printf "(Location x=%.2f y=%.2f)" x y
 
-newtype Distance = Distance { unDistance :: Double }
+newtype Distance = Distance { unDistance :: Float }
     deriving (Generic, Default, Show)
 makeWrapped ''Distance
 
@@ -59,15 +59,15 @@ newtype Health   = Health   { unHealth   :: Int    }
     deriving (Generic, Default, Show)
 makeWrapped ''Health
 
-newtype Speed    = Speed    { unSpeed    :: Double }
+newtype Speed    = Speed    { unSpeed    :: Float }
     deriving (Generic, Default, Show)
 makeWrapped ''Speed
 
-newtype Volume   = Volume   { unVolume   :: Double }
+newtype Volume   = Volume   { unVolume   :: Float }
     deriving (Generic, Default, Show, Num, Eq, Ord)
 makeWrapped ''Volume
 
-newtype Time     = Time     { unTime     :: Double }
+newtype Time     = Time     { unTime     :: Float }
     -- deriving (Generic, Default, Show)
 
 --------------------------------------------------------------------------------
@@ -81,15 +81,15 @@ instance Default EntityDebugFlags
 --------------------------------------------------------------------------------
 
 -- make volume in liters. litre = 1000 cm^3
-volumeL :: Double -> Volume
+volumeL :: Float -> Volume
 volumeL = Volume
 
 -- distance in metres
-disM :: Double -> Distance
+disM :: Float -> Distance
 disM = Distance
 
 -- make location in meters.
-locM :: Double -> Double -> Location
+locM :: Float -> Float -> Location
 locM x y = Location $ V2 x y
 
 locationInMeters :: V2D -> Location
@@ -98,7 +98,7 @@ locationInMeters = Location
 velocityInMetersPerSecond :: V2D -> Velocity
 velocityInMetersPerSecond = Velocity
 
-timeInSeconds :: Double -> Time
+timeInSeconds :: Float -> Time
 timeInSeconds = Time
 
 defaultDelta :: Time
@@ -107,7 +107,7 @@ defaultDelta = timeInSeconds 0.01 -- 10ms = 0.01s
 type family   Delta a :: *
 type instance Delta a = a
 
-speedInMetersPerSecond :: Double -> Speed
+speedInMetersPerSecond :: Float -> Speed
 speedInMetersPerSecond = Speed
 
 --------------------------------------------------------------------------------

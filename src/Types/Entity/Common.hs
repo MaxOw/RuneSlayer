@@ -2,9 +2,12 @@
 {-# Language TemplateHaskell #-}
 module Types.Entity.Common
     ( module Types.Entity.Common
+
+    , CollisionShape
     ) where
 
 import Delude
+import Data.Collider (CollisionShape)
 import qualified Prelude
 import Text.Printf
 

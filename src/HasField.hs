@@ -33,6 +33,7 @@ class HasPath            s t | s -> t where path            :: Lens' s t
 class HasLastId          s t | s -> t where lastId          :: Lens' s t
 class HasUnique          s t | s -> t where unique          :: Lens' s t
 class HasSprite          s t | s -> t where sprite          :: Lens' s t
+class HasCollisionShape  s t | s -> t where collisionShape  :: Lens' s t
 -- class HasPart            s t | s -> t where part            :: Lens' s t
 
 class GetZIndex          s t | s -> t where get_zindex      :: s -> t

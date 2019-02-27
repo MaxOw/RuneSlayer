@@ -18,8 +18,8 @@ import Types.Entity.Common (EntityId (..), EntityKind (..))
 import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex
-import Data.SpatialIndex.Types
 import Data.GridIndex.Types
+import Data.QuadTree.Types (minCellSize, maxBucketSize)
 import qualified Data.FullMap as FullMap
 
 --------------------------------------------------------------------------------
@@ -30,10 +30,14 @@ new = do
     let g = def
           & gridSize .~ pure 30
           & cellSize .~ pure 2
-    sTile    <- SpatialIndex.create $ SpatialIndexConfig_Grid g
-    sItem    <- SpatialIndex.create $ SpatialIndexConfig_HashSet
-    sStatic  <- SpatialIndex.create $ SpatialIndexConfig_HashSet
-    sDynamic <- SpatialIndex.create $ SpatialIndexConfig_HashSet
+    let qt = def
+          & size          .~ 30
+          & minCellSize   .~ 2
+          & maxBucketSize .~ 4
+    sTile    <- SpatialIndex.createGrid g
+    sItem    <- SpatialIndex.createQuadTree qt
+    sStatic  <- SpatialIndex.createQuadTree qt
+    sDynamic <- SpatialIndex.createQuadTree qt
     let f = \case
             EntityKind_Tile    -> sTile
             EntityKind_Item    -> sItem

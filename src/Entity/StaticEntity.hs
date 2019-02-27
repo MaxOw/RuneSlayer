@@ -6,13 +6,20 @@ module Entity.StaticEntity
     ) where
 
 import Delude
+import qualified Data.Set as Set
 
+import Types.Debug
 import Types.Entity.StaticEntity
 import Types.Entity.Appearance
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.ZIndex
 import qualified Resource
+import qualified Data.Collider as Collider
+import qualified Data.Collider.Types as Collider
+
+import qualified Data.Colour       as Color
+import qualified Data.Colour.Names as Color
 
 --------------------------------------------------------------------------------
 
@@ -26,14 +33,29 @@ update
 update x _ = return (Just x, [])
 
 render :: StaticEntity -> RenderContext -> RenderAction
-render x ctx = withZIndex x $ locate x $ renderAppearance ctx
-    $ x^.entityType.appearance
+render x ctx = withZIndex x $ locate x $ renderComposition
+    [ renderDebug
+    , renderAppearance ctx $ x^.entityType.appearance ]
+    where
+    renderDebug
+        = renderComposition $ map snd
+        $ filter (\(f, _) -> Set.member f $ ctx^.debugFlags)
+        [ (DebugFlag_ShowCollisionShapes, renderCollisionShapes)
+        ]
+
+    renderCollisionShapes = monoidJust (x^.entityType.collisionShape) $ \case
+        Collider.Circle d -> renderShape $ def
+            & shapeType .~ SimpleCircle
+            & color     .~ Color.withOpacity Color.red 0.3
+            & scale     (realToFrac $ d^.Collider.radius)
+            & translate (fmap realToFrac $ d^.Collider.center)
+            & zindex    .~ 10000
 
 oracle :: StaticEntity -> EntityOracle
 oracle x = def
-   & location .~ Just (x^.location)
-   & static   .~ True
-   & zindex   .~ Just EntityZIndex_Vertical
+   & location       .~ Just (x^.location)
+   & zindex         .~ Just EntityZIndex_Vertical
+   & collisionShape .~ (x^.entityType.collisionShape)
 
 --------------------------------------------------------------------------------
 
@@ -54,6 +76,7 @@ testStaticEntityType_tree :: StaticEntityType
 testStaticEntityType_tree = def
     & name       .~ "Tree"
     & appearance .~ app
+    & collisionShape .~ Just (Collider.circle (V2 0 (-0.2)) 0.6)
     where
     app = Appearance_Compose
         [ Appearance_Sprite Resource.treeTrunk

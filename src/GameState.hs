@@ -4,7 +4,6 @@ module GameState
     , updateGameState
     , actOnEntity
     , actOnFocusedEntity
-    , entityIdToWithId
 
     , toggleDebug, isDebugFlagOn
     , pickupItem, pickupAllItems
@@ -16,7 +15,6 @@ import qualified Data.Set as Set
 
 import Engine (userState)
 import Types (Game)
-import Types.Entity (EntityWithId(..))
 import Types.Entity.Common (EntityId)
 import Types.St
 import Types.GameState
@@ -47,15 +45,7 @@ actOnEntity :: EntityId -> EntityAction -> Game ()
 actOnEntity eid = addDirectedAction . DirectedEntityAction eid
 
 actOnFocusedEntity :: EntityAction -> Game ()
-actOnFocusedEntity act = zoomGameState $ do
-    use focusId >>= \case
-        Just fi -> actions %= (DirectedEntityAction fi act:)
-        Nothing -> return ()
-
-entityIdToWithId :: EntityId -> Game (Maybe EntityWithId)
-entityIdToWithId eid = zoomGameState $ do
-    es <- use entities
-    EntityIndex.lookupById eid es
+actOnFocusedEntity act = withFocusId $ \fi -> actOnEntity fi act
 
 --------------------------------------------------------------------------------
 

@@ -31,7 +31,6 @@ render x ctx = renderSprite ctx (Resource.mkEnvRect 36 10 2 2)
 oracle :: Wall -> EntityOracle
 oracle x = def
    & location .~ Just (x^.location)
-   & static   .~ True
 
 renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
 renderSprite ctx r = case lookupResource r $ ctx^.resources of

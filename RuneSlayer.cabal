@@ -68,7 +68,7 @@ Executable RuneSlayer
                 , repa-algorithms
 
                 , linear
-                , Carnot == 0.1.11.1
+                , Carnot == 0.1.12.0
                 , gl
                 , colour
                 , diagrams-core

@@ -248,6 +248,7 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "ts" (ToggleDebug DebugFlag_ZoomOutScroller)
         , InputStr "tb" (ToggleDebug DebugFlag_HideScroller)
         , InputStr "td" (ToggleDebug DebugFlag_ShowDynamicBoundingBoxes)
+        , InputStr "tc" (ToggleDebug DebugFlag_ShowCollisionShapes)
 
         , InputStr "q" FastQuit
 

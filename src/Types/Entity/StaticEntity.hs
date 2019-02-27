@@ -3,13 +3,14 @@ module Types.Entity.StaticEntity where
 
 import Delude
 
-import Types.Entity.Common (Location)
+import Types.Entity.Common
 import Types.Entity.ZIndex
 import Types.Entity.Appearance
 
 data StaticEntityType = StaticEntityType
-   { staticEntityType_name       :: Text
-   , staticEntityType_appearance :: Appearance
+   { staticEntityType_name           :: Text
+   , staticEntityType_appearance     :: Appearance
+   , staticEntityType_collisionShape :: Maybe CollisionShape
    } deriving (Generic)
 makeFieldsCustom ''StaticEntityType
 instance Default StaticEntityType

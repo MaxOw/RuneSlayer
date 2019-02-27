@@ -5,10 +5,11 @@ module Entity.Actions
     , handleOnUpdate
 
     -- Update Actions
-    , pureIntegrateLocation, integrateLocation
+    , integrateLocation
+    , separateCollision
     , addItems
     , dropAllItems
-    , purePickUpInformOwner, pickUpInformOwner
+    , pickUpInformOwner
     , dropItem, dropItemAction
     , containerAddItems
     , containerDropItem
@@ -20,6 +21,9 @@ module Entity.Actions
     , renderAppearance
     , renderBBox
 
+    -- Queries
+    -- , queryStaticInRange
+
     -- Utils
     , anyMatch
     , ifJustLocation
@@ -30,7 +34,7 @@ import qualified Data.Set as Set
 import qualified Data.List as List
 import Random.Utils
 import Data.Hashable (hash)
-import Engine.Common.Types (BBox, bboxToRect)
+import Engine.Common.Types (BBox, bboxToRect, mkBBoxCenter)
 import Engine.Layout.Render (renderSimpleBox)
 import Engine.Layout.Types (border)
 
@@ -73,21 +77,28 @@ handleOnUpdate a = over processOnUpdate (a:)
 --------------------------------------------------------------------------------
 -- Update Actions
 
-pureIntegrateLocation
-    :: HasVelocity s Velocity
-    => HasLocation s Location
- -- => Delta Time -> s -> s
-    => s -> s
-pureIntegrateLocation s = set location newLoc s
-    where
-    newLoc = upd defaultDelta (s^.velocity) (s^.location)
-    upd (Time t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
-
 integrateLocation
     :: HasVelocity s Velocity
     => HasLocation s Location
     => Update s ()
-integrateLocation = liftUpdate pureIntegrateLocation
+integrateLocation = do
+    vel <- use (self.velocity)
+    self.location %= upd defaultDelta vel
+    where
+    upd (Time t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
+
+--------------------------------------------------------------------------------
+
+separateCollision
+    :: HasLocation s Location
+    => Update s ()
+separateCollision = do
+    Location l <- use $ self.location
+    let range = mkBBoxCenter l maxCollisionBBoxSize
+    ss <- queryStaticInRange range
+    return ()
+    where
+    maxCollisionBBoxSize = pure 4
 
 --------------------------------------------------------------------------------
 
@@ -336,6 +347,13 @@ renderBBox bb = renderSimpleBox $ def
     & size .~ (view size $ bboxToRect bb)
     & border.each.color .~ Color.opaque Color.gray
     & border.each.width .~ (1/32)
+
+--------------------------------------------------------------------------------
+-- Queries
+
+queryStaticInRange :: RangeBBox -> Update s [EntityWithId]
+queryStaticInRange rng =
+    EntityIndex.lookupInRange EntityKind_Static rng =<< use (context.entities)
 
 --------------------------------------------------------------------------------
 -- Utils

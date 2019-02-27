@@ -10,6 +10,7 @@ module Delude
 
     , boundedRange
 
+    , monoidJust
     , nothingFalse
     , nothingFalse2
 
@@ -58,6 +59,10 @@ boundedRange :: (Bounded a, Enum a) => [a]
 boundedRange = [minBound .. maxBound]
 
 --------------------------------------------------------------------------------
+
+monoidJust :: Monoid m => Maybe x -> (x -> m) -> m
+monoidJust Nothing  _ = mempty
+monoidJust (Just x) f = f x
 
 nothingFalse :: Maybe a -> (a -> Bool) -> Bool
 nothingFalse Nothing  _ = False

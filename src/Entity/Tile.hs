@@ -29,7 +29,6 @@ render x ctx = withZIndex x $ locate x $ case x^.tileType.sprite of
 oracle :: Tile -> EntityOracle
 oracle x = def
    & location .~ Just (x^.location)
-   & static   .~ True
 
 --------------------------------------------------------------------------------
 

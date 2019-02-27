@@ -6,7 +6,6 @@ import Engine
 import Engine.Layout.Types
 
 import Types
-import Types.Entity
 import Types.InputState
 import InputState (getMode, isPanelVisible)
 

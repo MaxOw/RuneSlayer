@@ -16,10 +16,6 @@ import Entity.Actions
 import Types.Entity.ZIndex
 import qualified Resource
 import qualified Data.Collider as Collider
-import qualified Data.Collider.Types as Collider
-
-import qualified Data.Colour       as Color
-import qualified Data.Colour.Names as Color
 
 --------------------------------------------------------------------------------
 
@@ -40,22 +36,16 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     renderDebug
         = renderComposition $ map snd
         $ filter (\(f, _) -> Set.member f $ ctx^.debugFlags)
-        [ (DebugFlag_ShowCollisionShapes, renderCollisionShapes)
+        [ (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
         ]
 
-    renderCollisionShapes = monoidJust (x^.entityType.collisionShape) $ \case
-        Collider.Circle d -> renderShape $ def
-            & shapeType .~ SimpleCircle
-            & color     .~ Color.withOpacity Color.red 0.3
-            & scale     (d^.Collider.radius)
-            & translate (d^.Collider.center)
-            & zindex    .~ 10000
+    cs = x^.entityType.collisionShape
 
 oracle :: StaticEntity -> EntityOracle
 oracle x = def
    & location       .~ Just (x^.location)
    & zindex         .~ Just EntityZIndex_Vertical
-   & collisionShape .~ (x^.entityType.collisionShape)
+   & collisionShape .~ (locate x <$> x^.entityType.collisionShape)
 
 --------------------------------------------------------------------------------
 
@@ -76,7 +66,9 @@ testStaticEntityType_tree :: StaticEntityType
 testStaticEntityType_tree = def
     & name       .~ "Tree"
     & appearance .~ app
-    & collisionShape .~ Just (Collider.circle (V2 0 (-0.2)) 0.6)
+    -- & collisionShape .~ Just (
+        -- translateY (-0.8) $ Collider.circle 0 0.3)
+    & collisionShape .~ Just (Collider.circle (P $ V2 0 (-0.3)) 0.3)
     where
     app = Appearance_Compose
         [ Appearance_Sprite Resource.treeTrunk

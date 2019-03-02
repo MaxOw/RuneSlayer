@@ -7,6 +7,8 @@ import qualified Prelude (Show(..))
 import Data.Char (isUpper, toLower)
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
+import qualified Types.Entity.Animation as Animation
+import Types.Entity.Animation (AnimationKind)
 import Types.Entity.Common (EntityId)
 import Types.Debug (DebugFlag(..))
 import Engine.Events.Types
@@ -14,6 +16,25 @@ import qualified Control.Monad.Trans.State.Lazy as Lazy
 -- import Engine (defaultModifierKeys)
 
 import Data.Vector (Vector)
+
+--------------------------------------------------------------------------------
+
+data InputAction
+   = SetMode InputMode
+   | SimpleMove MoveDirection
+   | ToggleDebug DebugFlag
+   | DebugRunAnimation AnimationKind
+   | ToggleViewPanel PanelName
+   | PickupAllItems
+   | DropAllItems
+   | SelectItemToPickUp
+   | SelectItemToDrop
+   | SelectItemToFocus
+   | InputAction_Escape
+   | FastQuit
+   deriving (Show)
+
+--------------------------------------------------------------------------------
 
 data StatusMenu
    = StatusMenu_Inventory
@@ -35,6 +56,8 @@ data SelectKind
    | SelectDrop   (SelectValues EntityId)
    | SelectFocus  (SelectValues EntityId)
    deriving (Show, Generic)
+
+--------------------------------------------------------------------------------
 
 data InputMode
    = NormalMode
@@ -67,22 +90,6 @@ data MoveDirection
 data PanelName
    = GroundPreviewPanel
    deriving (Eq, Ord, Show)
-
---------------------------------------------------------------------------------
-
-data InputAction
-   = SetMode InputMode
-   | SimpleMove MoveDirection
-   | ToggleDebug DebugFlag
-   | ToggleViewPanel PanelName
-   | PickupAllItems
-   | DropAllItems
-   | SelectItemToPickUp
-   | SelectItemToDrop
-   | SelectItemToFocus
-   | InputAction_Escape
-   | FastQuit
-   deriving (Show)
 
 --------------------------------------------------------------------------------
 
@@ -249,6 +256,14 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "tb" (ToggleDebug DebugFlag_HideScroller)
         , InputStr "td" (ToggleDebug DebugFlag_ShowDynamicBoundingBoxes)
         , InputStr "tc" (ToggleDebug DebugFlag_ShowCollisionShapes)
+
+
+        , InputStr "ac" (DebugRunAnimation Animation.Cast)
+        , InputStr "at" (DebugRunAnimation Animation.Thrust)
+        , InputStr "aw" (DebugRunAnimation Animation.Walk)
+        , InputStr "as" (DebugRunAnimation Animation.Slash)
+        , InputStr "af" (DebugRunAnimation Animation.Fire)
+        , InputStr "ad" (DebugRunAnimation Animation.Die)
 
         , InputStr "q" FastQuit
 

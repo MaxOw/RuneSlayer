@@ -13,6 +13,8 @@ import Delude
 import qualified Data.HashSet as HashSet
 import qualified Data.HashMap.Strict as HashMap
 import Text.Printf
+
+import Engine.Common.Types (minPoint, maxPoint)
 import Types.Entity
 import Types.Entity.Common (EntityId (..), EntityKind (..))
 import Data.VectorIndex (VectorIndex)
@@ -210,20 +212,20 @@ lookupInRange :: MonadQ m
     => EntityKind -> RangeBBox -> EntityIndex -> m [EntityWithId]
 lookupInRange k r eix = do
     let ki = FullMap.lookup k (eix^.spatialIndex)
-    eis <- liftQ $ Q $ SpatialIndex.lookup r ki
+    let er = expandRange expandSizeByKind r
+    eis <- liftQ $ Q $ SpatialIndex.lookup er ki
     lookupManyById eis eix
-
-{-
     where
+    expandSizeByKind = case k of
+        EntityKind_Tile    -> 0.5
+        EntityKind_Static  -> 4
+        EntityKind_Item    -> 0.5
+        EntityKind_Dynamic -> 2
 
-    expandRange :: Num x => x -> BBox x -> BBox x
+    -- expandRange :: Num x => x -> BBox x -> BBox x
     expandRange e bb = bb
         & minPoint %~ fmap (\x -> x-e)
         & maxPoint %~ fmap (\x -> x+e)
-
-    maxEntitySize :: Float
-    maxEntitySize = 4 -- meters
--}
 
 lookupManyById :: (Foldable t, MonadQ m)
     => t EntityId -> EntityIndex -> m [EntityWithId]

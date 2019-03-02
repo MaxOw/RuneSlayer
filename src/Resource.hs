@@ -10,12 +10,34 @@ allSprites =
     [ healthPotion
     , atlasItems1
     , atlasEnv1
+    , maleBody
+    , maleHair
+    , malePants
+    , maleShirt
     ]
 
 mkResourcePng :: Float -> Text -> Resource
 mkResourcePng ppu p = def
     & unitsPerPixel .~ (1/ppu)
     & path .~ "data/imgs/" <> p <> ".png"
+
+mkAnimation :: Text -> Resource
+mkAnimation t = mkResourcePng 32 ("characters/" <> t)
+    -- & gridSize .~ (Size 13 21)
+    & gridSize .~ pure 64
+
+maleBody :: Resource
+maleBody = mkAnimation "body/male/light"
+
+maleHair :: Resource
+maleHair = mkAnimation "hair/male/plain/brown"
+
+malePants :: Resource
+malePants = mkAnimation "legs/pants/male/teal_pants_male"
+
+maleShirt :: Resource
+maleShirt = mkAnimation "torso/shirts/longsleeve/male/white_longsleeve"
+
 
 {-
 mkResourcePngPart :: Int -> Text -> Int -> Int -> Resource

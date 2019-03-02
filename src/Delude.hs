@@ -21,6 +21,7 @@ import Relude         as All
 import Control.Lens   as All hiding (uncons)
 import Data.Default   as All
 import Linear         as All hiding (trace, transpose, identity, rotate)
+import Linear.Affine  as All (Point (..))
 import Diagrams.Angle as All ((@@))
 import Data.Bimap     as All (Bimap)
 

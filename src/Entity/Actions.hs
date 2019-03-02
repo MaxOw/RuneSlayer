@@ -6,6 +6,7 @@ module Entity.Actions
 
     -- Update Actions
     , integrateLocation
+    , updateAnimation
     , separateCollision
     , addItems
     , dropAllItems
@@ -20,6 +21,7 @@ module Entity.Actions
     , renderSprite
     , renderAppearance
     , renderBBox
+    , renderCollisionShape
 
     -- Queries
     -- , queryStaticInRange
@@ -41,6 +43,8 @@ import Engine.Layout.Types (border)
 import Types.Entity
 import Types.Entity.ItemType
 import Types.Entity.Appearance
+import Types.Entity.Animation (CharacterAnimation)
+import qualified Entity.Animation as Animation
 import Entity.Utils
 import qualified EntityIndex
 import qualified Equipment
@@ -52,6 +56,8 @@ import qualified Data.Colour.Names as Color
 import Resource (Resource)
 import ResourceManager (lookupResource, ResourceMap)
 import Types.ResourceManager (unitsPerPixel)
+import qualified Data.Collider as Collider
+import qualified Data.Collider.Types as Collider
 
 --------------------------------------------------------------------------------
 -- ActOn Actions
@@ -87,18 +93,44 @@ integrateLocation = do
     where
     upd (Time t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
 
---------------------------------------------------------------------------------
+updateAnimation
+    :: HasVelocity  s Velocity
+    => HasAnimation s CharacterAnimation
+    => Update s ()
+updateAnimation = do
+    vel <- use $ self.velocity._Wrapped
+    let n = norm vel
+    let Time t = defaultDelta
+    d <- use $ self.animation.direction
+    let animationSpeed = -- 1 --  0.01
+            if d == Animation.North || d == Animation.South then 1.6 else 1.2
+    let upd x = if x > 1 then x - 1 else x
+    let eraChange = n * t * animationSpeed
+    self.animation.direction %= Animation.vecToDir vel
+    self.animation.era       %= upd . (+eraChange)
+    when (n == 0) $
+        self.animation.era .= 0
 
 separateCollision
     :: HasLocation s Location
+    => HasCollisionShape s (Maybe CollisionShape)
     => Update s ()
 separateCollision = do
     Location l <- use $ self.location
     let range = mkBBoxCenter l maxCollisionBBoxSize
     ss <- queryStaticInRange range
-    return ()
+    mc <- use $ self.collisionShape
+    x <- use self
+    let mlc = locate x <$> mc
+    let ms = ss^..traverse.entity.oracle.collisionShape
+    let svs = mapMaybe (mCol mlc) ms
+    whenJust (viaNonEmpty head svs) $ \v -> self.location._Wrapped -= v
     where
     maxCollisionBBoxSize = pure 4
+    mCol ma mb = do
+        a <- ma
+        b <- mb
+        Collider.collide a b
 
 --------------------------------------------------------------------------------
 
@@ -347,6 +379,15 @@ renderBBox bb = renderSimpleBox $ def
     & size .~ (view size $ bboxToRect bb)
     & border.each.color .~ Color.opaque Color.gray
     & border.each.width .~ (1/32)
+
+renderCollisionShape :: Maybe CollisionShape -> RenderAction
+renderCollisionShape cs = monoidJust cs $ \case
+    Collider.Circle d -> renderShape $ def
+        & shapeType .~ SimpleCircle
+        & color     .~ Color.withOpacity Color.red 0.3
+        & scale     (d^.Collider.radius)
+        & translate (d^.Collider.center._Wrapped)
+        & zindex    .~ 10000
 
 --------------------------------------------------------------------------------
 -- Queries

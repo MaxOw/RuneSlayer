@@ -6,6 +6,7 @@ module GameState
     , actOnFocusedEntity
 
     , toggleDebug, isDebugFlagOn
+    , debugRunAnimation
     , pickupItem, pickupAllItems
     , dropItem, dropAllItems
     ) where
@@ -16,6 +17,7 @@ import qualified Data.Set as Set
 import Engine (userState)
 import Types (Game)
 import Types.Entity.Common (EntityId)
+import Types.Entity.Animation (AnimationKind)
 import Types.St
 import Types.GameState
 import Types.Debug (DebugFlag(..))
@@ -58,6 +60,9 @@ toggleDebug x = do
     where
     debugFocus = actOnFocusedEntity . EntityAction_ToggleDebug
     -- toggleShowScroller =
+
+debugRunAnimation :: AnimationKind -> Game ()
+debugRunAnimation = actOnFocusedEntity . EntityAction_DebugRunAnimation
 
 isDebugFlagOn :: DebugFlag -> Game Bool
 isDebugFlagOn x = uses (userState.debugFlags) (Set.member x)

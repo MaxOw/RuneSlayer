@@ -1,6 +1,6 @@
 module GUI.Common where
 
-import Delude
+import Delude hiding (direction)
 import Engine
 import Engine.Layout.Types
 

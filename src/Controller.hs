@@ -78,17 +78,18 @@ handleKeyReleased = mapM_ handleDeactivation <=< popDeactivators
 
 handleActivation :: InputAction -> Game ()
 handleActivation = \case
-    SimpleMove       d -> activateAction (ActiveMove d)
-    SetMode          m -> setMode m
-    ToggleDebug      f -> toggleDebug f
-    ToggleViewPanel  p -> toggleViewPanel p
-    PickupAllItems     -> pickupAllItems
-    DropAllItems       -> dropAllItems
-    SelectItemToPickUp -> selectItemToPickUp
-    SelectItemToDrop   -> selectItemToDrop
-    SelectItemToFocus  -> selectItemToFocus
-    InputAction_Escape -> inputActionEscape
-    FastQuit           -> Engine.closeWindow
+    SimpleMove        d -> activateAction (ActiveMove d)
+    SetMode           m -> setMode m
+    ToggleDebug       f -> toggleDebug f
+    DebugRunAnimation k -> debugRunAnimation k
+    ToggleViewPanel   p -> toggleViewPanel p
+    PickupAllItems      -> pickupAllItems
+    DropAllItems        -> dropAllItems
+    SelectItemToPickUp  -> selectItemToPickUp
+    SelectItemToDrop    -> selectItemToDrop
+    SelectItemToFocus   -> selectItemToFocus
+    InputAction_Escape  -> inputActionEscape
+    FastQuit            -> Engine.closeWindow
 
 handleDeactivation :: InputAction -> Game ()
 handleDeactivation = \case

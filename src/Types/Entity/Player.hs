@@ -7,6 +7,7 @@ import qualified Data.Set as Set
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ZIndex
+import Types.Entity.Animation (CharacterAnimation)
 import Types.Equipment
 import qualified Equipment
 
@@ -19,6 +20,8 @@ data Player = Player
    , player_equipment       :: Equipment
    , player_debugFlags      :: EntityDebugFlags
    , player_processOnUpdate :: [EntityAction]
+   , player_collisionShape  :: Maybe CollisionShape
+   , player_animation       :: CharacterAnimation
    } deriving (Generic)
 makeFieldsCustom ''Player
 
@@ -26,10 +29,13 @@ instance Default Player where
    def = Player
     { player_location        = def
     , player_velocity        = def
-    , player_maxSpeed        = baseRunningSpeed
+    , player_maxSpeed        = baseWalkingSpeed
+    -- , player_maxSpeed        = baseRunningSpeed
     , player_equipment       = Equipment.create playerSlots
     , player_debugFlags      = def
     , player_processOnUpdate = def
+    , player_collisionShape  = def
+    , player_animation       = def
     }
 
 instance GetZIndex Player Word32 where

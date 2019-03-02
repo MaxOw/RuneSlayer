@@ -4,6 +4,7 @@ module Types.EntityAction where
 import Delude
 import qualified Prelude
 import Types.Entity.Common
+import Types.Entity.Animation (AnimationKind)
 
 --------------------------------------------------------------------------------
 
@@ -14,6 +15,7 @@ data EntityDebugFlag
 data EntityAction
    = EntityAction_SetMoveVector V2D
    | EntityAction_ToggleDebug EntityDebugFlag
+   | EntityAction_DebugRunAnimation AnimationKind
    -- tell entity that it was picked up by [EntityId]
    | EntityAction_SelfAddedBy EntityId
    -- tell entity that it was passed to [EntityId]

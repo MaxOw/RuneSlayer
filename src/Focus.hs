@@ -41,7 +41,7 @@ focusItemsInRange = focusLocation >>= \case
         return $ filter (isItemInRange lc . view (entity.oracle)) es
     where
     queryRange loc = mkBBoxCenter (loc^._Wrapped)
-        (pure $ defaultPickupRange^._Wrapped)
+        (pure . (*2) $ defaultPickupRange^._Wrapped)
 
     isItemInRange loc x = withinRange loc (x^.location) && isJust (x^.itemKind)
     withinRange l xl = nothingFalse xl $ isWithinDistance defaultPickupRange l

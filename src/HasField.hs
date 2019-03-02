@@ -34,6 +34,10 @@ class HasLastId          s t | s -> t where lastId          :: Lens' s t
 class HasUnique          s t | s -> t where unique          :: Lens' s t
 class HasSprite          s t | s -> t where sprite          :: Lens' s t
 class HasCollisionShape  s t | s -> t where collisionShape  :: Lens' s t
+class HasAnimation       s t | s -> t where animation       :: Lens' s t
+class HasDirection       s t | s -> t where direction       :: Lens' s t
+class HasEra             s t | s -> t where era             :: Lens' s t
+class HasKind            s t | s -> t where kind            :: Lens' s t
 -- class HasPart            s t | s -> t where part            :: Lens' s t
 
 class GetZIndex          s t | s -> t where get_zindex      :: s -> t

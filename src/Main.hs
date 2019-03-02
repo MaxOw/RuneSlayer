@@ -1,6 +1,7 @@
 module Main where
 
 import Delude
+import Control.Exception (try, AsyncException)
 
 import Engine (Ignition (..), igniteEngine)
 import qualified Engine
@@ -8,40 +9,27 @@ import qualified Engine
 import Controller (handleEvent)
 import Model      (integrate)
 import View       (renderView)
-import Game       (initSt)
+import Game       (initSt, endSt)
 import Reload.Utils (reacquire)
 
-import qualified Graphics.UI.GLFW as GLFW
+-- import qualified Graphics.UI.GLFW as GLFW
 
 import WorldGen (worldGenTest)
-
--- import qualified Data.Map as PrefixMap
 
 main :: IO ()
 main = do
     worldGenTest
     win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (400, 400)
-    GLFW.makeContextCurrent $ Just win
     -- win <- Engine.initWindow "RuneSlayer" (400, 400)
 
     -- st  <- initSt
 
-    Engine.igniteEngine win $ Ignition
+    eex <- try $ Engine.igniteEngine win $ Ignition
         { initializer      = initSt
         , eventHandler     = handleEvent
         , renderer         = renderView
         , integrator       = integrate
+        , finalizer        = endSt
         }
-
-{-
-test :: IO ()
-test = do
-    let m = PrefixMap.fromList [ ("aa", 1), ("ab", 2), ("c", 3) ]
-    print m
-    print $ PrefixMap.splitLookup "a" m
-    print $ PrefixMap.splitLookup "b" m
-    print $ PrefixMap.splitLookup "c" m
-    print $ PrefixMap.takeWhileAntitone (isPrefixOf "a") m
-    print $ PrefixMap.takeWhileAntitone (isPrefixOf "c") m
-    -}
+    print (eex :: Either AsyncException ())
 

@@ -1,11 +1,13 @@
 module Game
-    ( initSt
+    ( initSt, endSt
     ) where
 
 import Delude
 import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
-import Engine (Img)
+import Engine.Graphics.Utils (delObject)
+import Graphics.GL (glDeleteTextures)
+import Engine (Img, userState, texture)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine)
 import Engine.Common.Types
@@ -22,6 +24,8 @@ import WorldGen (generateWorld, genTest)
 import qualified Resource
 import qualified EntityIndex
 import EntityIndex (EntityIndex)
+
+import qualified Data.Collider as Collider
 
 initSt :: Engine () St
 initSt = do
@@ -43,6 +47,12 @@ initSt = do
     where
     playerEntity = toEntity @Player $ def
         & location .~ locM 0 0
+        & collisionShape .~ Just (Collider.circle 0 0.3)
+
+endSt :: Engine St ()
+endSt = do
+    rs <- uses (userState.resources) HashMap.elems
+    mapM_ (delObject glDeleteTextures . view texture) rs
 
 loadResource :: Text -> Engine us (Maybe (Text, Img))
 loadResource r = do

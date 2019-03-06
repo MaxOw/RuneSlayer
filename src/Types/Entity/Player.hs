@@ -7,8 +7,9 @@ import qualified Data.Set as Set
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ZIndex
-import Types.Entity.Animation (CharacterAnimation)
+import Types.Entity.Animation (Animation)
 import Types.Equipment
+import Types.Skills.Runes (RunicLevel)
 import qualified Equipment
 
 --------------------------------------------------------------------------------
@@ -21,7 +22,9 @@ data Player = Player
    , player_debugFlags      :: EntityDebugFlags
    , player_processOnUpdate :: [EntityAction]
    , player_collisionShape  :: Maybe CollisionShape
-   , player_animation       :: CharacterAnimation
+   , player_animation       :: Animation
+   , player_runicLevel      :: RunicLevel
+   , player_target          :: Maybe EntityId
    } deriving (Generic)
 makeFieldsCustom ''Player
 
@@ -36,6 +39,8 @@ instance Default Player where
     , player_processOnUpdate = def
     , player_collisionShape  = def
     , player_animation       = def
+    , player_runicLevel      = def
+    , player_target          = Nothing
     }
 
 instance GetZIndex Player Word32 where

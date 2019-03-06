@@ -1,12 +1,14 @@
 module Entity.Actions
+    ( EntityAction (..)
     -- ActOn Actions
-    ( setMoveVector
+    , setMoveVector
     , toggleDebugFlag
     , handleOnUpdate
 
     -- Update Actions
     , integrateLocation
     , updateAnimation
+    , updateEffects, addEffect
     , separateCollision
     , addItems
     , dropAllItems
@@ -20,14 +22,21 @@ module Entity.Actions
     , withZIndex
     , renderSprite
     , renderAppearance
+    , renderAnimaiton
     , renderBBox
     , renderCollisionShape
+    , renderTargetMark
+    , renderEffects
 
     -- Queries
     -- , queryStaticInRange
+    , queryInRadius
+    , queryById
+    , shouldDie
 
     -- Utils
-    , anyMatch
+    , addAction
+    , anyMatch, whenMatch
     , ifJustLocation
     ) where
 
@@ -43,7 +52,7 @@ import Engine.Layout.Types (border)
 import Types.Entity
 import Types.Entity.ItemType
 import Types.Entity.Appearance
-import Types.Entity.Animation (CharacterAnimation)
+import Types.Entity.Animation (Animation, EffectState, EffectKind, effectUpdate)
 import qualified Entity.Animation as Animation
 import Entity.Utils
 import qualified EntityIndex
@@ -95,21 +104,48 @@ integrateLocation = do
 
 updateAnimation
     :: HasVelocity  s Velocity
-    => HasAnimation s CharacterAnimation
+    => HasAnimation s Animation
     => Update s ()
 updateAnimation = do
     vel <- use $ self.velocity._Wrapped
-    let n = norm vel
+    a <- use $ self.animation
+    when (a^.current.kind == Animation.Walk) $
+        if (norm vel == 0)
+        then self.animation.progression .= Animation.Stopped
+        else do
+            self.animation.progression       .= Animation.Cycle
+            self.animation.current.direction %= Animation.vecToDir vel
+    self.animation %= Animation.update defaultDelta
+
+    {-
     let Time t = defaultDelta
-    d <- use $ self.animation.direction
+    d <- use $ self.animation.current.direction
     let animationSpeed = -- 1 --  0.01
             if d == Animation.North || d == Animation.South then 1.6 else 1.2
     let upd x = if x > 1 then x - 1 else x
     let eraChange = n * t * animationSpeed
-    self.animation.direction %= Animation.vecToDir vel
-    self.animation.era       %= upd . (+eraChange)
+    self.animation.current.direction %= Animation.vecToDir vel
+    self.animation.current.era       %= upd . (+eraChange)
     when (n == 0) $
-        self.animation.era .= 0
+        self.animation.current.era .= 0
+    -}
+
+updateEffects
+    :: HasEffects s [EffectState]
+    => Time -> Update s ()
+updateEffects delta = self.effects %= mapMaybe (\x -> (x^.effectUpdate) delta x)
+
+addEffect
+    :: HasEffects s [EffectState]
+    => EffectKind -> Update s ()
+addEffect k = case k of
+    Animation.HitEffect _ -> self.effects %= ((Animation.makeEffect k hitUpdate):)
+    where
+    hitUpdate dt s = endByEra dt $ s
+    endByEra dt s
+        | ss^.era >= s^.duration = Nothing
+        | otherwise              = Just ss
+        where ss = s & era +~ (dt^._Wrapped)
 
 separateCollision
     :: HasLocation s Location
@@ -315,8 +351,8 @@ dropItem i = do
 
 --------------------------------------------------------------------------------
 
-addAction :: EntityId -> EntityAction -> Update x ()
-addAction i x = actions %= (:>DirectedEntityAction i x)
+addAction :: HasEntityId e EntityId => e -> EntityAction -> Update x ()
+addAction e x = actions %= (:>DirectedEntityAction (e^.entityId) x)
 
 dropItemAction
     :: HasLocation x Location
@@ -374,6 +410,12 @@ renderAppearance ctx = \case
         & shapeType .~ t
         & color     .~ c
 
+renderAnimaiton :: HasAnimation x Animation
+    => x -> RenderContext -> [Resource] -> RenderAction
+renderAnimaiton x ctx = renderComposition . map renderAnimPart
+    where
+    renderAnimPart = renderSprite ctx . Animation.selectCurrent (x^.animation)
+
 renderBBox :: BBox Float -> RenderAction
 renderBBox bb = renderSimpleBox $ def
     & size .~ (view size $ bboxToRect bb)
@@ -389,6 +431,16 @@ renderCollisionShape cs = monoidJust cs $ \case
         & translate (d^.Collider.center._Wrapped)
         & zindex    .~ 10000
 
+renderTargetMark :: RenderAction
+renderTargetMark = renderShape $ def
+    & shapeType .~ SimpleCircle
+    & color     .~ Color.withOpacity Color.red 0.3
+    & scale  0.4
+    & scaleY 0.7
+
+renderEffects :: HasEffects x [EffectState] => x -> RenderAction
+renderEffects = renderComposition . map Animation.renderEffect . view effects
+
 --------------------------------------------------------------------------------
 -- Queries
 
@@ -396,15 +448,38 @@ queryStaticInRange :: RangeBBox -> Update s [EntityWithId]
 queryStaticInRange rng =
     EntityIndex.lookupInRange EntityKind_Static rng =<< use (context.entities)
 
+queryInRadius
+    :: HasLocation x Location
+    => EntityKind -> Distance -> Update x [EntityWithId]
+queryInRadius k (Distance d) = do
+    Location l <- use $ self.location
+    let rng = mkBBoxCenter l (pure $ d*2)
+    EntityIndex.lookupInRange k rng =<< use (context.entities)
+
+queryById :: EntityId -> Update s (Maybe EntityWithId)
+queryById eid = EntityIndex.lookupById eid =<< use (context.entities)
+
+shouldDie :: HasHealth x Health => Update x Bool
+shouldDie = uses (self.health._Wrapped) (<=0)
+
 --------------------------------------------------------------------------------
 -- Utils
 
 anyMatch
     :: HasProcessOnUpdate x [EntityAction]
     => APrism' EntityAction y
-    -> Update x ()
+    -> (NonEmpty y -> Update x ())
     -> Update x ()
 anyMatch p act = do
+    as <- uses (self.processOnUpdate) $ toListOf (traverse.clonePrism p)
+    whenNotNull as act
+
+whenMatch
+    :: HasProcessOnUpdate x [EntityAction]
+    => APrism' EntityAction y
+    -> Update x ()
+    -> Update x ()
+whenMatch p act = do
     as <- use (self.processOnUpdate)
     when (any (isPrism p) as) act
 

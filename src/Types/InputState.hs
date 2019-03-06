@@ -27,6 +27,7 @@ data InputAction
    | ToggleViewPanel PanelName
    | PickupAllItems
    | DropAllItems
+   | ExecuteAttack
    | SelectItemToPickUp
    | SelectItemToDrop
    | SelectItemToFocus
@@ -240,8 +241,8 @@ defaultCommonKeymap = buildKeymap
 defaultInputKeymap :: InputKeymap
 defaultInputKeymap = buildInputKeymap
     [ InputGroup NormalMode
-        [ InputKey Key'F      (SetMode FightMode)
-        , InputKey Key'Space  (SetMode SpaceMode)
+        -- [ InputKey Key'F      (SetMode FightMode)
+        [ InputKey Key'Space  (SetMode SpaceMode)
 
         , InputStr "i" (SetMode $ StatusMode Inventory)
 
@@ -269,8 +270,9 @@ defaultInputKeymap = buildInputKeymap
 
         , InputStr "yy" PickupAllItems
         -- , InputStr "yi" SelectItemToPickUp
-
         , InputStr "pp" DropAllItems
+
+        , InputStr "gf" ExecuteAttack
         ]
 
     , InputGroup FightMode

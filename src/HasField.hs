@@ -35,9 +35,14 @@ class HasUnique          s t | s -> t where unique          :: Lens' s t
 class HasSprite          s t | s -> t where sprite          :: Lens' s t
 class HasCollisionShape  s t | s -> t where collisionShape  :: Lens' s t
 class HasAnimation       s t | s -> t where animation       :: Lens' s t
+class HasEffects         s t | s -> t where effects         :: Lens' s t
 class HasDirection       s t | s -> t where direction       :: Lens' s t
 class HasEra             s t | s -> t where era             :: Lens' s t
+class HasDuration        s t | s -> t where duration        :: Lens' s t
 class HasKind            s t | s -> t where kind            :: Lens' s t
+class HasCurrent         s t | s -> t where current         :: Lens' s t
+class HasProgression     s t | s -> t where progression     :: Lens' s t
+class HasHealth          s t | s -> t where health          :: Lens' s t
 -- class HasPart            s t | s -> t where part            :: Lens' s t
 
 class GetZIndex          s t | s -> t where get_zindex      :: s -> t

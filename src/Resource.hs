@@ -14,6 +14,7 @@ allSprites =
     , maleHair
     , malePants
     , maleShirt
+    , bat
     ]
 
 mkResourcePng :: Float -> Text -> Resource
@@ -37,6 +38,10 @@ malePants = mkAnimation "legs/pants/male/teal_pants_male"
 
 maleShirt :: Resource
 maleShirt = mkAnimation "torso/shirts/longsleeve/male/white_longsleeve"
+
+bat :: Resource
+bat = mkResourcePng 32 "units/bat"
+    & gridSize .~ pure 32
 
 
 {-

@@ -30,6 +30,14 @@ data EntityAction
    | EntityAction_DropItem EntityId
    -- tell entity to that it's child container wants to drop selected [EntityId]
    | EntityAction_OwnerDropItem EntityId
+   -- tell entity to mark itself as targeted by player
+   | EntityAction_SelfMarkAsTarget
+   -- tell entity to unmark itself as targeted by player
+   | EntityAction_SelfUnmarkAsTarget
+   -- tell entity to execute attack on market target
+   | EntityAction_ExecuteAttack
+   -- tell entity it was attacked
+   | EntityAction_SelfAttacked AttackPower
    deriving (Show)
 makePrisms ''EntityAction
 

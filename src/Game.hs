@@ -15,8 +15,10 @@ import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
+import qualified Entity.Animation as Animation
 import Entity.Container
 import Entity.Item
+import Entity.Unit (makeUnit, testUnitType_bat)
 import GameState
 import EntityLike
 import WorldGen (generateWorld, genTest)
@@ -40,6 +42,8 @@ initSt = do
     let eix = st^.gameState.entities
     forM_ world $ \e -> EntityIndex.insert e eix
     pid <- EntityIndex.insert playerEntity eix
+    void $ EntityIndex.insert (batEntity $ locM 3 6)   eix
+    void $ EntityIndex.insert (batEntity $ locM 2 6.3) eix
     setupTestGameState eix
     return $ st
         & gameState.focusId .~ Just pid
@@ -48,6 +52,10 @@ initSt = do
     playerEntity = toEntity @Player $ def
         & location .~ locM 0 0
         & collisionShape .~ Just (Collider.circle 0 0.3)
+        & animation      .~ Animation.characterAnimation
+
+    batEntity atLoc = toEntity $ makeUnit testUnitType_bat
+        & location .~ atLoc -- locM 3 6
 
 endSt :: Engine St ()
 endSt = do

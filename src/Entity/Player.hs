@@ -29,19 +29,69 @@ actOn x a = case a of
     EntityAction_AddItem           _ -> handleOnUpdate   a x
     EntityAction_DropItem          _ -> handleOnUpdate   a x
     EntityAction_OwnerDropItem     _ -> handleOnUpdate   a x
+    EntityAction_ExecuteAttack       -> handleOnUpdate   a x
     _ -> x
     where
-    setAnimationKind k x = x & animation.kind .~ k
+    setAnimationKind k _ = x
+        & animation.current.kind .~ k
+        & animation.current.era  .~ 0
+        & animation.progression  .~ Animation.defaultTransition
 
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedEntityAction])
 update x ctx = runUpdate x ctx $ do
-    integrateLocation
-    separateCollision
+    whenMatch _EntityAction_ExecuteAttack executeAttack
     updateAnimation
-    anyMatch _EntityAction_AddItem  addItems
-    anyMatch _EntityAction_DropAllItems dropAllItems
+    playerIntegrateLocation
+    separateCollision
+    autoTarget
+    whenMatch _EntityAction_AddItem  addItems
+    whenMatch _EntityAction_DropAllItems dropAllItems
     mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
+
+executeAttack :: Update Player ()
+executeAttack = do
+    mt <- fmap join . mapM queryById =<< use (self.target)
+    whenJust mt $ \te -> do
+        let mloc = te^.entity.oracle.location
+        whenJust mloc $ \loc -> do
+            sloc <- use $ self.location
+            executeAttackAt te $ loc^._Wrapped - sloc^._Wrapped
+
+executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
+executeAttackAt targetEntity vectorToTarget = do
+    -- TODO: Choose attack animation based on weapon
+    -- TODO: Only execute attack if dist is withing weapon range
+    -- let dist = norm vectorToTarget
+    self.animation.current.direction %= Animation.vecToDir vectorToTarget
+    self.animation.current.kind .= Animation.Slash
+    self.animation.current.era  .= 0
+    self.animation.progression  .= Animation.defaultTransition
+
+    let attackPower = AttackPower 1 -- TODO: Calculate attack power
+    addAction targetEntity $ EntityAction_SelfAttacked attackPower
+
+playerIntegrateLocation :: Update Player ()
+playerIntegrateLocation = do
+    k <- use $ self.animation.current.kind
+    when (k == Animation.Walk) integrateLocation
+
+autoTarget :: Update Player ()
+autoTarget = do
+    ds <- queryInRadius EntityKind_Dynamic (disM 8)
+    sid <- use $ context.selfId
+    loc <- use $ self.location
+    let hs = sortWith (distanceTo loc) $ filter ((/=sid) . view entityId) ds
+    let newTarget = viaNonEmpty head (map (view entityId) hs)
+    currentTarget <- use $ self.target
+    self.target .= viaNonEmpty head (map (view entityId) hs)
+    when (newTarget /= currentTarget) $ do
+        mapM_ (flip addAction EntityAction_SelfUnmarkAsTarget) currentTarget
+        mapM_ (flip addAction EntityAction_SelfMarkAsTarget) newTarget
+
+    where
+    distanceTo loc e = fromMaybe 10000 $
+        (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracle.location)
 
 processAction :: EntityAction -> Update Player ()
 processAction = \case
@@ -55,7 +105,7 @@ render :: Player -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
     -- , renderShape shape & scale 0.3
-    , renderAnimaiton
+    , translateY 0.8 $ renderAnimaiton x ctx
         [ Resource.maleBody
         , Resource.malePants
         , Resource.maleShirt
@@ -64,9 +114,6 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     ]
     where
     renderDebug = renderComposition $ localDebug <> globalDebug
-
-    renderAnimaiton = translateY 0.8 . renderComposition . map renderAnimPart
-    renderAnimPart  = renderSprite ctx . Animation.selectPart (x^.animation)
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)

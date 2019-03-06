@@ -59,6 +59,10 @@ newtype Health   = Health   { unHealth   :: Int    }
     deriving (Generic, Default, Show)
 makeWrapped ''Health
 
+newtype AttackPower = AttackPower { unAttackPower :: Int    }
+    deriving (Generic, Default, Show)
+makeWrapped ''AttackPower
+
 newtype Speed    = Speed    { unSpeed    :: Float }
     deriving (Generic, Default, Show)
 makeWrapped ''Speed
@@ -68,6 +72,7 @@ newtype Volume   = Volume   { unVolume   :: Float }
 makeWrapped ''Volume
 
 newtype Time     = Time     { unTime     :: Float }
+makeWrapped ''Time
     -- deriving (Generic, Default, Show)
 
 --------------------------------------------------------------------------------

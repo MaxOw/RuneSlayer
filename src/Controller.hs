@@ -85,6 +85,7 @@ handleActivation = \case
     ToggleViewPanel   p -> toggleViewPanel p
     PickupAllItems      -> pickupAllItems
     DropAllItems        -> dropAllItems
+    ExecuteAttack       -> executeAttack
     SelectItemToPickUp  -> selectItemToPickUp
     SelectItemToDrop    -> selectItemToDrop
     SelectItemToFocus   -> selectItemToFocus

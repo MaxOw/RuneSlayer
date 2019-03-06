@@ -9,6 +9,7 @@ module GameState
     , debugRunAnimation
     , pickupItem, pickupAllItems
     , dropItem, dropAllItems
+    , executeAttack
     ) where
 
 import Delude
@@ -80,4 +81,7 @@ pickupAllItems = withFocusId $ \fi -> do
 
 dropAllItems :: Game ()
 dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
+
+executeAttack :: Game ()
+executeAttack = actOnFocusedEntity EntityAction_ExecuteAttack
 

@@ -66,7 +66,7 @@ itemLikeUpdate
     => HasOwner           s (Maybe EntityId)
     => Update s ()
 itemLikeUpdate = do
-    anyMatch _EntityAction_SelfAddedBy pickUpInformOwner
+    whenMatch _EntityAction_SelfAddedBy pickUpInformOwner
     self.processOnUpdate .= mempty
 
 itemLikeRender

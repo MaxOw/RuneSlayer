@@ -13,6 +13,7 @@ import Entity.Tile
 import Entity.Container
 import Entity.Item
 import Entity.StaticEntity
+import Entity.Unit
 
 --------------------------------------------------------------------------------
 
@@ -24,6 +25,7 @@ instance EntityLike Tile         where toEntity =         tileToEntity
 instance EntityLike Container    where toEntity =    containerToEntity
 instance EntityLike Item         where toEntity =         itemToEntity
 instance EntityLike StaticEntity where toEntity = staticEntityToEntity
+instance EntityLike Unit         where toEntity =         unitToEntity
 
 instance EntityLike EntitySum where
     toEntity tag = case tag of
@@ -33,3 +35,4 @@ instance EntityLike EntitySum where
         EntitySum_Container    x -> toEntity x
         EntitySum_Item         x -> toEntity x
         EntitySum_StaticEntity x -> toEntity x
+        EntitySum_Unit         x -> toEntity x

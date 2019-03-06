@@ -27,7 +27,7 @@ actOn x a = case a of
 
 update :: Container -> EntityContext -> Q (Maybe Container, [DirectedEntityAction])
 update x ctx = runUpdate x ctx $ do
-    anyMatch _EntityAction_AddItem containerAddItems
+    whenMatch _EntityAction_AddItem containerAddItems
     mapM_ processAction =<< use (self.processOnUpdate)
     itemLikeUpdate
 

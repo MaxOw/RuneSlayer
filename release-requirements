@@ -1,0 +1,34 @@
+# Release Requirements
+Requirements for first release: v0.1
+
+## General
+
+* Main Menu.                                                                 [ ]
+* Saving and loading.                                                        [ ]
+* Auto updates. [v0.2?]                                                      [ ]
+* Sqlite powered, nix-like immutable data storage. [v0.2?]                   [ ]
+* Fix scroller lag.                                                          [ ]
+* Benchmark and speedup rendering pipeline. [v0.2?]                          [ ]
+* Declarative config via Dhall. (Just keymap for now)                        [ ]
+* Improve text and layout rendering.                                         [ ]
+
+## Game/Gameplay
+
+* Load entity types from files (Json/Dhall)                                  [ ]
+* Load resource files. (Json/Dhall)                                          [ ]
+* Save/Load map description. (What format?)                                  [ ]
+
+* World actions.                                                             [X]
+* Enemy unit spwan corpse on death.                                          [.]
+* Enemy unit go towards & attack player.                                     [ ]
+* Show equipped items.                                                       [ ]
+* Offensive skill.                                                           [ ]
+* Defensive skill.                                                           [ ]
+* Runic levels.                                                              [ ]
+* Add hint/help/tutorial windows.                                            [ ]
+* Initial vilige.                                                            [ ]
+* NPCs.                                                                      [ ]
+* Communication with NPCs.                                                   [ ]
+* Initial island.                                                            [ ]
+* Enemy units: Gore Bats, Shadow Spiders, Shadow Puppets (Skeletons)         [ ]
+

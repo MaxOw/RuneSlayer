@@ -17,7 +17,7 @@ import Resource (Resource)
 actOn :: Tile -> EntityAction -> Tile
 actOn x _ = x
 
-update :: Tile -> EntityContext -> Q (Maybe Tile, [DirectedEntityAction])
+update :: Tile -> EntityContext -> Q (Maybe Tile, [DirectedAction])
 update x _ = return (Just x, [])
 
 render :: Tile -> RenderContext -> RenderAction

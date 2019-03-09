@@ -19,7 +19,7 @@ makeUpdateSt x ctx = UpdateSt
    }
 
 runUpdate
-    :: x -> EntityContext -> Update x () -> Q (Maybe x, [DirectedEntityAction])
+    :: x -> EntityContext -> Update x () -> Q (Maybe x, [DirectedAction])
 runUpdate x ctx act = do
     result <- execStateT act (makeUpdateSt x ctx)
     let mx = if result^.deleteSelf then Nothing else Just (result^.self)

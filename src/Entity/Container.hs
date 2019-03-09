@@ -25,7 +25,7 @@ actOn x a = case a of
     EntityAction_DropItem _ -> handleOnUpdate a x
     _ -> itemLikeActOn x a
 
-update :: Container -> EntityContext -> Q (Maybe Container, [DirectedEntityAction])
+update :: Container -> EntityContext -> Q (Maybe Container, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_AddItem containerAddItems
     mapM_ processAction =<< use (self.processOnUpdate)

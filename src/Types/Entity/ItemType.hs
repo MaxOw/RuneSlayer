@@ -14,6 +14,9 @@ data ItemKind
    deriving (Eq)
 instance Default ItemKind where def = ItemKind_SmallItem
 
+newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }
+makeWrapped ''ItemTypeName
+
 data ItemType = ItemType
    { itemType_name         :: Text
    , itemType_volume       :: Volume

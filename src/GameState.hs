@@ -17,13 +17,18 @@ import qualified Data.Set as Set
 
 import Engine (userState)
 import Types (Game)
+import Types.Entity (Entity)
 import Types.Entity.Common (EntityId)
 import Types.Entity.Animation (AnimationKind)
 import Types.St
 import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
+import Types.DirectedAction
 import Focus
+
+import EntityLike (toEntity)
+import Entity.Item (makeItem)
 
 import qualified EntityIndex
 
@@ -35,17 +40,33 @@ zoomGameState = zoom (userState.gameState)
 updateGameState :: Game ()
 updateGameState = zoomGameState $ do
     join $ EntityIndex.update
-        <$> use actions
+        <$> pure handleWorldAction
+        <*> use actions
         <*> use frameCount
         <*> use entities
 
     actions .= []
 
-addDirectedAction :: DirectedEntityAction -> Game ()
+handleWorldAction :: WorldAction -> GameStateM (Maybe Entity)
+handleWorldAction = \case
+    WorldAction_SpawnEntity s -> spawnEntity s
+    where
+    spawnEntity = \case
+        SpawnEntity_Item i -> spawnItem i
+
+    spawnItem i = do
+        -- mit <- lookupItemType itName
+        let mit = Just (i^.itemType)
+        flip (maybe (pure Nothing)) mit $ \it -> do
+            let e = toEntity $ makeItem it
+                  & location .~ (Just $ i^.location)
+            return $ Just e
+
+addDirectedAction :: DirectedAction -> Game ()
 addDirectedAction a = userState.gameState.actions %= (a:)
 
 actOnEntity :: EntityId -> EntityAction -> Game ()
-actOnEntity eid = addDirectedAction . DirectedEntityAction eid
+actOnEntity eid = addDirectedAction . directAtEntity eid
 
 actOnFocusedEntity :: EntityAction -> Game ()
 actOnFocusedEntity act = withFocusId $ \fi -> actOnEntity fi act

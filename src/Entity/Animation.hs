@@ -18,7 +18,7 @@ module Entity.Animation
 import Delude
 import Diagrams.Angle
 import Entity.Utils
-import Types.Entity.Common
+-- import Types.Entity.Common
 import Types.Entity.Animation
 import qualified Resource
 import Resource (Resource)
@@ -95,9 +95,13 @@ makeEffect k f = EffectState
 
 renderEffect :: EffectState -> RenderAction
 renderEffect e = case e^.kind of
-    HitEffect _ -> translateY (e^.era) $ renderCircle 0.1 Color.red
+    HitEffect x -> translateY (e^.era) $ renderHit x
     where
+    renderHit (AttackPower x) = scale (1/64) $ renderSimpleText d $ show (-x)
+    d = def & color .~ Color.opaque Color.red
+    {-
     renderCircle s c = scale s $ renderShape $ def
         & shapeType .~ SimpleCircle
         & color     .~ Color.opaque c
+    -}
 

@@ -61,15 +61,17 @@ noSetMoveVector :: EntityAction -> Bool
 noSetMoveVector (EntityAction_SetMoveVector {}) = False
 noSetMoveVector _                               = True
 
-update :: MonadIO m => [DirectedEntityAction] -> Word32 -> EntityIndex -> m ()
-update globalActions fct eix = liftIO $ do
+update :: MonadIO m
+    => (WorldAction -> m (Maybe Entity))
+    -> [DirectedAction] -> Word32 -> EntityIndex -> m ()
+update handleWorldAction globalActions fct eix = do
 
     actList <- readIORef $ eix^.activatedList
-    dynSet  <- readIORef (eix^.dynamicIndex)
+    dynSet  <- readIORef $ eix^.dynamicIndex
     -- List of entity ids to process in this update O(n+m)
     let toProcIdList = actList <> toList dynSet
     -- List of entities in need of processing O(n)
-    toProcList <- lookupManyById toProcIdList eix
+    toProcList <- liftIO $ lookupManyById toProcIdList eix
 
     -- List of results after applying update function on each entity toProc O(n)
     -- [(EntityId, (Maybe Entity, [DirectedEntityAction]))]
@@ -82,25 +84,26 @@ update globalActions fct eix = liftIO $ do
 
     -- List of directed actions resulting from update + global ones
     let directedActions = concatMap (snd.snd) updateResult <> globalActions
-    debugPrintActions directedActions
+    let (actionsAtEntity, actionsAtWorld) = partitionActions directedActions
+    debugPrintActions actionsAtEntity
 
     -- Map of entity action grouped by target entity id
     let directedActionsMap :: HashMap EntityId [EntityAction]
-        directedActionsMap = HashMap.fromListWith (<>) $ map f directedActions
+        directedActionsMap = HashMap.fromListWith (<>) $ map f actionsAtEntity
             where f d = (d^.entityId, [d^.action])
 
     -- Set of all entity ids that changed in this frame
     let changedList = hashNub $
-            (map fst updateResult) <> (map (view entityId) directedActions)
+            (map fst updateResult) <> (map (view entityId) actionsAtEntity)
     -- List of values that entities had before change
-    preChangeList <- lookupManyById changedList eix
+    preChangeList <- liftIO $ lookupManyById changedList eix
 
     -- Write updated entities to index
     forM_ updateResult $ \(i, (me,_)) -> do
         VectorIndex.update (i^.offset) (EntityWithId i <$> me) (eix^.entities)
 
     --  (EntityId, [EntityAction]) -> Q (Maybe (Int, EntityWithId))
-    let performActions (eid, as) = fmap f <$> lookupById eid eix
+    let performActions (eid, as) = fmap f <$> liftIO (lookupById eid eix)
             where f = (eid^.offset,) . over entity (flip (foldl' entityActOn) as)
 
     -- Result of directed actions
@@ -111,15 +114,20 @@ update globalActions fct eix = liftIO $ do
     -- Write acted on entities to index
     forM_ actOnResult $ \(i, e) -> VectorIndex.update i (Just e) (eix^.entities)
 
+    -- Preform world actions
+    toAddToIndexList <- map (\e -> (e^.entityId, Nothing, Just $ e^.entity))
+         . catMaybes <$> mapM handleAndInsert actionsAtWorld
+
     -- Reindex changed entities
-    toReindexList <- forM preChangeList $ \ewid -> do
+    toUpdateOnIndexList <- forM preChangeList $ \ewid -> do
         let i = ewid^.entityId
-        newEwid <- lookupById i eix
+        newEwid <- liftIO $ lookupById i eix
         return (i, Just $ ewid^.entity, view entity <$> newEwid)
+    let toReindexList = toUpdateOnIndexList <> toAddToIndexList
     mapM_ (reindex eix) toReindexList
 
     -- Update list of activated entities to be processed in next frame
-    directedList <- lookupManyById (HashMap.keys directedActionsMap) eix
+    directedList <- liftIO $ lookupManyById (HashMap.keys directedActionsMap) eix
     let f = filter (\e -> entityKind (e^.entity) /= EntityKind_Dynamic)
     writeIORef (eix^.activatedList) (map (view entityId) $ f directedList)
 
@@ -145,6 +153,21 @@ update globalActions fct eix = liftIO $ do
     shouldInsertDyn (_, Just ov, Just nv)
         =  entityKind ov /= EntityKind_Dynamic
         && entityKind nv == EntityKind_Dynamic
+
+    partitionActions = go [] []
+        where
+        go es ws [] = (es, ws)
+        go es ws (x:xs) = case x of
+            DirectedAtEntity e -> go (e:es) ws xs
+            DirectedAtWorld  w -> go es (w:ws) xs
+
+    handleAndInsert w = do
+        me <- handleWorldAction w
+        case me of
+            Nothing -> return Nothing
+            Just en -> do
+                i <- insert en eix
+                return $ Just $ EntityWithId i en
 
     ----------------------------------------------------------------------------
     debugPrintActions = mapM_ prt . filter (noSetMoveVector . view action)

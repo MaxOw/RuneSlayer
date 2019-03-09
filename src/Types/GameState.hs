@@ -5,12 +5,12 @@ import Delude
 import qualified Control.Monad.Trans.State.Lazy as Lazy
 import Types.Entity.Common (EntityId)
 import Types.Entity (EntityIndex)
-import Types.EntityAction (DirectedEntityAction)
+import Types.DirectedAction (DirectedAction)
 import qualified EntityIndex
 
 data GameState = GameState
    { gameState_entities       :: EntityIndex
-   , gameState_actions        :: [DirectedEntityAction]
+   , gameState_actions        :: [DirectedAction]
    , gameState_focusId        :: Maybe EntityId
    , gameState_gameScale      :: Float
    , gameState_menuScale      :: Float

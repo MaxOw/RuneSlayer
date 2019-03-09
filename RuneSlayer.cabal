@@ -70,7 +70,7 @@ Executable RuneSlayer
                 , time
 
                 , linear
-                , Carnot == 0.1.12.8
+                , Carnot == 0.1.13.2
                 , gl
                 , colour
                 , diagrams-core

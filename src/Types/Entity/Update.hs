@@ -10,7 +10,7 @@ data UpdateSt x = UpdateSt
    { updateSt_self       :: x
    , updateSt_context    :: EntityContext
    , updateSt_deleteSelf :: Bool
-   , updateSt_actions    :: Seq DirectedEntityAction
+   , updateSt_actions    :: Seq DirectedAction
    }
 makeFieldsCustom ''UpdateSt
 

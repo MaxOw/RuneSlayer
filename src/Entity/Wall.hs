@@ -18,7 +18,7 @@ import ResourceManager (lookupResource, ResourceMap)
 actOn :: Wall -> EntityAction -> Wall
 actOn x _ = x
 
-update :: Wall -> EntityContext -> Q (Maybe Wall, [DirectedEntityAction])
+update :: Wall -> EntityContext -> Q (Maybe Wall, [DirectedAction])
 update x _ = return (Just x, [])
 
 render :: Wall -> RenderContext -> RenderAction

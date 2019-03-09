@@ -13,9 +13,10 @@ import Delude
 import qualified Control.Monad.Trans.State.Lazy as Lazy
 
 import Types.Debug (DebugFlag)
-import Types.EntityAction as All
-import Types.EntityOracle as All
-import Types.EntitySum    as All
+import Types.DirectedAction as All
+import Types.EntityAction   as All
+import Types.EntityOracle   as All
+import Types.EntitySum      as All
 import Engine (RenderAction (..))
 import Engine.Common.Types (BBox)
 import Data.VectorIndex (VectorIndex)
@@ -65,7 +66,7 @@ data RenderContext = RenderContext
 
 data Entity = Entity
    { entityActOn  :: EntityAction -> Entity
-   , entityUpdate :: EntityContext -> Q (Maybe Entity, [DirectedEntityAction])
+   , entityUpdate :: EntityContext -> Q (Maybe Entity, [DirectedAction])
    , entityRender :: RenderContext -> RenderAction
    , entityOracle :: EntityOracle
    , entitySave   :: EntitySum
@@ -86,7 +87,7 @@ makeFieldsCustom ''EntityWithId
 
 data EntityParts p = EntityParts
    { makeActOn  :: p -> EntityAction -> p
-   , makeUpdate :: p -> EntityContext -> Q (Maybe p, [DirectedEntityAction])
+   , makeUpdate :: p -> EntityContext -> Q (Maybe p, [DirectedAction])
    , makeRender :: p -> RenderContext -> RenderAction
    , makeOracle :: p -> EntityOracle
    , makeSave   :: p -> EntitySum

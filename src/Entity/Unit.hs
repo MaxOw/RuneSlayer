@@ -10,6 +10,7 @@ import Delude
 import Types.Entity
 import Types.Entity.Unit
 
+import Entity.Item (testItemType_healthPotion)
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Animation (aniMap)
@@ -25,7 +26,7 @@ actOn x a = x & case a of
     EntityAction_SelfAttacked     _ -> handleOnUpdate a
     _ -> id
 
-update :: Unit -> EntityContext -> Q (Maybe Unit, [DirectedEntityAction])
+update :: Unit -> EntityContext -> Q (Maybe Unit, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     -- updateAnimation
     updateEffects defaultDelta
@@ -41,10 +42,13 @@ procAttack as = do
     self.health._Wrapped -= p
     whenM shouldDie $ do
         deleteSelf .= True
+        loc <- use $ self.location
+        addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
+            & location .~ loc
+            & itemType .~ testItemType_healthPotion
         -- TODO: spawn item: self.corpse
     where
     applyDefence     x = return x
-    addHitAnimation _x = return ()
 
 render :: Unit -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition

@@ -182,8 +182,8 @@ upShift c kp@(Keypress k m)
     | otherwise = kp
 
 defaultSelectors :: [Char]
--- defaultSelectors = "jfkdlsahgurieowpq"
-defaultSelectors = "jf"
+defaultSelectors = "jfkdlsahgurieowpq"
+-- defaultSelectors = "jf"
 
 --------------------------------------------------------------------------------
 

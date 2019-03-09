@@ -25,7 +25,7 @@ actOn x _ = x
 update
     :: StaticEntity
     -> EntityContext
-    -> Q (Maybe StaticEntity, [DirectedEntityAction])
+    -> Q (Maybe StaticEntity, [DirectedAction])
 update x _ = return (Just x, [])
 
 render :: StaticEntity -> RenderContext -> RenderAction

@@ -38,6 +38,7 @@ initSt = do
     rs <- catMaybes <$> mapM loadResource
         (ordNub $ map (view path) Resource.allSprites)
     Engine.fullyUpdateAtlas
+    Engine.setDefaultFonts ["Arial"] 10
     world <- generateWorld $ Size 30 30
     let eix = st^.gameState.entities
     forM_ world $ \e -> EntityIndex.insert e eix

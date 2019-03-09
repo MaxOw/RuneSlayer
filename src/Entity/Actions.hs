@@ -35,7 +35,7 @@ module Entity.Actions
     , shouldDie
 
     -- Utils
-    , addAction
+    , addAction, addWorldAction
     , anyMatch, whenMatch
     , ifJustLocation
     ) where
@@ -183,9 +183,9 @@ dropAllItems = do
 
 purePickUpInformOwner
     :: HasOwner x (Maybe EntityId)
-    => x -> EntityContext -> [DirectedEntityAction]
+    => x -> EntityContext -> [DirectedAction]
 purePickUpInformOwner x ctx = case x^.owner of
-    Just ownerId -> [DirectedEntityAction ownerId act]
+    Just ownerId -> [directAtEntity ownerId act]
     _            -> []
     where
     act = EntityAction_AddItem        $ ctx^.selfId
@@ -352,7 +352,10 @@ dropItem i = do
 --------------------------------------------------------------------------------
 
 addAction :: HasEntityId e EntityId => e -> EntityAction -> Update x ()
-addAction e x = actions %= (:>DirectedEntityAction (e^.entityId) x)
+addAction e x = actions %= (:> directAtEntity (e^.entityId) x)
+
+addWorldAction :: WorldAction -> Update x ()
+addWorldAction a = actions %= (:> directAtWorld a)
 
 dropItemAction
     :: HasLocation x Location

@@ -37,7 +37,7 @@ actOn x a = case a of
         & animation.current.era  .~ 0
         & animation.progression  .~ Animation.defaultTransition
 
-update :: Player -> EntityContext -> Q (Maybe Player, [DirectedEntityAction])
+update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_ExecuteAttack executeAttack
     updateAnimation

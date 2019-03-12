@@ -5,12 +5,13 @@ import Delude
 import Types.Entity.Common
 import Types.EntityAction
 import Types.Entity.ItemType
+-- import Types.Entity.EntityType
 
 --------------------------------------------------------------------------------
 
 data SpawnItem = SpawnItem
    { spawnItem_location :: Location
-   , spawnItem_itemType :: ItemType
+   , spawnItem_itemType :: ItemTypeName
    } deriving (Generic)
 makeFieldsCustom ''SpawnItem
 instance Default SpawnItem

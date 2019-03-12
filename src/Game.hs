@@ -23,11 +23,13 @@ import GameState
 import EntityLike
 import WorldGen (generateWorld, genTest)
 
-import qualified Resource
+-- import qualified Resource
 import qualified EntityIndex
 import EntityIndex (EntityIndex)
 
 import qualified Data.Collider as Collider
+import Dhall.Utils (dhallToMap)
+import qualified Data.Map as Map
 
 initSt :: Engine () St
 initSt = do
@@ -35,8 +37,10 @@ initSt = do
     scro <- newScroller $ def
     st <- defaultSt scro
     loadFontFamily "Arial"
-    rs <- catMaybes <$> mapM loadResource
-        (ordNub $ map (view path) Resource.allSprites)
+    rs <- loadAllSprites
+    -- whenJustM (dhallToMap "data/desc/ResourcePaths.dhall") $ \m ->
+        -- rs <- catMaybes <$> mapM loadResource (ordNub $ Map.values m)
+        -- (ordNub $ map (view path) Resource.allSprites)
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
     world <- generateWorld $ Size 30 30
@@ -55,8 +59,15 @@ initSt = do
         & collisionShape .~ Just (Collider.circle 0 0.3)
         & animation      .~ Animation.characterAnimation
 
-    batEntity atLoc = toEntity $ makeUnit testUnitType_bat
+    batEntity atLoc = toEntity $ makeUnit testUnitType_bat
         & location .~ atLoc -- locM 3 6
+
+loadAllSprites :: Engine us [(Text, Img)]
+loadAllSprites = do
+    mpaths <- liftIO $ dhallToMap "data/desc/ResourcePaths.dhall"
+    case mpaths of
+        Nothing -> return []
+        Just pm -> catMaybes <$> mapM loadResource (ordNub $ Map.elems pm)
 
 endSt :: Engine St ()
 endSt = do

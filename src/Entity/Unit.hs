@@ -10,7 +10,6 @@ import Delude
 import Types.Entity
 import Types.Entity.Unit
 
-import Entity.Item (testItemType_healthPotion)
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Animation (aniMap)
@@ -45,7 +44,8 @@ procAttack as = do
         loc <- use $ self.location
         addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
             & location .~ loc
-            & itemType .~ testItemType_healthPotion
+            & itemType._Wrapped .~ "Health Potion"
+            -- testItemType_healthPotion
         -- TODO: spawn item: self.corpse
     where
     applyDefence     x = return x

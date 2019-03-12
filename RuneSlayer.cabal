@@ -63,14 +63,17 @@ Executable RuneSlayer
                 , random
                 , mwc-random
                 , vector
-                , grids
                 , reflection
                 , repa
                 , repa-algorithms
                 , time
 
+                , aeson
+                , dhall
+                , dhall-json
+
                 , linear
-                , Carnot == 0.1.13.2
+                , Carnot == 0.1.13.3
                 , gl
                 , colour
                 , diagrams-core

@@ -18,6 +18,7 @@ import qualified Data.Set as Set
 import Engine (userState)
 import Types (Game)
 import Types.Entity (Entity)
+-- import Types.Entity.EntityType
 import Types.Entity.Common (EntityId)
 import Types.Entity.Animation (AnimationKind)
 import Types.St
@@ -38,16 +39,19 @@ zoomGameState :: GameStateM a -> Game a
 zoomGameState = zoom (userState.gameState)
 
 updateGameState :: Game ()
-updateGameState = zoomGameState $ do
+updateGameState = do
     join $ EntityIndex.update
         <$> pure handleWorldAction
-        <*> use actions
-        <*> use frameCount
-        <*> use entities
+        <*> use (gs actions)
+        <*> use (gs frameCount)
+        <*> use (gs entities)
 
-    actions .= []
+    gs actions .= []
 
-handleWorldAction :: WorldAction -> GameStateM (Maybe Entity)
+    where
+    gs l = userState.gameState.l
+
+handleWorldAction :: WorldAction -> Game (Maybe Entity)
 handleWorldAction = \case
     WorldAction_SpawnEntity s -> spawnEntity s
     where
@@ -55,12 +59,20 @@ handleWorldAction = \case
         SpawnEntity_Item i -> spawnItem i
 
     spawnItem i = do
-        -- mit <- lookupItemType itName
-        let mit = Just (i^.itemType)
+        -- mit <- lookupEntityType $ i^.itemType
+        -- let mit = Just (i^.itemType)
+        let mit = Nothing
         flip (maybe (pure Nothing)) mit $ \it -> do
             let e = toEntity $ makeItem it
                   & location .~ (Just $ i^.location)
             return $ Just e
+
+{-
+lookupEntityType :: EntityTypeName n => n -> Game (Maybe (EntityTypeResult n))
+lookupEntityType n = do
+    et <- use $ userState.entityTypes
+    retrurn $ lookupEntityTypeByName et n
+-}
 
 addDirectedAction :: DirectedAction -> Game ()
 addDirectedAction a = userState.gameState.actions %= (a:)

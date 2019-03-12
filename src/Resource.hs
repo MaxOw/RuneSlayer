@@ -19,7 +19,7 @@ allSprites =
 
 mkResourcePng :: Float -> Text -> Resource
 mkResourcePng ppu p = def
-    & unitsPerPixel .~ (1/ppu)
+    & pixelsPerUnit .~ ppu
     & path .~ "data/imgs/" <> p <> ".png"
 
 mkAnimation :: Text -> Resource
@@ -99,3 +99,4 @@ treeTrunk = mkEnvRect 50 38 6 6
 
 treeFoliage :: Resource
 treeFoliage = mkEnvRect 48 24 6 6
+

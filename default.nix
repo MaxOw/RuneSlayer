@@ -1,4 +1,4 @@
-{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc843" }:
+{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc863" }:
 let ghc = nixpkgs.haskell.packages.${compiler}.override {
       overrides = self: super: {
         # TODO: get packages from github
@@ -11,7 +11,6 @@ let ghc = nixpkgs.haskell.packages.${compiler}.override {
         # concat-plugin         = loadLocal self "concat/plugin";
         # concat-graphics       = loadLocal self "concat/graphics";
         # concat-examples       = loadLocal self "concat/examples";
-        grids           = loadLocal self "grids";
 
         # halive          = loadDirec self "${~/Projects/Gridlock/halive}";
         reload-utils    = loadDirec self "${./../reload-utils}";

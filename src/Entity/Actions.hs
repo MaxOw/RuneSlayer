@@ -64,7 +64,7 @@ import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import Resource (Resource)
 import ResourceManager (lookupResource, ResourceMap)
-import Types.ResourceManager (unitsPerPixel)
+import Types.ResourceManager (pixelsPerUnit)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -393,7 +393,7 @@ withZIndex x = setZIndexAtLeast (get_zindex x)
 renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
 renderSprite ctx r = case lookupResource r $ ctx^.resources of
     Nothing  -> renderShape shape
-    Just img -> renderImg img & scale (r^.unitsPerPixel)
+    Just img -> renderImg img & scale (1/r^.pixelsPerUnit)
     where
     shape = def
         & shapeType   .~ SimpleSquare

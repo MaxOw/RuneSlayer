@@ -17,8 +17,8 @@ import Entity.Tile (makeSimpleTile, makeSimpleFullTile)
 import EntityLike (toEntity)
 import qualified Resource
 import Resource (Resource)
-import Data.Grid (Grid, Coord(..))
-import qualified Data.Grid as Grid
+-- import Data.Grid (Grid, Coord(..))
+-- import qualified Data.Grid as Grid
 --import Data.Reflection
 
 --------------------------------------------------------------------------------
@@ -248,6 +248,7 @@ mkBool p b = mkLocEnt p $ boolToRes b
     boolToRes True  = Resource.mkEnvRect 42 10 2 2
     boolToRes False = Resource.mkEnvRect 54 10 2 2
 
+{-
 mk3x3 :: V2 Int -> Int -> [Entity]
 mk3x3 (V2 x y) i = c -- [mkBool pp True]
     where
@@ -258,6 +259,7 @@ mk3x3 (V2 x y) i = c -- [mkBool pp True]
 
 mk3x3Quad :: V2 Int -> M33 Bool -> [Entity]
 mk3x3Quad p = concatMap (mkTileQuad p) . gridToIndexedRoles . m33toGrid
+-}
 
 mkTileQuad :: V2 Int -> (V2 Int, CornerQuad (Maybe TileRole)) -> [Entity]
 mkTileQuad offp (pos, q) = catMaybes
@@ -318,10 +320,13 @@ roleToOffset = \case
         Corner_BottomLeft  -> mkr 1 1
         Corner_BottomRight -> mkr 2 1
 
+{-
 coordToV2 :: Coord [a, b] -> V2 Int
 coordToV2 = \case
     Coord [x, y] -> V2 y x
     _            -> error "Impossible happend!"
+
+-}
 
 {-
 reifyTabulateGrid
@@ -334,6 +339,7 @@ reifyTabulateGrid (w,h) f =
     proxyTabulateGrid (pw, ph) f
 -}
 
+{-
 m33toGrid :: M33 a -> Grid [3, 3] a
 m33toGrid = Grid.fromNestedLists' . map toList . toList
 
@@ -403,6 +409,8 @@ cornerToRole_TR g = case Grid.toNestedLists g of
         | c          -> Just $ TileRole_OuterCorner Corner_BottomLeft
         | otherwise  -> Nothing
     _ -> Nothing
+-}
+
 
 class RotateMod4 x where
     rotateMod4 :: x -> x
@@ -415,6 +423,7 @@ rotateMod4N i = case mod i 4 of
     _ -> id
     where f = rotateMod4
 
+{-
 partitionCell :: Grid [3, 3] a -> CornerQuad (Grid [2, 2] a)
 partitionCell x = case Grid.toNestedLists x of
     [ [a, b, c] ,
@@ -442,6 +451,7 @@ kernelToRoleQuad k
         -- = fmap (rotateMod4N i)
         -- . cornerToRole
         -- . rotateMod4N_CCW i
+-}
 
 rotateMod4_CCW :: RotateMod4 x => x -> x
 rotateMod4_CCW = rotateMod4N 3
@@ -449,10 +459,12 @@ rotateMod4_CCW = rotateMod4N 3
 rotateMod4N_CCW :: RotateMod4 x => Int -> x -> x
 rotateMod4N_CCW i = rotateMod4N (4 - mod i 4)
 
+{-
 instance RotateMod4 (Grid [2, 2] x) where
     rotateMod4 g = case Grid.toNestedLists g of
         [ [a, b] , [c, d] ] -> Grid.fromNestedLists' [ [c, a] , [d, b] ]
         _ -> g
+-}
 
 instance RotateMod4 (M22 x) where
     rotateMod4

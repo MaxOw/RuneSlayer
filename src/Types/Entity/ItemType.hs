@@ -15,7 +15,9 @@ data ItemKind
 instance Default ItemKind where def = ItemKind_SmallItem
 
 newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }
+    deriving (Generic)
 makeWrapped ''ItemTypeName
+instance Default ItemTypeName
 
 data ItemType = ItemType
    { itemType_name         :: Text

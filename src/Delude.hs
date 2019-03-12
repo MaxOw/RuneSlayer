@@ -18,12 +18,14 @@ module Delude
     ) where
 
 import Relude         as All
-import Control.Lens   as All hiding (uncons)
+import Control.Lens   as All hiding (uncons, (??))
 import Data.Default   as All
 import Linear         as All hiding (trace, transpose, identity, rotate)
 import Linear.Affine  as All (Point (..))
 import Diagrams.Angle as All ((@@))
 import Data.Bimap     as All (Bimap)
+import Data.Aeson
+import Engine.Common.Types
 
 import qualified Data.Bimap as Bimap
 
@@ -53,6 +55,11 @@ instance Default Text where def = ""
 instance Default Bool where def = False
 instance Default (Bimap a b) where def = Bimap.empty
 instance Default (Vector.Vector a) where def = Vector.empty
+
+deriving instance Generic (Rect a)
+instance ToJSON a => ToJSON (Rect a)
+instance ToJSON a => ToJSON (V2 a)
+instance ToJSON a => ToJSON (Size a)
 
 --------------------------------------------------------------------------------
 

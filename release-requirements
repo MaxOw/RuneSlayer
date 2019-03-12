@@ -20,6 +20,7 @@ Requirements for first release: v0.1
 
 * World actions.                                                             [X]
 * Enemy unit spwan corpse on death.                                          [.]
+* Named entity types                                                         [ ]
 * Enemy unit go towards & attack player.                                     [ ]
 * Show equipped items.                                                       [ ]
 * Offensive skill.                                                           [ ]

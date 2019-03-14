@@ -1,4 +1,3 @@
-
 let makeImgsPath = \(x : Text) -> "data/imgs/${x}.png"
 let makeCharPath = \(x : Text) -> makeImgsPath "characters/${x}"
 let makeUnitPath = \(x : Text) -> makeImgsPath "units/${x}"

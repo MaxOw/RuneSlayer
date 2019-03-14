@@ -14,7 +14,7 @@ import Types.Entity.Appearance
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.ZIndex
-import qualified Resource
+import Types.ResourceManager
 import qualified Data.Collider as Collider
 
 --------------------------------------------------------------------------------
@@ -71,8 +71,8 @@ testStaticEntityType_tree = def
     & collisionShape .~ Just (Collider.circle (P $ V2 0 (-0.3)) 0.3)
     where
     app = Appearance_Compose
-        [ Appearance_Sprite Resource.treeTrunk
+        [ Appearance_Sprite (SpriteName "Tree Trunk")
         , Appearance_Translate (V2 0 2)
-        $ Appearance_Sprite Resource.treeFoliage
+        $ Appearance_Sprite (SpriteName "Tree Foliage")
         ]
 

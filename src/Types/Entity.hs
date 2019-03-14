@@ -21,7 +21,7 @@ import Engine (RenderAction (..))
 import Engine.Common.Types (BBox)
 import Data.VectorIndex (VectorIndex)
 
-import Types.ResourceManager (ResourceMap)
+import Types.ResourceManager (Resources)
 import Types.Entity.Common (EntityId, EntityKind) -- , Location)
 import Data.SpatialIndex (SpatialIndex)
 import Data.FullMap (FullMap)
@@ -60,7 +60,7 @@ data EntityContext = EntityContext
    }
 
 data RenderContext = RenderContext
-   { renderContext_resources  :: ResourceMap
+   { renderContext_resources  :: Resources
    , renderContext_debugFlags :: Set DebugFlag
    }
 

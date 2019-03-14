@@ -23,7 +23,7 @@ import Types.Debug
 import Engine.Common.Types (BBox(..))
 import Entity.Utils
 import Entity.Actions
-import qualified Resource
+import Types.ResourceManager
 
 --------------------------------------------------------------------------------
 
@@ -123,7 +123,7 @@ testItemType_helmet = def
     & name         .~ "Helmet"
     & volume       .~ volumeL 1.5
     & itemKind     .~ ItemKind_BigItem
-    & appearance   .~ Appearance_Sprite Resource.helmet
+    & appearance   .~ Appearance_Sprite (SpriteName "Helmet")
     & fittingSlots .~ Set.fromList [EquipmentSlot_Head]
 
 testItemType_healthPotion :: ItemType
@@ -131,6 +131,6 @@ testItemType_healthPotion = def
     & name         .~ "Health Potion"
     & volume       .~ volumeL 0.1
     & itemKind     .~ ItemKind_SmallItem
-    & appearance   .~ Appearance_Sprite Resource.healthPotion
+    & appearance   .~ Appearance_Sprite (SpriteName "Health Potion")
     & fittingSlots .~ Set.fromList []
 

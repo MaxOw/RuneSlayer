@@ -15,6 +15,7 @@ import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
+import Types.ResourceManager
 import qualified Entity.Animation as Animation
 import Entity.Container
 import Entity.Item
@@ -37,10 +38,7 @@ initSt = do
     scro <- newScroller $ def
     st <- defaultSt scro
     loadFontFamily "Arial"
-    rs <- loadAllSprites
-    -- whenJustM (dhallToMap "data/desc/ResourcePaths.dhall") $ \m ->
-        -- rs <- catMaybes <$> mapM loadResource (ordNub $ Map.values m)
-        -- (ordNub $ map (view path) Resource.allSprites)
+    rs <- loadResources
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
     world <- generateWorld $ Size 30 30
@@ -52,7 +50,7 @@ initSt = do
     setupTestGameState eix
     return $ st
         & gameState.focusId .~ Just pid
-        & resources .~ HashMap.fromList rs
+        & resources .~ rs
     where
     playerEntity = toEntity @Player $ def
         & location .~ locM 0 0
@@ -62,16 +60,34 @@ initSt = do
     batEntity atLoc = toEntity $ makeUnit testUnitType_bat
         & location .~ atLoc -- locM 3 6
 
-loadAllSprites :: Engine us [(Text, Img)]
-loadAllSprites = do
-    mpaths <- liftIO $ dhallToMap "data/desc/ResourcePaths.dhall"
+loadResources :: Engine us Resources
+loadResources = do
+    rs <- loadAllPaths
+    ss <- loadAllSprites
+    mapM_ print ss
+    return $ def
+        & resourceMap .~ HashMap.fromList rs
+        & spriteMap   .~ buildSpriteMap ss
+    where
+    buildSpriteMap = HashMap.fromList . map (\x -> (x^.name, x))
+
+loadAllPaths :: Engine us [(Text, Img)]
+loadAllPaths = do
+    mpaths <- liftIO $ dhallToMap "data/desc" "ResourcePaths.dhall"
     case mpaths of
         Nothing -> return []
         Just pm -> catMaybes <$> mapM loadResource (ordNub $ Map.elems pm)
 
+loadAllSprites :: Engine us [SpriteDesc]
+loadAllSprites = do
+    msprites <- liftIO $ dhallToMap "data/desc" "Sprites.dhall"
+    case msprites of
+        Nothing -> return []
+        Just pm -> return $ Map.elems pm
+
 endSt :: Engine St ()
 endSt = do
-    rs <- uses (userState.resources) HashMap.elems
+    rs <- uses (userState.resources.resourceMap) HashMap.elems
     mapM_ (delObject glDeleteTextures . view texture) rs
 
 loadResource :: Text -> Engine us (Maybe (Text, Img))

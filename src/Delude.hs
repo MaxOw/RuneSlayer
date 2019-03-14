@@ -7,6 +7,7 @@ module Delude
     , unwrap
     , isPrism
     , makeFieldsCustom
+    , customOptionsJSON
 
     , boundedRange
 
@@ -24,10 +25,13 @@ import Linear         as All hiding (trace, transpose, identity, rotate)
 import Linear.Affine  as All (Point (..))
 import Diagrams.Angle as All ((@@))
 import Data.Bimap     as All (Bimap)
-import Data.Aeson
+import Data.Aeson    as All  (ToJSON, FromJSON)
+
+import qualified Data.Aeson as Aeson
 import Engine.Common.Types
 
 import qualified Data.Bimap as Bimap
+import qualified Data.HashMap.Strict as HashMap
 
 import qualified Data.Vector as Vector
 import qualified Data.Set    as Set
@@ -55,11 +59,25 @@ instance Default Text where def = ""
 instance Default Bool where def = False
 instance Default (Bimap a b) where def = Bimap.empty
 instance Default (Vector.Vector a) where def = Vector.empty
+instance Default (HashMap a b) where def = HashMap.empty
 
 deriving instance Generic (Rect a)
-instance ToJSON a => ToJSON (Rect a)
 instance ToJSON a => ToJSON (V2 a)
 instance ToJSON a => ToJSON (Size a)
+instance FromJSON a => FromJSON (V2 a)
+instance FromJSON a => FromJSON (Size a)
+
+instance ToJSON a => ToJSON (Rect a) where
+    toEncoding = Aeson.genericToEncoding customOptionsJSON
+instance FromJSON a => FromJSON (Rect a) where
+    parseJSON = Aeson.genericParseJSON customOptionsJSON
+
+--------------------------------------------------------------------------------
+
+customOptionsJSON :: Aeson.Options
+customOptionsJSON = Aeson.defaultOptions
+    { Aeson.fieldLabelModifier = drop 1 . dropWhile (/='_')
+    }
 
 --------------------------------------------------------------------------------
 

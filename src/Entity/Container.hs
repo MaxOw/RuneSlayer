@@ -15,7 +15,7 @@ import Types.Entity.Appearance
 import Entity.Utils
 import Entity.Actions
 import Entity.Item
-import qualified Resource
+import Types.ResourceManager
 
 --------------------------------------------------------------------------------
 
@@ -70,5 +70,5 @@ testContainerType_bag = def
     & itemType.fittingSlots   .~ Set.fromList [EquipmentSlot_Backpack]
     & maxVolume               .~ volumeL 15
     where
-    ap = Appearance_Sprite Resource.bag
+    ap = Appearance_Sprite (SpriteName "Bag")
 

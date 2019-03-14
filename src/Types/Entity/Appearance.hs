@@ -2,14 +2,14 @@ module Types.Entity.Appearance where
 
 import Delude
 
-import Types.ResourceManager (Resource)
+import Types.ResourceManager (SpriteName)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 
 data Appearance
    = Appearance_SimpleCircle Float AlphaColor
    | Appearance_SimpleSquare Float AlphaColor
-   | Appearance_Sprite       Resource
+   | Appearance_Sprite       SpriteName
    | Appearance_Translate (V2 Float) Appearance
    | Appearance_Compose [Appearance]
 instance Default Appearance where

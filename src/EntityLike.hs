@@ -8,7 +8,6 @@ module EntityLike
 import Types.Entity
 
 import Entity.Player
-import Entity.Wall
 import Entity.Tile
 import Entity.Container
 import Entity.Item
@@ -20,7 +19,6 @@ import Entity.Unit
 class EntityLike ent where toEntity :: ent -> Entity
 
 instance EntityLike Player       where toEntity =       playerToEntity
-instance EntityLike Wall         where toEntity =         wallToEntity
 instance EntityLike Tile         where toEntity =         tileToEntity
 instance EntityLike Container    where toEntity =    containerToEntity
 instance EntityLike Item         where toEntity =         itemToEntity
@@ -30,7 +28,6 @@ instance EntityLike Unit         where toEntity =         unitToEntity
 instance EntityLike EntitySum where
     toEntity tag = case tag of
         EntitySum_Player       x -> toEntity x
-        EntitySum_Wall         x -> toEntity x
         EntitySum_Tile         x -> toEntity x
         EntitySum_Container    x -> toEntity x
         EntitySum_Item         x -> toEntity x

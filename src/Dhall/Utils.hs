@@ -11,14 +11,17 @@ import Data.Aeson
 
 --------------------------------------------------------------------------------
 
-inputExprFromFile :: FilePath -> IO (Expr Src X)
-inputExprFromFile fpath = inputExprWithSettings
-    (set sourceName fpath defaultInputSettings)
-    =<< Text.readFile fpath
+inputExprFromFile :: FilePath -> FilePath -> IO (Expr Src X)
+inputExprFromFile rdir fpath = inputExprWithSettings opts
+    =<< Text.readFile (rdir <> "/" <> fpath)
+    where
+    opts = defaultInputSettings
+        & rootDirectory .~ rdir
+        & sourceName    .~ fpath
 
-dhallToMap :: FromJSON x => FilePath -> IO (Maybe (Map Text x))
-dhallToMap fpath = do
-    expr <- inputExprFromFile fpath
+dhallToMap :: FromJSON x => FilePath -> FilePath -> IO (Maybe (Map Text x))
+dhallToMap rdir fpath = do
+    expr <- inputExprFromFile rdir fpath
     case dhallToJSON expr of
         Left err -> print err >> return Nothing
         Right vl -> case fromJSON vl of

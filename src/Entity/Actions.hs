@@ -63,8 +63,8 @@ import Equipment (Equipment, contentList)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import Resource (Resource)
-import ResourceManager (lookupResource, ResourceMap)
-import Types.ResourceManager (pixelsPerUnit)
+import ResourceManager (lookupSprite, lookupResource, Resources)
+import Types.ResourceManager (pixelsPerUnit, SpriteName)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -390,7 +390,7 @@ withZIndex :: GetZIndex x Word32
     => x -> (RenderAction -> RenderAction)
 withZIndex x = setZIndexAtLeast (get_zindex x)
 
-renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
+renderSprite :: HasResources c Resources => c -> Resource -> RenderAction
 renderSprite ctx r = case lookupResource r $ ctx^.resources of
     Nothing  -> renderShape shape
     Just img -> renderImg img & scale (1/r^.pixelsPerUnit)
@@ -399,11 +399,21 @@ renderSprite ctx r = case lookupResource r $ ctx^.resources of
         & shapeType   .~ SimpleSquare
         & color       .~ Color.opaque Color.gray
 
-renderAppearance :: HasResources c ResourceMap => c -> Appearance -> RenderAction
+renderSpriteN :: HasResources c Resources => c -> SpriteName -> RenderAction
+renderSpriteN ctx r = case lookupSprite r $ ctx^.resources of
+    Nothing      -> renderShape shape
+    Just (s,img) -> renderImg img & sscale (s^.pixelsPerUnit)
+    where
+    sscale = maybe id (\s -> scale $ 1/(fromIntegral s))
+    shape = def
+        & shapeType   .~ SimpleSquare
+        & color       .~ Color.opaque Color.gray
+
+renderAppearance :: HasResources c Resources => c -> Appearance -> RenderAction
 renderAppearance ctx = \case
     Appearance_SimpleCircle s c -> renderCircle s c
     Appearance_SimpleSquare s c -> renderSquare s c
-    Appearance_Sprite         r -> renderSprite ctx r
+    Appearance_Sprite         r -> renderSpriteN ctx r
     Appearance_Translate    t a -> translate t $ renderAppearance ctx a
     Appearance_Compose as -> renderComposition $ map (renderAppearance ctx) as
     where

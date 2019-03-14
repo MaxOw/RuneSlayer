@@ -12,7 +12,7 @@ module Types.St
     ) where
 
 import Delude
-import qualified Data.HashMap.Strict as HashMap
+-- import qualified Data.HashMap.Strict as HashMap
 -- import Random.Utils (pureRandomSeed)
 -- import qualified System.Random.MWC as MWC
 
@@ -21,11 +21,11 @@ import Engine.Graphics.Scroller.Types (Scroller)
 import Types.MenuState
 import Types.InputState
 import Types.GameState
-import Types.ResourceManager (ResourceMap)
+import Types.ResourceManager (Resources)
 import Types.Debug (DebugFlag)
 
 data St = St
-   { st_resources  :: ResourceMap
+   { st_resources  :: Resources
    , st_menuState  :: MenuState
    , st_inputState :: InputState
    , st_gameState  :: GameState
@@ -39,7 +39,7 @@ defaultSt :: MonadIO m => Scroller -> m St
 defaultSt scro = do
     gs <- defaultGameState
     return $ St
-        { st_resources  = HashMap.empty
+        { st_resources  = def
         , st_inputState = def
         , st_gameState  = gs
         , st_menuState  = def

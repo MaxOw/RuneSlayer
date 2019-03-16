@@ -15,7 +15,7 @@ import Types.Entity.Appearance
 import Entity.Utils
 import Entity.Actions
 import Entity.Item
-import Types.ResourceManager
+import Types.Sprite
 
 --------------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ makeContainer x = set containerType x def
 
 testContainerType_bag :: ContainerType
 testContainerType_bag = def
-    & itemType.name           .~ "Bag"
+    & itemType.name           .~ (ItemTypeName "Bag")
     & itemType.volume         .~ volumeL 15
     & itemType.itemKind       .~ ItemKind_BigItem
     & itemType.appearance     .~ ap

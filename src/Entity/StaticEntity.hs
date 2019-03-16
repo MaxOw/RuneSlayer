@@ -14,7 +14,7 @@ import Types.Entity.Appearance
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.ZIndex
-import Types.ResourceManager
+import Types.Sprite
 import qualified Data.Collider as Collider
 
 --------------------------------------------------------------------------------

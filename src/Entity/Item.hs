@@ -23,7 +23,7 @@ import Types.Debug
 import Engine.Common.Types (BBox(..))
 import Entity.Utils
 import Entity.Actions
-import Types.ResourceManager
+import Types.Sprite
 
 --------------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ itemLikeOracle
     => s -> EntityOracle
 itemLikeOracle x = def
    & location     .~ (x^.location)
-   & name         .~ Just (x^.itemType.name)
+   & name         .~ Just (x^.itemType.name._Wrapped)
    & volume       .~ Just (x^.itemType.volume)
    & itemKind     .~ Just (x^.itemType.itemKind)
    & fittingSlots .~ (x^.itemType.fittingSlots)
@@ -120,7 +120,7 @@ makeItem t = set itemType t def
 
 testItemType_helmet :: ItemType
 testItemType_helmet = def
-    & name         .~ "Helmet"
+    & name         .~ (ItemTypeName "Helmet")
     & volume       .~ volumeL 1.5
     & itemKind     .~ ItemKind_BigItem
     & appearance   .~ Appearance_Sprite (SpriteName "Helmet")
@@ -128,7 +128,7 @@ testItemType_helmet = def
 
 testItemType_healthPotion :: ItemType
 testItemType_healthPotion = def
-    & name         .~ "Health Potion"
+    & name         .~ (ItemTypeName "Health Potion")
     & volume       .~ volumeL 0.1
     & itemKind     .~ ItemKind_SmallItem
     & appearance   .~ Appearance_Sprite (SpriteName "Health Potion")

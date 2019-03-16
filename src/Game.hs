@@ -19,6 +19,7 @@ import Types.ResourceManager
 import qualified Entity.Animation as Animation
 import Entity.Container
 import Entity.Item
+import Types.Entity.ItemType
 import Entity.Unit (makeUnit, testUnitType_bat)
 import GameState
 import EntityLike
@@ -64,12 +65,16 @@ loadResources :: Engine us Resources
 loadResources = do
     rs <- loadAllPaths
     ss <- loadAllSprites
-    mapM_ print ss
+    is <- loadAllItemTypes
+    -- mapM_ print is
     return $ def
         & resourceMap .~ HashMap.fromList rs
-        & spriteMap   .~ buildSpriteMap ss
+        & spriteMap   .~ buildMap ss
+        & itemsMap    .~ buildMap is
     where
-    buildSpriteMap = HashMap.fromList . map (\x -> (x^.name, x))
+
+buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
+buildMap = HashMap.fromList . map (\x -> (x^.name, x))
 
 loadAllPaths :: Engine us [(Text, Img)]
 loadAllPaths = do
@@ -84,6 +89,14 @@ loadAllSprites = do
     case msprites of
         Nothing -> return []
         Just pm -> return $ Map.elems pm
+
+loadAllItemTypes :: Engine us [ItemType]
+loadAllItemTypes = do
+    mits <- liftIO $ dhallToMap "data/desc" "ItemTypes.dhall"
+    case mits of
+        Nothing -> return []
+        Just pm -> return $ Map.elems pm
+
 
 endSt :: Engine St ()
 endSt = do

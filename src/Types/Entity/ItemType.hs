@@ -7,34 +7,48 @@ import Types.Equipment
 import Types.Entity.Common
 import Types.Entity.Appearance
 
+--------------------------------------------------------------------------------
+
 data ItemKind
    = ItemKind_Container
    | ItemKind_SmallItem
    | ItemKind_BigItem
-   deriving (Eq)
-instance Default ItemKind where def = ItemKind_SmallItem
+   deriving (Eq, Generic)
 
 newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }
-    deriving (Generic)
-makeWrapped ''ItemTypeName
-instance Default ItemTypeName
+    deriving (Eq, Hashable, Generic, ToJSON, FromJSON)
 
 data ItemType = ItemType
-   { itemType_name         :: Text
+   { itemType_name         :: ItemTypeName
    , itemType_volume       :: Volume
    , itemType_itemKind     :: ItemKind
    , itemType_appearance   :: Appearance
    , itemType_fittingSlots :: Set EquipmentSlot
    } deriving (Generic)
-makeFieldsCustom ''ItemType
-instance Default ItemType
 
 data ContainerType = ContainerType
    { containerType_maxVolume :: Volume
    , containerType_itemType  :: ItemType
    } deriving (Generic)
-makeFieldsCustom ''ContainerType
-instance Default ContainerType
 
 --------------------------------------------------------------------------------
+
+instance Default ItemKind where def = ItemKind_SmallItem
+instance ToJSON ItemKind where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ItemKind where
+    parseJSON = genericParseJSON customOptionsJSON
+
+makeWrapped ''ItemTypeName
+instance Default ItemTypeName
+
+makeFieldsCustom ''ItemType
+instance Default ItemType
+instance ToJSON ItemType where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ItemType where
+    parseJSON = genericParseJSON customOptionsJSON
+
+makeFieldsCustom ''ContainerType
+instance Default ContainerType
 

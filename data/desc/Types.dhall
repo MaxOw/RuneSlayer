@@ -1,5 +1,12 @@
-let Rect = { offset : List Natural, size : List Natural }
+let Rect   = { offset : List Natural, size : List Natural }
+let Sprite =
+  { name : Text
+  , path : Text
+  , part : Optional Rect
+  , pixelsPerUnit : Optional Natural
+  }
 
 in
-{ rect = Rect
+{ Rect     = Rect
+, Sprite   = Sprite
 }

@@ -1,6 +1,6 @@
-let makeImgsPath = \(x : Text) -> "data/imgs/${x}.png"
-let makeCharPath = \(x : Text) -> makeImgsPath "characters/${x}"
-let makeUnitPath = \(x : Text) -> makeImgsPath "units/${x}"
+let makeImgsPath = λ(x : Text) → "data/imgs/${x}.png"
+let makeCharPath = λ(x : Text) → makeImgsPath "characters/${x}"
+let makeUnitPath = λ(x : Text) → makeImgsPath "units/${x}"
 in
 { itemsAtlas1 = makeImgsPath "items1/items1"
 , envAtlas1   = makeImgsPath "environment/base_out_atlas"

@@ -68,7 +68,7 @@ newtype Speed    = Speed    { unSpeed    :: Float }
 makeWrapped ''Speed
 
 newtype Volume   = Volume   { unVolume   :: Float }
-    deriving (Generic, Default, Show, Num, Eq, Ord)
+    deriving (Generic, Default, Show, Num, Eq, Ord, ToJSON, FromJSON)
 makeWrapped ''Volume
 
 newtype Time     = Time     { unTime     :: Float }

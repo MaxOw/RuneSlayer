@@ -14,7 +14,11 @@ data EquipmentSlot
    | EquipmentSlot_Hands
    | EquipmentSlot_Legs
    | EquipmentSlot_Feet
-   deriving (Show, Eq, Ord)
+   deriving (Show, Eq, Ord, Generic)
+instance ToJSON EquipmentSlot where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON EquipmentSlot where
+    parseJSON = genericParseJSON customOptionsJSON
 
 data Equipment = Equipment
    { equipment_slots   :: Set EquipmentSlot

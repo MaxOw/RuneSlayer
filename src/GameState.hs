@@ -14,6 +14,7 @@ module GameState
 
 import Delude
 import qualified Data.Set as Set
+import qualified Data.HashMap.Strict as HashMap
 
 import Engine (userState)
 import Types (Game)
@@ -26,6 +27,8 @@ import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
+import Types.Entity.ItemType
+import Types.ResourceManager (itemsMap)
 import Focus
 
 import EntityLike (toEntity)
@@ -59,20 +62,16 @@ handleWorldAction = \case
         SpawnEntity_Item i -> spawnItem i
 
     spawnItem i = do
-        -- mit <- lookupEntityType $ i^.itemType
-        -- let mit = Just (i^.itemType)
-        let mit = Nothing
+        mit <- lookupItemType $ i^.itemType
         flip (maybe (pure Nothing)) mit $ \it -> do
             let e = toEntity $ makeItem it
                   & location .~ (Just $ i^.location)
             return $ Just e
 
-{-
-lookupEntityType :: EntityTypeName n => n -> Game (Maybe (EntityTypeResult n))
-lookupEntityType n = do
-    et <- use $ userState.entityTypes
-    retrurn $ lookupEntityTypeByName et n
--}
+lookupItemType :: ItemTypeName -> Game (Maybe ItemType)
+lookupItemType n = do
+    rs <- use $ userState.resources.itemsMap
+    return $ HashMap.lookup n rs
 
 addDirectedAction :: DirectedAction -> Game ()
 addDirectedAction a = userState.gameState.actions %= (a:)

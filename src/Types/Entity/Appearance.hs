@@ -1,17 +1,18 @@
 module Types.Entity.Appearance where
 
 import Delude
-
-import Types.ResourceManager (SpriteName)
-import qualified Data.Colour       as Color
-import qualified Data.Colour.Names as Color
+import Types.Sprite (SpriteName)
 
 data Appearance
-   = Appearance_SimpleCircle Float AlphaColor
-   | Appearance_SimpleSquare Float AlphaColor
-   | Appearance_Sprite       SpriteName
-   | Appearance_Translate (V2 Float) Appearance
+   = Appearance_Sprite SpriteName
+   | Appearance_Translate { _vector :: (V2 Float), _content :: Appearance }
    | Appearance_Compose [Appearance]
+   deriving (Generic)
 instance Default Appearance where
-    def = Appearance_SimpleCircle 1 $ Color.opaque Color.red
+    def = Appearance_Compose []
+
+instance ToJSON Appearance where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON Appearance where
+    parseJSON = genericParseJSON customOptionsJSON
 

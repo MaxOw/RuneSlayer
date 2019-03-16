@@ -64,7 +64,7 @@ import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import Resource (Resource)
 import ResourceManager (lookupSprite, lookupResource, Resources)
-import Types.ResourceManager (pixelsPerUnit, SpriteName)
+import Types.Sprite (pixelsPerUnit, SpriteName)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -411,17 +411,9 @@ renderSpriteN ctx r = case lookupSprite r $ ctx^.resources of
 
 renderAppearance :: HasResources c Resources => c -> Appearance -> RenderAction
 renderAppearance ctx = \case
-    Appearance_SimpleCircle s c -> renderCircle s c
-    Appearance_SimpleSquare s c -> renderSquare s c
     Appearance_Sprite         r -> renderSpriteN ctx r
     Appearance_Translate    t a -> translate t $ renderAppearance ctx a
     Appearance_Compose as -> renderComposition $ map (renderAppearance ctx) as
-    where
-    renderCircle = renderS SimpleCircle
-    renderSquare = renderS SimpleSquare
-    renderS t s c = scale s $ renderShape $ def
-        & shapeType .~ t
-        & color     .~ c
 
 renderAnimaiton :: HasAnimation x Animation
     => x -> RenderContext -> [Resource] -> RenderAction

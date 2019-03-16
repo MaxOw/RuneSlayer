@@ -25,7 +25,8 @@ import Linear         as All hiding (trace, transpose, identity, rotate)
 import Linear.Affine  as All (Point (..))
 import Diagrams.Angle as All ((@@))
 import Data.Bimap     as All (Bimap)
-import Data.Aeson    as All  (ToJSON, FromJSON)
+import Data.Aeson     as All
+    (ToJSON(..), FromJSON(..), genericToEncoding, genericParseJSON)
 
 import qualified Data.Aeson as Aeson
 import Engine.Common.Types
@@ -76,8 +77,12 @@ instance FromJSON a => FromJSON (Rect a) where
 
 customOptionsJSON :: Aeson.Options
 customOptionsJSON = Aeson.defaultOptions
-    { Aeson.fieldLabelModifier = drop 1 . dropWhile (/='_')
+    { Aeson.fieldLabelModifier = dropPrefix
+    , Aeson.constructorTagModifier = dropPrefix
+    , Aeson.sumEncoding = Aeson.ObjectWithSingleField
     }
+    where
+    dropPrefix x = if any (=='_') x then drop 1 $ dropWhile (/='_') x else x
 
 --------------------------------------------------------------------------------
 

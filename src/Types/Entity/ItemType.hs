@@ -19,16 +19,16 @@ newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }
     deriving (Eq, Hashable, Generic, ToJSON, FromJSON)
 
 data ItemType = ItemType
-   { itemType_name         :: ItemTypeName
-   , itemType_volume       :: Volume
-   , itemType_itemKind     :: ItemKind
-   , itemType_appearance   :: Appearance
-   , itemType_fittingSlots :: Set EquipmentSlot
+   { itemType_name          :: ItemTypeName
+   , itemType_volume        :: Volume
+   , itemType_itemKind      :: ItemKind
+   , itemType_appearance    :: Appearance
+   , itemType_fittingSlots  :: Set EquipmentSlot
+   , itemType_containerType :: Maybe ContainerType
    } deriving (Generic)
 
 data ContainerType = ContainerType
    { containerType_maxVolume :: Volume
-   , containerType_itemType  :: ItemType
    } deriving (Generic)
 
 --------------------------------------------------------------------------------
@@ -51,4 +51,7 @@ instance FromJSON ItemType where
 
 makeFieldsCustom ''ContainerType
 instance Default ContainerType
-
+instance ToJSON ContainerType where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ContainerType where
+    parseJSON = genericParseJSON customOptionsJSON

@@ -16,9 +16,8 @@ import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
 import Types.ResourceManager
+import Types.DirectedAction
 import qualified Entity.Animation as Animation
-import Entity.Container
-import Entity.Item
 import Types.Entity.ItemType
 import Entity.Unit (makeUnit, testUnitType_bat)
 import GameState
@@ -27,7 +26,6 @@ import WorldGen (generateWorld, genTest)
 
 -- import qualified Resource
 import qualified EntityIndex
-import EntityIndex (EntityIndex)
 
 import qualified Data.Collider as Collider
 import Dhall.Utils (dhallToMap)
@@ -48,9 +46,9 @@ initSt = do
     pid <- EntityIndex.insert playerEntity eix
     void $ EntityIndex.insert (batEntity $ locM 3 6)   eix
     void $ EntityIndex.insert (batEntity $ locM 2 6.3) eix
-    setupTestGameState eix
     return $ st
         & gameState.focusId .~ Just pid
+        & gameState.actions .~ testInitialActions
         & resources .~ rs
     where
     playerEntity = toEntity @Player $ def
@@ -59,19 +57,17 @@ initSt = do
         & animation      .~ Animation.characterAnimation
 
     batEntity atLoc = toEntity $ makeUnit testUnitType_bat
-        & location .~ atLoc -- locM 3 6
+        & location .~ atLoc
 
 loadResources :: Engine us Resources
 loadResources = do
     rs <- loadAllPaths
     ss <- loadAllSprites
     is <- loadAllItemTypes
-    -- mapM_ print is
     return $ def
         & resourceMap .~ HashMap.fromList rs
         & spriteMap   .~ buildMap ss
         & itemsMap    .~ buildMap is
-    where
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
@@ -119,18 +115,22 @@ loadFontFamily fname = void $ Engine.loadFontFamily fname $ def
     where
     mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ".ttf"
 
-setupTestGameState :: MonadIO m => EntityIndex -> m ()
-setupTestGameState eix = mapM_ (flip EntityIndex.insert eix)
-    [ bagEntity
-    , helmetEntity
-    , potionEntity
+testInitialActions :: [DirectedAction]
+testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
+    [ SpawnEntity_Item helmetItem
+    , SpawnEntity_Item potionItem
+    , SpawnEntity_Item bagItem
     ]
     where
-    bagEntity = toEntity $ makeContainer testContainerType_bag
-        & location .~ (Just $ locM 0 1)
+    helmetItem = def
+        & itemType .~ (ItemTypeName "Helmet")
+        & location .~ (locM 1 0)
 
-    helmetEntity = toEntity $ makeItem testItemType_helmet
-        & location .~ (Just $ locM 1 0)
+    potionItem = def
+        & itemType .~ (ItemTypeName "Health Potion")
+        & location .~ (locM (-1) 0.2)
 
-    potionEntity = toEntity $ makeItem testItemType_healthPotion
-        & location .~ (Just $ locM (-1) 0.2)
+    bagItem = def
+        & itemType .~ (ItemTypeName "Bag")
+        & location .~ (locM 0 1)
+

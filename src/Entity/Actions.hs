@@ -14,8 +14,8 @@ module Entity.Actions
     , dropAllItems
     , pickUpInformOwner
     , dropItem, dropItemAction
-    , containerAddItems
-    , containerDropItem
+    , getItemsToAdd
+    , makeDropItem, splitItemKind
 
     -- Render Actions
     , maybeLocate, locate
@@ -33,6 +33,7 @@ module Entity.Actions
     , queryInRadius
     , queryById
     , shouldDie
+    , useSelfId
 
     -- Utils
     , addAction, addWorldAction
@@ -211,65 +212,6 @@ addItems = do
         Just ct -> mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
         Nothing -> mapM_ (dropItemAction . view entityId) sit
     mapM_ (dropItemAction . view entityId) oit
-
-{-
-sendItemsToContainer :: EntityId -> [EntityWithId] -> Update x ()
-sendItemsToContainer eid es = do
-    actions <>= fromList (map f es)
-    where
-    f x = DirectedEntityAction (x^.entityId) $ EntityAction_AddItem eid
--}
-
-containerAddItems
-    :: HasProcessOnUpdate x [EntityAction]
-    => HasContent         x [EntityId]
-    => HasContentVolume   x Volume
-    => HasContainerType   x ContainerType
-    => HasLocation        x (Maybe Location)
-    => HasOwner           x (Maybe EntityId)
-    => Update             x ()
-containerAddItems = do
-    os <- fitIntoContainer =<< getItemsToAdd
-    mapM_ containerDropItem os
-
-containerDropItem
-    :: HasLocation x (Maybe Location)
-    => HasContent  x [EntityId]
-    => HasOwner    x (Maybe EntityId)
-    => HasEntityId i EntityId
-    => i -> Update x ()
-containerDropItem e = use (self.location) >>= \case
-    Nothing -> use (self.owner) >>= \mo -> whenJust mo $ \o -> do
-        addAction o $ EntityAction_OwnerDropItem eid
-        self.content %= List.delete eid
-    Just lc -> use (context.frameCount) >>= \fct -> do
-        addAction eid $ makeDropItem fct lc eid
-        self.content %= List.delete eid
-    where
-    eid = e^.entityId
-
-fitIntoContainer
-    :: HasContent       x [EntityId]
-    => HasContentVolume x Volume
-    => HasContainerType x ContainerType
-    => [EntityWithId] -> Update x [EntityWithId]
-fitIntoContainer ees = do
-    let (smallItems, otherItems) = splitItemKind ItemKind_SmallItem ees
-    overflow <- go smallItems
-    return $ otherItems <> overflow
-    where
-    go [] = return []
-    go (e:es) = do
-        cv <- use (self.contentVolume)
-        mv <- use (self.containerType.maxVolume)
-        if cv >= mv
-        then return (e:es)
-        else do
-            let eid = e^.entityId
-            self.content       %= (eid:)
-            self.contentVolume += fromMaybe 0 (e^.entity.oracle.volume)
-            addAction eid . EntityAction_SelfPassedTo =<< useSelfId
-            go es
 
 useSelfId :: Update x EntityId
 useSelfId = use $ context.selfId

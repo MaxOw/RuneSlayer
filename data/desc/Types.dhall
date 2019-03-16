@@ -6,7 +6,12 @@ let Sprite =
   , pixelsPerUnit : Optional Natural
   }
 
+let ContainerType =
+  { maxVolue : Double
+  }
+
 in
-{ Rect     = Rect
-, Sprite   = Sprite
+{ Rect          = Rect
+, Sprite        = Sprite
+, ContainerType = ContainerType
 }

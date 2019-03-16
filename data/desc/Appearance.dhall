@@ -7,4 +7,5 @@ let makeSprite =
 
 in
 { sprite = makeSprite
+, empty  = None {}
 }

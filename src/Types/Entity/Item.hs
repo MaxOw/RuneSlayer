@@ -15,6 +15,8 @@ data Item = Item
    , item_owner           :: Maybe EntityId
    , item_itemType        :: ItemType
    , item_processOnUpdate :: [EntityAction]
+   , item_content         :: [EntityId]
+   , item_contentVolume   :: Volume
    } deriving (Generic)
 makeFieldsCustom ''Item
 

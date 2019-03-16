@@ -1,12 +1,23 @@
-let sprites = ./Sprites.dhall
-let enums   = ./Enums.dhall
+let sprites    = ./Sprites.dhall
+let types      = ./Types.dhall
+let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
 
+let ContainerType = types.ContainerType
 let ItemKind      = enums.ItemKind
 let EquipmentSlot = enums.EquipmentSlot
 
+let defaultItemType =
+  { name     = ""
+  , volume   = 0
+  , itemKind = ItemKind.SmallItem
+  , appearance = appearance.empty
+  , fittingSlots = [] : List Text
+  , containerType = None ContainerType
+  }
+
 in
-{ helmet =
+{ helmet = defaultItemType //
   { name     = "Helmet"
   , volume   = 1.5
   , itemKind = ItemKind.BigItem
@@ -14,11 +25,19 @@ in
   , fittingSlots = [ EquipmentSlot.Head ]
   }
 
-, healthPotion =
+, healthPotion = defaultItemType //
   { name     = "Health Potion"
   , volume   = 0.1
   , itemKind = ItemKind.SmallItem
   , appearance = appearance.sprite sprites.healthPotion
-  , fittingSlots = [] : List Text
+  }
+
+, bag = defaultItemType //
+  { name     = "Bag"
+  , volume   = 15
+  , itemKind = ItemKind.Container
+  , appearance = appearance.sprite sprites.bag
+  , fittingSlots = [ EquipmentSlot.Backpack ]
+  , containerType = Some { maxVolume = 15 }
   }
 }

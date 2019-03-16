@@ -12,9 +12,6 @@ module Types.St
     ) where
 
 import Delude
--- import qualified Data.HashMap.Strict as HashMap
--- import Random.Utils (pureRandomSeed)
--- import qualified System.Random.MWC as MWC
 
 import Engine.Graphics.Scroller.Types (Scroller)
 
@@ -31,7 +28,6 @@ data St = St
    , st_gameState  :: GameState
    , st_scroller   :: Scroller
    , st_debugFlags :: Set DebugFlag
-   -- , st_randomSeed :: MWC.Seed
    }
 makeFieldsCustom ''St
 
@@ -45,7 +41,6 @@ defaultSt scro = do
         , st_menuState  = def
         , st_scroller   = scro
         , st_debugFlags = def
-        -- , st_randomSeed = pureRandomSeed
         }
 
 

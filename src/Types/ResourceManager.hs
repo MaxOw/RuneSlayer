@@ -5,7 +5,9 @@ import Delude
 import Engine (Img)
 import Engine.Common.Types (Size, Rect)
 import Types.Sprite as Types.ResourceManager
+import Types.Entity.Animation
 import Types.Entity.ItemType
+import Types.Entity.Unit
 
 data Resource = Resource
    { resource_path          :: Text
@@ -28,10 +30,13 @@ instance Default Resource where
 
 
 data Resources = Resources
-   { resources_resourceMap :: HashMap Text Img
-   , resources_spriteMap   :: HashMap SpriteName SpriteDesc
-   , resources_itemsMap    :: HashMap ItemTypeName ItemType
+   { resources_resourceMap   :: HashMap Text Img
+   , resources_spriteMap     :: HashMap SpriteName SpriteDesc
+   , resources_itemsMap      :: HashMap ItemTypeName ItemType
+   , resources_unitsMap      :: HashMap UnitTypeName UnitType
+   , resources_animaitonsMap :: HashMap Text AnimationDesc
    } deriving (Generic)
 instance Default Resources
+instance HasResources Resources Resources where resources = id
 
 makeFieldsCustom ''Resources

@@ -105,12 +105,12 @@ render :: Player -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
     -- , renderShape shape & scale 0.3
-    , translateY 0.8 $ renderAnimaiton x ctx
+    , translateY 0.8 $ mempty {- renderAnimaiton x ctx
         [ Resource.maleBody
         , Resource.malePants
         , Resource.maleShirt
         , Resource.maleHair
-        ]
+        ]-}
     ]
     where
     renderDebug = renderComposition $ localDebug <> globalDebug

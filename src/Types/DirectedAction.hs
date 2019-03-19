@@ -5,19 +5,21 @@ import Delude
 import Types.Entity.Common
 import Types.EntityAction
 import Types.Entity.ItemType
+import Types.Entity.Unit
 -- import Types.Entity.EntityType
 
 --------------------------------------------------------------------------------
 
-data SpawnItem = SpawnItem
+data Spawn a = Spawn
    { spawnItem_location :: Location
-   , spawnItem_itemType :: ItemTypeName
+   , spawnItem_name     :: a
    } deriving (Generic)
-makeFieldsCustom ''SpawnItem
-instance Default SpawnItem
+makeFieldsCustom ''Spawn
+instance Default a => Default (Spawn a)
 
 data SpawnEntity
-   = SpawnEntity_Item SpawnItem
+   = SpawnEntity_Item (Spawn ItemTypeName)
+   | SpawnEntity_Unit (Spawn UnitTypeName)
 
 data WorldAction
    = WorldAction_SpawnEntity SpawnEntity

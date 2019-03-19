@@ -19,7 +19,7 @@ import Types.ResourceManager
 import Types.DirectedAction
 import qualified Entity.Animation as Animation
 import Types.Entity.ItemType
-import Entity.Unit (makeUnit, testUnitType_bat)
+import Types.Entity.Unit
 import GameState
 import EntityLike
 import WorldGen (generateWorld, genTest)
@@ -44,8 +44,6 @@ initSt = do
     let eix = st^.gameState.entities
     forM_ world $ \e -> EntityIndex.insert e eix
     pid <- EntityIndex.insert playerEntity eix
-    void $ EntityIndex.insert (batEntity $ locM 3 6)   eix
-    void $ EntityIndex.insert (batEntity $ locM 2 6.3) eix
     return $ st
         & gameState.focusId .~ Just pid
         & gameState.actions .~ testInitialActions
@@ -56,18 +54,17 @@ initSt = do
         & collisionShape .~ Just (Collider.circle 0 0.3)
         & animation      .~ Animation.characterAnimation
 
-    batEntity atLoc = toEntity $ makeUnit testUnitType_bat
-        & location .~ atLoc
-
 loadResources :: Engine us Resources
 loadResources = do
     rs <- loadAllPaths
-    ss <- loadAllSprites
-    is <- loadAllItemTypes
+    ss <- loadDhallList "Sprites.dhall"
+    is <- loadDhallList "ItemTypes.dhall"
+    us <- loadDhallList "UnitTypes.dhall"
     return $ def
         & resourceMap .~ HashMap.fromList rs
         & spriteMap   .~ buildMap ss
         & itemsMap    .~ buildMap is
+        & unitsMap    .~ buildMap us
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
@@ -79,20 +76,12 @@ loadAllPaths = do
         Nothing -> return []
         Just pm -> catMaybes <$> mapM loadResource (ordNub $ Map.elems pm)
 
-loadAllSprites :: Engine us [SpriteDesc]
-loadAllSprites = do
-    msprites <- liftIO $ dhallToMap "data/desc" "Sprites.dhall"
-    case msprites of
-        Nothing -> return []
-        Just pm -> return $ Map.elems pm
-
-loadAllItemTypes :: Engine us [ItemType]
-loadAllItemTypes = do
-    mits <- liftIO $ dhallToMap "data/desc" "ItemTypes.dhall"
+loadDhallList :: FromJSON a => FilePath -> Engine us [a]
+loadDhallList fname = do
+    mits <- liftIO $ dhallToMap "data/desc" fname
     case mits of
         Nothing -> return []
         Just pm -> return $ Map.elems pm
-
 
 endSt :: Engine St ()
 endSt = do
@@ -120,17 +109,23 @@ testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
     [ SpawnEntity_Item helmetItem
     , SpawnEntity_Item potionItem
     , SpawnEntity_Item bagItem
+
+    , SpawnEntity_Unit (batUnit $ locM 3 6)
+    , SpawnEntity_Unit (batUnit $ locM 2 6.3)
     ]
     where
     helmetItem = def
-        & itemType .~ (ItemTypeName "Helmet")
+        & name     .~ (ItemTypeName "Helmet")
         & location .~ (locM 1 0)
 
     potionItem = def
-        & itemType .~ (ItemTypeName "Health Potion")
+        & name     .~ (ItemTypeName "Health Potion")
         & location .~ (locM (-1) 0.2)
 
     bagItem = def
-        & itemType .~ (ItemTypeName "Bag")
+        & name     .~ (ItemTypeName "Bag")
         & location .~ (locM 0 1)
 
+    batUnit loc = def
+        & name     .~ (UnitTypeName "Bat")
+        & location .~ (loc)

@@ -14,15 +14,15 @@ Requirements for first release: v0.1
 
 ## Game/Gameplay
 
-* Load entity types from files (Json/Dhall)                                  [ ]
-* Load resource files. (Json/Dhall)                                          [ ]
+* Load entity types from files (Json/Dhall)                                  [.]
+* Load resource files. (Json/Dhall)                                          [.]
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]
 * Enemy unit spwan corpse on death.                                          [.]
-* Named entity types                                                         [ ]
+* Named entity types                                                         [.]
 * Enemy unit go towards & attack player.                                     [ ]
-* Show equipped items.                                                       [ ]
+* Render equipped items.                                                     [ ]
 * Offensive skill.                                                           [ ]
 * Defensive skill.                                                           [ ]
 * Runic levels.                                                              [ ]
@@ -33,3 +33,4 @@ Requirements for first release: v0.1
 * Initial island.                                                            [ ]
 * Enemy units: Gore Bats, Shadow Spiders, Shadow Puppets (Skeletons)         [ ]
 
+* Declare animations via Dhall                                               [ ]

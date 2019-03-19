@@ -10,8 +10,21 @@ let ContainerType =
   { maxVolue : Double
   }
 
+let Frame =
+  { duration  : Double
+  , sprite    : Sprite
+  }
+
+let AnimationPart =
+  { direction : Optional Text
+  , kind      : Optional Text
+  , frames    : List Frame
+  }
+
 in
 { Rect          = Rect
 , Sprite        = Sprite
 , ContainerType = ContainerType
+, Frame         = Frame
+, AnimationPart = AnimationPart
 }

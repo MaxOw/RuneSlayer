@@ -8,9 +8,7 @@ let ItemKind      = enums.ItemKind
 let EquipmentSlot = enums.EquipmentSlot
 
 let defaultItemType =
-  { name     = ""
-  , volume   = 0
-  , itemKind = ItemKind.SmallItem
+  { itemKind = ItemKind.SmallItem
   , appearance = appearance.empty
   , fittingSlots = [] : List Text
   , containerType = None ContainerType

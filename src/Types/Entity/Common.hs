@@ -56,7 +56,7 @@ newtype Velocity = Velocity { unVelocity :: V2D    }
 makeWrapped ''Velocity
 
 newtype Health   = Health   { unHealth   :: Int    }
-    deriving (Generic, Default, Show)
+    deriving (Generic, Default, Show, ToJSON, FromJSON)
 makeWrapped ''Health
 
 newtype AttackPower = AttackPower { unAttackPower :: Int    }

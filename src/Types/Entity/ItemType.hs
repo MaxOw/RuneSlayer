@@ -34,24 +34,18 @@ data ContainerType = ContainerType
 --------------------------------------------------------------------------------
 
 instance Default ItemKind where def = ItemKind_SmallItem
-instance ToJSON ItemKind where
-    toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON ItemKind where
-    parseJSON = genericParseJSON customOptionsJSON
+instance ToJSON ItemKind where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ItemKind where parseJSON = genericParseJSON customOptionsJSON
 
 makeWrapped ''ItemTypeName
 instance Default ItemTypeName
 
 makeFieldsCustom ''ItemType
 instance Default ItemType
-instance ToJSON ItemType where
-    toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON ItemType where
-    parseJSON = genericParseJSON customOptionsJSON
+instance ToJSON ItemType where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ItemType where parseJSON = genericParseJSON customOptionsJSON
 
 makeFieldsCustom ''ContainerType
 instance Default ContainerType
-instance ToJSON ContainerType where
-    toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON ContainerType where
-    parseJSON = genericParseJSON customOptionsJSON
+instance ToJSON ContainerType where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ContainerType where parseJSON = genericParseJSON customOptionsJSON

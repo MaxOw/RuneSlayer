@@ -24,7 +24,7 @@ render :: Tile -> RenderContext -> RenderAction
 -- render x ctx = renderSprite ctx (Resource.mkEnvPart 40 11)
 render x ctx = withZIndex x $ locate x $ case x^.tileType.sprite of
     Nothing -> mempty
-    Just rs -> renderSprite ctx rs
+    Just rs -> renderResource ctx rs
 
 oracle :: Tile -> EntityOracle
 oracle x = def

@@ -2,19 +2,18 @@ module Entity.Unit
     ( Unit, unitToEntity
 
     , makeUnit
-    , testUnitType_bat
     ) where
 
 import Delude
 
 import Types.Entity
 import Types.Entity.Unit
+import Types.ResourceManager (Resources)
 
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Animation (aniMap)
 import qualified Entity.Animation as Animation
-import qualified Resource
 
 --------------------------------------------------------------------------------
 
@@ -44,7 +43,7 @@ procAttack as = do
         loc <- use $ self.location
         addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
             & location .~ loc
-            & itemType._Wrapped .~ "Health Potion"
+            & name._Wrapped .~ "Health Potion"
             -- testItemType_healthPotion
         -- TODO: spawn item: self.corpse
     where
@@ -54,7 +53,7 @@ render :: Unit -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderIf (x^.isMarked) renderTargetMark
     , translateY 0.8 $ renderComposition
-        [ renderAnimaiton x ctx [ x^.unitType.sprite ]
+        [ renderAnimaiton ctx (x^.animation)
         , renderEffects x ]
     ]
 
@@ -76,23 +75,15 @@ unitToEntity = makeEntity $ EntityParts
 
 --------------------------------------------------------------------------------
 
-makeUnit :: UnitType -> Unit
-makeUnit t = def
+makeUnit :: Resources -> UnitType -> Unit
+makeUnit rs t = def
     & unitType  .~ t
-    & animation .~ (t^.animation)
+    & animation .~ (Animation.makeAnimation $ t^.animation)
     & health    .~ (t^.maxHealth)
 
-testUnitType_bat :: UnitType
-testUnitType_bat = def
-    & sprite    .~ Resource.bat
-    & animation .~ anim
-    & maxHealth .~ Health 10
-    where
-    anim = def
-        & progression .~ Animation.Cycle
-        & aniMap      .~ batMap
-
+{-
     batMap s = \r -> Resource.mkAtlasPart r fr dk
         where
         fr = max 1 $ min 3 $ floor $ 3 * (s^.era) + 1
         dk = fromEnum (s^.direction)
+-}

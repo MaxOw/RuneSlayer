@@ -20,6 +20,7 @@ module Entity.Actions
     -- Render Actions
     , maybeLocate, locate
     , withZIndex
+    , renderResource
     , renderSprite
     , renderAppearance
     , renderAnimaiton
@@ -53,7 +54,8 @@ import Engine.Layout.Types (border)
 import Types.Entity
 import Types.Entity.ItemType
 import Types.Entity.Appearance
-import Types.Entity.Animation (Animation, EffectState, EffectKind, effectUpdate)
+import Types.Entity.Animation
+    (Animation, AnimationDesc, EffectState, EffectKind, effectUpdate)
 import qualified Entity.Animation as Animation
 import Entity.Utils
 import qualified EntityIndex
@@ -64,8 +66,8 @@ import Equipment (Equipment, contentList)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import Resource (Resource)
-import ResourceManager (lookupSprite, lookupResource, Resources)
-import Types.Sprite (pixelsPerUnit, SpriteName)
+import ResourceManager (lookupSpriteName, lookupSprite, lookupResource, Resources)
+import Types.Sprite (pixelsPerUnit, SpriteName, SpriteDesc)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -310,7 +312,7 @@ dropItemAction eid = do
 makeDropItem :: Word32 -> Location -> EntityId -> EntityAction
 makeDropItem rnd loc eid = EntityAction_SelfDroppedAt dloc
     where
-    rgid = fromIntegral $ hash eid
+    rgid = fromIntegral $ hash eid
     dloc = over _Wrapped (\v -> v + genDropOffset [rnd + rgid]) loc
 
 --------------------------------------------------------------------------------
@@ -332,8 +334,8 @@ withZIndex :: GetZIndex x Word32
     => x -> (RenderAction -> RenderAction)
 withZIndex x = setZIndexAtLeast (get_zindex x)
 
-renderSprite :: HasResources c Resources => c -> Resource -> RenderAction
-renderSprite ctx r = case lookupResource r $ ctx^.resources of
+renderResource :: HasResources c Resources => c -> Resource -> RenderAction
+renderResource ctx r = case lookupResource r $ ctx^.resources of
     Nothing  -> renderShape shape
     Just img -> renderImg img & scale (1/r^.pixelsPerUnit)
     where
@@ -341,8 +343,18 @@ renderSprite ctx r = case lookupResource r $ ctx^.resources of
         & shapeType   .~ SimpleSquare
         & color       .~ Color.opaque Color.gray
 
+renderSprite :: HasResources c Resources => c -> SpriteDesc -> RenderAction
+renderSprite ctx s = case lookupSprite s $ ctx^.resources of
+    Nothing  -> renderShape shape
+    Just img -> renderImg img & sscale (s^.pixelsPerUnit)
+    where
+    sscale = maybe id (\s -> scale $ 1/(fromIntegral s))
+    shape = def
+        & shapeType   .~ SimpleSquare
+        & color       .~ Color.opaque Color.gray
+
 renderSpriteN :: HasResources c Resources => c -> SpriteName -> RenderAction
-renderSpriteN ctx r = case lookupSprite r $ ctx^.resources of
+renderSpriteN ctx r = case lookupSpriteName r $ ctx^.resources of
     Nothing      -> renderShape shape
     Just (s,img) -> renderImg img & sscale (s^.pixelsPerUnit)
     where
@@ -357,11 +369,8 @@ renderAppearance ctx = \case
     Appearance_Translate    t a -> translate t $ renderAppearance ctx a
     Appearance_Compose as -> renderComposition $ map (renderAppearance ctx) as
 
-renderAnimaiton :: HasAnimation x Animation
-    => x -> RenderContext -> [Resource] -> RenderAction
-renderAnimaiton x ctx = renderComposition . map renderAnimPart
-    where
-    renderAnimPart = renderSprite ctx . Animation.selectCurrent (x^.animation)
+renderAnimaiton :: RenderContext -> Animation -> RenderAction
+renderAnimaiton ctx = maybe mempty (renderSprite ctx) . Animation.selectCurrent
 
 renderBBox :: BBox Float -> RenderAction
 renderBBox bb = renderSimpleBox $ def

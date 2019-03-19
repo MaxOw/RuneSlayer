@@ -28,11 +28,13 @@ import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
 import Types.Entity.ItemType
-import Types.ResourceManager (itemsMap)
+import Types.Entity.Unit
+import Types.ResourceManager (itemsMap, unitsMap)
 import Focus
 
 import EntityLike (toEntity)
 import Entity.Item (makeItem)
+import Entity.Unit (makeUnit)
 
 import qualified EntityIndex
 
@@ -59,18 +61,32 @@ handleWorldAction = \case
     WorldAction_SpawnEntity s -> spawnEntity s
     where
     spawnEntity = \case
-        SpawnEntity_Item i -> spawnItem i
+        SpawnEntity_Item s -> spawnItem s
+        SpawnEntity_Unit s -> spawnUnit s
 
-    spawnItem i = do
-        mit <- lookupItemType $ i^.itemType
+    spawnItem s = do
+        mit <- lookupItemType $ s^.name
         flip (maybe (pure Nothing)) mit $ \it -> do
             let e = toEntity $ makeItem it
-                  & location .~ (Just $ i^.location)
+                  & location .~ (Just $ s^.location)
+            return $ Just e
+
+    spawnUnit s = do
+        mit <- lookupUnitType $ s^.name
+        rs  <- use $ userState.resources
+        flip (maybe (pure Nothing)) mit $ \it -> do
+            let e = toEntity $ makeUnit rs it
+                  & location .~ (s^.location)
             return $ Just e
 
 lookupItemType :: ItemTypeName -> Game (Maybe ItemType)
 lookupItemType n = do
     rs <- use $ userState.resources.itemsMap
+    return $ HashMap.lookup n rs
+
+lookupUnitType :: UnitTypeName -> Game (Maybe UnitType)
+lookupUnitType n = do
+    rs <- use $ userState.resources.unitsMap
     return $ HashMap.lookup n rs
 
 addDirectedAction :: DirectedAction -> Game ()

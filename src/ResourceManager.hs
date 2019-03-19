@@ -3,6 +3,7 @@ module ResourceManager
     , SpriteName, SpriteDesc
     , lookupResource
     , lookupSprite
+    , lookupSpriteName
     ) where
 
 import Delude
@@ -15,8 +16,13 @@ lookupResource r = fmap f . HashMap.lookup (r^.path) . view resourceMap
     where
     f = set part (view part r)
 
-lookupSprite :: SpriteName -> Resources -> Maybe (SpriteDesc, Img)
-lookupSprite n r = do
+lookupSprite :: SpriteDesc -> Resources -> Maybe Img
+lookupSprite r = fmap f . HashMap.lookup (r^.path) . view resourceMap
+    where
+    f = set part (view part r)
+
+lookupSpriteName :: SpriteName -> Resources -> Maybe (SpriteDesc, Img)
+lookupSpriteName n r = do
     d <- HashMap.lookup n (r^.spriteMap)
     i <- HashMap.lookup (d^.path) (r^.resourceMap)
     return (d, set part (view part d) i)

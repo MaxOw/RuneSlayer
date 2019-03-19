@@ -5,18 +5,17 @@ import Delude
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ZIndex
-import Types.Entity.Animation (Animation, EffectState)
-import Resource (Resource)
+import Types.Entity.Animation (Animation, AnimationDesc, EffectState)
 
 --------------------------------------------------------------------------------
 
+newtype UnitTypeName = UnitTypeName { unUnitTypeName :: Text }
+    deriving (Default, Eq, Hashable, Generic, ToJSON, FromJSON)
 data UnitType = UnitType
-   { unitType_animation :: Animation -- This should be AnimationDesc in future
-   , unitType_sprite    :: Resource
+   { unitType_name      :: UnitTypeName
+   , unitType_animation :: AnimationDesc
    , unitType_maxHealth :: Health
    } deriving (Generic)
-makeFieldsCustom ''UnitType
-instance Default UnitType
 
 data Unit = Unit
    { unit_location        :: Location
@@ -28,9 +27,17 @@ data Unit = Unit
    , unit_isMarked        :: Bool
    , unit_processOnUpdate :: [EntityAction]
    } deriving (Generic)
-makeFieldsCustom ''Unit
-instance Default Unit
 
 instance GetZIndex Unit Word32 where
     get_zindex _ = toZIndex EntityZIndex_Vertical
 
+--------------------------------------------------------------------------------
+
+makeFieldsCustom ''UnitType
+instance Default UnitType
+
+instance ToJSON   UnitType where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON UnitType where parseJSON  = genericParseJSON  customOptionsJSON
+
+makeFieldsCustom ''Unit
+instance Default Unit

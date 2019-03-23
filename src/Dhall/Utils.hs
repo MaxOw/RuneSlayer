@@ -21,12 +21,21 @@ inputExprFromFile rdir fpath = inputExprWithSettings opts
         & rootDirectory .~ prdr
         & sourceName    .~ full
 
-dhallToMap :: FromJSON x => FilePath -> FilePath -> IO (Maybe (Map Text x))
+dhallToMap :: FromJSON x => FilePath -> FilePath -> IO (HashMap Text x)
 dhallToMap rdir fpath = do
     expr <- inputExprFromFile rdir fpath
     case dhallToJSON expr of
-        Left err -> print err >> return Nothing
+        Left err -> print err >> return mempty
         Right vl -> case fromJSON vl of
-            Error err -> putStrLn err >> return Nothing
+            Error err -> putStrLn err >> return mempty
+            Success v -> return v
+
+loadDhall :: (MonadIO m, FromJSON x, Default x) => FilePath -> FilePath -> m x
+loadDhall rdir fpath = liftIO $ do
+    expr <- inputExprFromFile rdir fpath
+    case dhallToJSON expr of
+        Left err -> print err >> return def
+        Right vl -> case fromJSON vl of
+            Error err -> print err >> return def
             Success v -> return v
 

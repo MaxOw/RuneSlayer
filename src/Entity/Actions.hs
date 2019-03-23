@@ -21,9 +21,8 @@ module Entity.Actions
     , maybeLocate, locate
     , withZIndex
     , renderResource
-    , renderSprite
+    -- , renderSprite
     , renderAppearance
-    , renderAnimaiton
     , renderBBox
     , renderCollisionShape
     , renderTargetMark
@@ -55,7 +54,7 @@ import Types.Entity
 import Types.Entity.ItemType
 import Types.Entity.Appearance
 import Types.Entity.Animation
-    (Animation, AnimationDesc, EffectState, EffectKind, effectUpdate)
+    (AnimationState, EffectState, EffectKind, effectUpdate)
 import qualified Entity.Animation as Animation
 import Entity.Utils
 import qualified EntityIndex
@@ -66,8 +65,8 @@ import Equipment (Equipment, contentList)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import Resource (Resource)
-import ResourceManager (lookupSpriteName, lookupSprite, lookupResource, Resources)
-import Types.Sprite (pixelsPerUnit, SpriteName, SpriteDesc)
+import ResourceManager (lookupSpriteName, lookupResource, Resources)
+import Types.Sprite (pixelsPerUnit, SpriteName)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -106,19 +105,19 @@ integrateLocation = do
     upd (Time t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
 
 updateAnimation
-    :: HasVelocity  s Velocity
-    => HasAnimation s Animation
+    :: HasVelocity       s Velocity
+    => HasAnimationState s AnimationState
     => Update s ()
 updateAnimation = do
     vel <- use $ self.velocity._Wrapped
-    a <- use $ self.animation
+    a <- use $ self.animationState
     when (a^.current.kind == Animation.Walk) $
         if (norm vel == 0)
-        then self.animation.progression .= Animation.Stopped
+        then self.animationState.progression .= Animation.Stopped
         else do
-            self.animation.progression       .= Animation.Cycle
-            self.animation.current.direction %= Animation.vecToDir vel
-    self.animation %= Animation.update defaultDelta
+            self.animationState.progression       .= Animation.Cycle
+            self.animationState.current.direction %= Animation.vecToDir vel
+    self.animationState %= Animation.update defaultDelta
 
     {-
     let Time t = defaultDelta
@@ -343,16 +342,6 @@ renderResource ctx r = case lookupResource r $ ctx^.resources of
         & shapeType   .~ SimpleSquare
         & color       .~ Color.opaque Color.gray
 
-renderSprite :: HasResources c Resources => c -> SpriteDesc -> RenderAction
-renderSprite ctx s = case lookupSprite s $ ctx^.resources of
-    Nothing  -> renderShape shape
-    Just img -> renderImg img & sscale (s^.pixelsPerUnit)
-    where
-    sscale = maybe id (\s -> scale $ 1/(fromIntegral s))
-    shape = def
-        & shapeType   .~ SimpleSquare
-        & color       .~ Color.opaque Color.gray
-
 renderSpriteN :: HasResources c Resources => c -> SpriteName -> RenderAction
 renderSpriteN ctx r = case lookupSpriteName r $ ctx^.resources of
     Nothing      -> renderShape shape
@@ -368,9 +357,6 @@ renderAppearance ctx = \case
     Appearance_Sprite         r -> renderSpriteN ctx r
     Appearance_Translate    t a -> translate t $ renderAppearance ctx a
     Appearance_Compose as -> renderComposition $ map (renderAppearance ctx) as
-
-renderAnimaiton :: RenderContext -> Animation -> RenderAction
-renderAnimaiton ctx = maybe mempty (renderSprite ctx) . Animation.selectCurrent
 
 renderBBox :: BBox Float -> RenderAction
 renderBBox bb = renderSimpleBox $ def

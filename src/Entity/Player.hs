@@ -1,5 +1,6 @@
 module Entity.Player
     ( Player, playerToEntity
+    , makePlayer
     ) where
 
 import Delude
@@ -10,11 +11,10 @@ import Types.Entity
 import Types.Entity.Player
 import Entity.Utils
 import Entity.Actions
+import ResourceManager (Resources, lookupAnimation)
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
-
-import qualified Resource
 
 import qualified Entity.Animation as Animation
 
@@ -33,9 +33,9 @@ actOn x a = case a of
     _ -> x
     where
     setAnimationKind k _ = x
-        & animation.current.kind .~ k
-        & animation.current.era  .~ 0
-        & animation.progression  .~ Animation.defaultTransition
+        & animationState.current.kind .~ k
+        & animationState.current.era  .~ 0
+        & animationState.progression  .~ Animation.defaultTransition
 
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
@@ -63,17 +63,17 @@ executeAttackAt targetEntity vectorToTarget = do
     -- TODO: Choose attack animation based on weapon
     -- TODO: Only execute attack if dist is withing weapon range
     -- let dist = norm vectorToTarget
-    self.animation.current.direction %= Animation.vecToDir vectorToTarget
-    self.animation.current.kind .= Animation.Slash
-    self.animation.current.era  .= 0
-    self.animation.progression  .= Animation.defaultTransition
+    self.animationState.current.direction %= Animation.vecToDir vectorToTarget
+    self.animationState.current.kind .= Animation.Slash
+    self.animationState.current.era  .= 0
+    self.animationState.progression  .= Animation.defaultTransition
 
     let attackPower = AttackPower 1 -- TODO: Calculate attack power
     addAction targetEntity $ EntityAction_SelfAttacked attackPower
 
 playerIntegrateLocation :: Update Player ()
 playerIntegrateLocation = do
-    k <- use $ self.animation.current.kind
+    k <- use $ self.animationState.current.kind
     when (k == Animation.Walk) integrateLocation
 
 autoTarget :: Update Player ()
@@ -104,16 +104,13 @@ processAction = \case
 render :: Player -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
-    -- , renderShape shape & scale 0.3
-    , translateY 0.8 $ mempty {- renderAnimaiton x ctx
-        [ Resource.maleBody
-        , Resource.malePants
-        , Resource.maleShirt
-        , Resource.maleHair
-        ]-}
+    , renderBody
     ]
     where
     renderDebug = renderComposition $ localDebug <> globalDebug
+    renderBody
+        = translateY 0.8
+        $ Animation.renderAnimation (x^.animationState) (x^.bodyAnimation)
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)
@@ -126,12 +123,6 @@ render x ctx = withZIndex x $ locate x $ renderComposition
         ]
 
     cs = x^.collisionShape
-
-    {-
-    shape = def
-        & shapeType   .~ SimpleCircle
-        & color       .~ Color.opaque Color.blue
-    -}
 
     rangeScale = defaultPickupRange^._Wrapped
     renderPickupRange = scale rangeScale $ renderShape $ def
@@ -155,3 +146,11 @@ playerToEntity = makeEntity $ EntityParts
    , makeSave   = EntitySum_Player
    , makeKind   = EntityKind_Dynamic
    }
+
+makePlayer :: Resources -> PlayerInit -> Player
+makePlayer rs p = def
+    & bodyAnimation .~ as
+    where
+    as = mconcat $ map (Animation.makeAnimation rs)
+       $ mapMaybe (flip lookupAnimation rs) (p^.body)
+

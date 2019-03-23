@@ -15,9 +15,9 @@ import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
 import Types.Entity.Player
+import Entity.Player (makePlayer)
 import Types.ResourceManager
 import Types.DirectedAction
-import qualified Entity.Animation as Animation
 import Types.Entity.ItemType
 import Types.Entity.Unit
 import GameState
@@ -28,8 +28,7 @@ import WorldGen (generateWorld, genTest)
 import qualified EntityIndex
 
 import qualified Data.Collider as Collider
-import Dhall.Utils (dhallToMap)
-import qualified Data.Map as Map
+import Dhall.Utils (dhallToMap, loadDhall)
 
 initSt :: Engine () St
 initSt = do
@@ -43,16 +42,16 @@ initSt = do
     world <- generateWorld $ Size 30 30
     let eix = st^.gameState.entities
     forM_ world $ \e -> EntityIndex.insert e eix
-    pid <- EntityIndex.insert playerEntity eix
+    pli <- loadDhall "data/desc" "Player.dhall"
+    pid <- EntityIndex.insert (playerEntity rs pli) eix
     return $ st
         & gameState.focusId .~ Just pid
         & gameState.actions .~ testInitialActions
         & resources .~ rs
     where
-    playerEntity = toEntity @Player $ def
+    playerEntity rs pli = toEntity $ makePlayer rs pli
         & location .~ locM 0 0
         & collisionShape .~ Just (Collider.circle 0 0.3)
-        & animation      .~ Animation.characterAnimation
 
 loadResources :: Engine us Resources
 loadResources = do
@@ -60,28 +59,27 @@ loadResources = do
     ss <- loadDhallList "Sprites.dhall"
     is <- loadDhallList "ItemTypes.dhall"
     us <- loadDhallList "UnitTypes.dhall"
+    as <- loadDhallMap  "Animations.dhall"
     return $ def
-        & resourceMap .~ HashMap.fromList rs
-        & spriteMap   .~ buildMap ss
-        & itemsMap    .~ buildMap is
-        & unitsMap    .~ buildMap us
+        & resourceMap   .~ HashMap.fromList rs
+        & spriteMap     .~ buildMap ss
+        & itemsMap      .~ buildMap is
+        & unitsMap      .~ buildMap us
+        & animationsMap .~ as
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
 
 loadAllPaths :: Engine us [(Text, Img)]
 loadAllPaths = do
-    mpaths <- liftIO $ dhallToMap "data/desc" "ResourcePaths.dhall"
-    case mpaths of
-        Nothing -> return []
-        Just pm -> catMaybes <$> mapM loadResource (ordNub $ Map.elems pm)
+    hm <- liftIO $ dhallToMap "data/desc" "ResourcePaths.dhall"
+    catMaybes <$> mapM loadResource (ordNub $ HashMap.elems hm)
 
 loadDhallList :: FromJSON a => FilePath -> Engine us [a]
-loadDhallList fname = do
-    mits <- liftIO $ dhallToMap "data/desc" fname
-    case mits of
-        Nothing -> return []
-        Just pm -> return $ Map.elems pm
+loadDhallList = fmap HashMap.elems . liftIO . dhallToMap "data/desc"
+
+loadDhallMap :: FromJSON a => FilePath -> Engine us (HashMap Text a)
+loadDhallMap = liftIO . dhallToMap "data/desc"
 
 endSt :: Engine St ()
 endSt = do

@@ -34,7 +34,7 @@ data Resources = Resources
    , resources_spriteMap     :: HashMap SpriteName SpriteDesc
    , resources_itemsMap      :: HashMap ItemTypeName ItemType
    , resources_unitsMap      :: HashMap UnitTypeName UnitType
-   , resources_animaitonsMap :: HashMap Text AnimationDesc
+   , resources_animationsMap :: HashMap Text AnimationDesc
    } deriving (Generic)
 instance Default Resources
 instance HasResources Resources Resources where resources = id

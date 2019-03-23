@@ -7,10 +7,9 @@ module Entity.Animation
     , direction, kind, era
 
     , makeAnimation
+    , renderAnimation
 
     , vecToDir
-    , characterAnimation
-    , selectCurrent
     , defaultTransition
     , update
     , makeEffect
@@ -19,27 +18,29 @@ module Entity.Animation
 
 import Delude
 import qualified Data.Map as Map
+import Engine.Common.Types (Rect (..))
 import Diagrams.Angle
 import Entity.Utils
--- import Types.Entity.Common
 import Types.Sprite
 import Types.Entity.Animation
 
-import qualified Data.Colour       as Color
-import qualified Data.Colour.Names as Color
+import ResourceManager (Resources, renderSprite)
+
+import qualified Color
 
 --------------------------------------------------------------------------------
 
--- type RenderSprite = SpriteDesc -> RenderAction
-makeAnimation :: AnimationDesc -> Animation
-makeAnimation = \case
-   CustomAnimation    ps -> makeCustomAnimation    ps
-   CharacterAnimation fp -> makeCharacterAnimation fp
+renderAnimation :: AnimationState -> Animation -> RenderAction
+renderAnimation s a = runAnimation a (s^.current)
 
-makeCustomAnimation :: [AnimationPart] -> Animation
-makeCustomAnimation ps = def
-    & set aniMap      amap
-    & set progression Cycle
+makeAnimation :: Resources -> AnimationDesc -> Animation
+makeAnimation rs desc = case desc of
+   CustomAnimation    ps -> makeCustomAnimation    rs ps
+   CharacterAnimation sd -> makeCharacterAnimation rs sd
+
+makeCustomAnimation
+    :: Resources -> [AnimationPart] -> Animation
+makeCustomAnimation rs ps = Animation $ maybe mempty (renderSprite rs) . amap
     where
     pmap :: Map (Maybe AnimationKind, Maybe AnimationDirection) [AnimationFrame]
     pmap = Map.fromList $ map (\p -> ((p^.kind, p^.direction), p^.frames)) ps
@@ -65,9 +66,18 @@ makeCustomAnimation ps = def
 
     amap s = selectFrame (s^.era) $ selectFrames (s^.kind) (s^.direction)
 
-makeCharacterAnimation :: FilePath -> Animation
-makeCharacterAnimation _fp = def
+makeCharacterAnimation :: Resources -> SpriteDesc -> Animation
+makeCharacterAnimation rs sd = Animation $ \s ->
+    renderSprite rs (selectFrame s sd)
     where
+    selectFrame :: AnimationFrameState -> SpriteDesc -> SpriteDesc
+    selectFrame s = set part (Just $ framePart s)
+
+    framePart s = makePart (eraToFrame s) dk
+        where dk = min 20 $ fromEnum (s^.kind) * 4 + fromEnum (s^.direction)
+
+    makePart x y = Rect (ss *^ V2 x y) (pure ss)
+        where ss = 64
 
 vecToDir :: V2 Float -> AnimationDirection -> AnimationDirection
 vecToDir v defDir
@@ -77,13 +87,6 @@ vecToDir v defDir
     | angleBetween v (V2   1   0 ) < 90 @@ deg = East
     | angleBetween v (V2 (-1)  0 ) < 90 @@ deg = West
     | otherwise = defDir
-
-{-
-makeAnimationState :: V2 Float -> AnimationKind -> AnimationState
-makeAnimationState v k = def
-   & direction .~ vecToDir v South
-   & kind      .~ k
--}
 
 kindFrameCount :: Num a => AnimationKind -> a
 kindFrameCount = \case
@@ -97,21 +100,10 @@ kindFrameCount = \case
 eraToFrame :: (HasKind a AnimationKind, HasEra a Float) => a -> Int
 eraToFrame a = floor $ (kindFrameCount $ a^.kind) * (a^.era)
 
-characterAnimation :: Animation
-characterAnimation = def & aniMap .~ f
-    where
-    -- TODO
-    f s = Nothing
-    -- f s = \r -> Resource.mkAtlasPart r (eraToFrame s) dk
-        -- where dk = min 20 $ fromEnum (s^.kind) * 4 + fromEnum (s^.direction)
-
-selectCurrent :: Animation -> Maybe SpriteDesc
-selectCurrent a = (a^.aniMap) (a^.current)
-
 defaultTransition :: AnimationProgression
 defaultTransition = TransitionInto Walk Stopped
 
-update :: Time -> Animation -> Animation
+update :: Time -> AnimationState -> AnimationState
 update (Time delta) a
     | newEra >= 1 = progressKind (a^.progression) $ a & current.era .~ newEra-1
     | otherwise   = a & current.era .~ newEra
@@ -142,9 +134,3 @@ renderEffect e = case e^.kind of
     where
     renderHit (AttackPower x) = scale (1/64) $ renderSimpleText d $ show (-x)
     d = def & color .~ Color.opaque Color.red
-    {-
-    renderCircle s c = scale s $ renderShape $ def
-        & shapeType .~ SimpleCircle
-        & color     .~ Color.opaque c
-    -}
-

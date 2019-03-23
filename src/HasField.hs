@@ -35,6 +35,7 @@ class HasUnique          s t | s -> t where unique          :: Lens' s t
 class HasSprite          s t | s -> t where sprite          :: Lens' s t
 class HasCollisionShape  s t | s -> t where collisionShape  :: Lens' s t
 class HasAnimation       s t | s -> t where animation       :: Lens' s t
+class HasAnimationState  s t | s -> t where animationState  :: Lens' s t
 class HasEffects         s t | s -> t where effects         :: Lens' s t
 class HasDirection       s t | s -> t where direction       :: Lens' s t
 class HasEra             s t | s -> t where era             :: Lens' s t

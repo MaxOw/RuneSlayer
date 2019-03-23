@@ -14,7 +14,8 @@ let Direction     = enums.Direction
 let AnimationKind = enums.AnimationKind
 
 let Any = None Text
-let makeCharAnimation = λ(p : Text) → { CharacterAnimation = p }
+let makeCharAnimation = λ(p : Text) →
+  { CharacterAnimation = utils.makeSprite "" p }
 
 let selectSpritePart = utils.selectSpritePart
 
@@ -24,15 +25,21 @@ let makeBatFrame =
   λ(n : Natural) →
     simpleFrame (selectSpritePart 32 n 0 sprites.bat)
 
-in
-{ maleBodyLight = makeCharAnimation paths.maleBodyLight
+let simpleCustomAnimation =
+  λ(frames : List Frame) →
+    { CustomAnimation =
+      [ { direction = Any
+        , kind      = Any
+        , frames    = frames
+        }
+      ]
+    }
 
-, bat =
-  { CustomAnimation =
-    [ { direction = Any
-      , kind      = Any
-      , frames    = map Natural Frame makeBatFrame [1, 2, 3]
-      }
-    ]
-  }
+in
+{ maleBodyLight      = makeCharAnimation paths.maleBodyLight
+, maleHairPlainBrown = makeCharAnimation paths.maleHairPlainBrown
+, malePantsTeal      = makeCharAnimation paths.malePantsTeal
+, maleShirtWhite     = makeCharAnimation paths.maleShirtWhite
+
+, bat = simpleCustomAnimation (map Natural Frame makeBatFrame [1, 2, 3])
 }

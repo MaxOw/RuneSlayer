@@ -28,7 +28,7 @@ data AnimationKind
 
 data AnimationDesc
    = CustomAnimation    [AnimationPart]
-   | CharacterAnimation FilePath
+   | CharacterAnimation SpriteDesc
    deriving (Generic)
 
 data AnimationFrame = AnimationFrame
@@ -44,17 +44,20 @@ data AnimationPart = AnimationPart
 
 --------------------------------------------------------------------------------
 
-data Animation = Animation
-   { animation_aniMap      :: AnimationState -> Maybe SpriteDesc
-   , animation_current     :: AnimationState
-   , animation_progression :: AnimationProgression
-   , animation_speed       :: Float
-   }
+newtype Animation = Animation
+    { runAnimation :: AnimationFrameState -> RenderAction }
+    deriving (Semigroup, Monoid)
 
 data AnimationState = AnimationState
-   { animationState_direction :: AnimationDirection
-   , animationState_kind      :: AnimationKind
-   , animationState_era       :: Float
+   { animationState_current     :: AnimationFrameState
+   , animationState_progression :: AnimationProgression
+   , animationState_speed       :: Float
+   }
+
+data AnimationFrameState = AnimationFrameState
+   { animationFrameState_direction :: AnimationDirection
+   , animationFrameState_kind      :: AnimationKind
+   , animationFrameState_era       :: Float
    }
 
 data AnimationProgression
@@ -91,24 +94,26 @@ instance FromJSON AnimationPart  where parseJSON = genericParseJSON customOption
 instance Default AnimationDesc where
     def = CustomAnimation []
 
-instance Default Animation where
-    def = Animation
-        { animation_aniMap      = \_ -> Nothing
-        , animation_current     = def
-        , animation_progression = Stopped
-        , animation_speed       = 1
-        }
-
 instance Default AnimationState where
     def = AnimationState
-        { animationState_direction = South
-        , animationState_kind      = Walk
-        , animationState_era       = 0
+        { animationState_current     = def
+        , animationState_progression = Stopped
+        , animationState_speed       = 1
         }
+
+instance Default AnimationFrameState where
+    def = AnimationFrameState
+        { animationFrameState_direction = South
+        , animationFrameState_kind      = Walk
+        , animationFrameState_era       = 0
+        }
+
+instance Default Animation where
+    def = Animation $ const mempty
 
 makeFieldsCustom ''AnimationFrame
 makeFieldsCustom ''AnimationPart
 
-makeFieldsCustom ''Animation
 makeFieldsCustom ''AnimationState
+makeFieldsCustom ''AnimationFrameState
 makeFieldsCustom ''EffectState

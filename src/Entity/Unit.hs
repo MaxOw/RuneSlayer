@@ -12,7 +12,6 @@ import Types.ResourceManager (Resources)
 
 import Entity.Utils
 import Entity.Actions
-import Types.Entity.Animation (aniMap)
 import qualified Entity.Animation as Animation
 
 --------------------------------------------------------------------------------
@@ -29,7 +28,7 @@ update x ctx = runUpdate x ctx $ do
     -- updateAnimation
     updateEffects defaultDelta
     anyMatch _EntityAction_SelfAttacked procAttack
-    self.animation %= Animation.update defaultDelta
+    self.animationState %= Animation.update defaultDelta
     self.processOnUpdate .= mempty
 
 procAttack :: NonEmpty AttackPower -> Update Unit ()
@@ -41,19 +40,21 @@ procAttack as = do
     whenM shouldDie $ do
         deleteSelf .= True
         loc <- use $ self.location
-        addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
-            & location .~ loc
-            & name._Wrapped .~ "Health Potion"
+        mco <- use $ self.unitType.corpse
+        whenJust mco $ \c ->
+            addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
+                & location .~ loc
+                & name     .~ c
             -- testItemType_healthPotion
         -- TODO: spawn item: self.corpse
     where
     applyDefence     x = return x
 
 render :: Unit -> RenderContext -> RenderAction
-render x ctx = withZIndex x $ locate x $ renderComposition
+render x _ctx = withZIndex x $ locate x $ renderComposition
     [ renderIf (x^.isMarked) renderTargetMark
     , translateY 0.8 $ renderComposition
-        [ renderAnimaiton ctx (x^.animation)
+        [ Animation.renderAnimation (x^.animationState) (x^.animation)
         , renderEffects x ]
     ]
 
@@ -77,9 +78,10 @@ unitToEntity = makeEntity $ EntityParts
 
 makeUnit :: Resources -> UnitType -> Unit
 makeUnit rs t = def
-    & unitType  .~ t
-    & animation .~ (Animation.makeAnimation $ t^.animation)
-    & health    .~ (t^.maxHealth)
+    & unitType .~ t
+    & health   .~ (t^.maxHealth)
+    & animation .~ Animation.makeAnimation rs (t^.animation)
+    & animationState.progression .~ Animation.Cycle
 
 {-
     batMap s = \r -> Resource.mkAtlasPart r fr dk

@@ -11,15 +11,13 @@ import Engine.Types (Engine)
 import Engine.Common.Types
 import Types.Entity (Entity)
 import Types.Entity.Common
-import Types.Entity.TileType
+import Types.Entity.TileSet
 import Entity.StaticEntity
-import Entity.Tile (makeSimpleTile, makeSimpleFullTile)
+import Entity.Tile (makeTile)
 import EntityLike (toEntity)
-import qualified Resource
-import Resource (Resource)
--- import Data.Grid (Grid, Coord(..))
--- import qualified Data.Grid as Grid
---import Data.Reflection
+import ResourceManager (Resources, lookupTileSet)
+
+import qualified Entity.TileSet as TileSet
 
 --------------------------------------------------------------------------------
 
@@ -42,8 +40,8 @@ makeFieldsCustom ''CornerQuad
 
 type Meter = Float
 
-generateWorld :: Size Meter -> Engine us (Vector Entity)
-generateWorld worldSize = do
+generateWorld :: Resources -> Size Meter -> Engine us (Vector Entity)
+generateWorld rs worldSize = do
     -- mapM_ print offM33
     let Size ox oy = fmap (negate . floor) $ worldSize ^/ 2
     let Size w  h  = fmap floor worldSize
@@ -53,7 +51,15 @@ generateWorld worldSize = do
     -- return $ Vector.fromList $ take 10 $ zipWith mkBool ps $ cycle [True, False]
     -- return $ Vector.fromList $ concat $ take 51 $ zipWith mk3x3 ps [0..]
     let pp = V2 ox oy
-    let tiles = concatMap (mkRoleL pp) $ rndRoleGrid 18 (V2 w h)
+    let dirtTileSet  = lookupTileSet (TileSetName "Wet Dirt") rs
+    let grassTileSet = lookupTileSet (TileSetName "Grass")    rs
+    print $ dirtTileSet
+    print $ grassTileSet
+    let tiles = case (dirtTileSet, grassTileSet) of
+            (Just dts, Just gts) ->
+                concatMap (mkRoleL dts gts pp) $ rndRoleGrid 18 (V2 w h)
+            _ -> []
+    print $ length tiles
     let trees = map (placeTree pp) $ rndTreeGrid 18 (V2 w h)
     return $ Vector.fromList $ tiles <> trees
 
@@ -134,6 +140,7 @@ flipRole (Just r) = Just $ case r of
    TileRole_Edge        e -> TileRole_Edge        $ flipEdge   e
    TileRole_OuterCorner c -> TileRole_InnerCorner c -- $ flipCorner c
    TileRole_InnerCorner c -> TileRole_OuterCorner c -- $ flipCorner c
+   TileRole_Cross       c -> TileRole_Cross c -- $ flipCross c
 
 flipRoles :: [TileRole] -> [TileRole]
 flipRoles [] = [TileRole_Full]
@@ -167,44 +174,8 @@ boolToRole :: Source x Bool => Array x DIM2 Bool -> Array D DIM2 [TileRole]
 boolToRole s = Repa.traverse s id f
     where
     es = Repa.extent s
-    f g (Z :. x :. y)
-        | atI ( 0, 0)                = [TileRole_Full]
-
-        | atI ( 1, 0) && atI (-1,-1) && atI ( 0, 1) = [TileRole_Hole]
-        | atI (-1, 0) && atI ( 1, 1) && atI ( 0,-1) = [TileRole_Hole]
-        | atI ( 0, 1) && atI ( 1,-1) && atI (-1, 0) = [TileRole_Hole]
-        | atI ( 0,-1) && atI (-1, 1) && atI ( 1, 0) = [TileRole_Hole]
-
-        | atI ( 1, 0) && atI ( 0, 1) = [TileRole_InnerCorner Corner_TopRight]
-        | atI (-1, 0) && atI ( 0, 1) = [TileRole_InnerCorner Corner_TopLeft]
-        | atI ( 1, 0) && atI ( 0,-1) = [TileRole_InnerCorner Corner_BottomRight]
-        | atI (-1, 0) && atI ( 0,-1) = [TileRole_InnerCorner Corner_BottomLeft]
-
-        | atI ( 1, 0) && atI (-1,-1) = [TileRole_InnerCorner Corner_BottomRight]
-        | atI (-1, 0) && atI ( 1, 1) = [TileRole_InnerCorner Corner_TopLeft]
-        | atI ( 0, 1) && atI ( 1,-1) = [TileRole_InnerCorner Corner_TopRight]
-        | atI ( 0,-1) && atI (-1, 1) = [TileRole_InnerCorner Corner_BottomLeft]
-
-        | atI ( 1, 0) && atI (-1, 1) = [TileRole_InnerCorner Corner_TopRight]
-        | atI (-1, 0) && atI ( 1,-1) = [TileRole_InnerCorner Corner_BottomLeft]
-        | atI ( 0, 1) && atI (-1,-1) = [TileRole_InnerCorner Corner_TopLeft]
-        | atI ( 0,-1) && atI ( 1, 1) = [TileRole_InnerCorner Corner_BottomRight]
-
-        | atI ( 1, 0)                = [TileRole_Edge Edge_Left]
-        | atI (-1, 0)                = [TileRole_Edge Edge_Right]
-        | atI ( 0, 1)                = [TileRole_Edge Edge_Bottom]
-        | atI ( 0,-1)                = [TileRole_Edge Edge_Top]
-
-        | otherwise
-            = ifI ( 1, 1) (TileRole_OuterCorner Corner_BottomLeft)
-            $ ifI (-1, 1) (TileRole_OuterCorner Corner_BottomRight)
-            $ ifI ( 1,-1) (TileRole_OuterCorner Corner_TopLeft)
-            $ ifI (-1,-1) (TileRole_OuterCorner Corner_TopRight)
-            $ []
-
-        where
-        ifI i v = if atI i then (v:) else id
-        atI (a,b) = g $ clamp2 es (a+x, b+y)
+    f g (Z :. x :. y) = TileSet.toRole atI
+        where atI (a,b) = g $ clamp2 es (a+x, b+y)
 
 clamp2 :: DIM2 -> (Int, Int) -> DIM2
 clamp2 es (a, b) = Repa.clampToBorder2 es $ Repa.ix2 a b
@@ -214,6 +185,7 @@ clamp2 es (a, b) = Repa.clampToBorder2 es $ Repa.ix2 a b
 pureCornerQuad :: x -> CornerQuad x
 pureCornerQuad x = CornerQuad x x x x
 
+{-
 mkGrass :: V2 Int -> Entity
 mkGrass pos@(V2 x y) = mkLocEnt pos tile
     where
@@ -221,22 +193,29 @@ mkGrass pos@(V2 x y) = mkLocEnt pos tile
     p1 = 2147480197
     tile = mkTile $ mod (x*p0 + y*p1 + x*y*p0*p1 + x + y*x) 3
     mkTile i = Resource.mkEnvRect (42 + i*2) 10 2 2
+-}
 
-mkRoleL :: V2 Int -> (V2 Int, [TileRole]) -> [Entity]
-mkRoleL pp (pos, mr) = condAddDirt $ mapMaybe (mkRole $ pp+pos) mr
+mkRoleL :: TileSet -> TileSet -> V2 Int -> (V2 Int, [TileRole]) -> [Entity]
+mkRoleL dts gts pp (pos, mr) = condAddDirt $ map (mkLocRole gts $ pp+pos) mr
     where
     isFull = any (== TileRole_Full) mr
-    condAddDirt = if isFull then id else (dirtTile (pp+pos):)
+    condAddDirt = if isFull then id
+        else (fullTile dts (pp+pos):)
 
-dirtTile :: V2 Int -> Entity
-dirtTile p = toEntity . set location loc . makeSimpleFullTile
-    $ Resource.mkEnvRect 38 10 2 2
+fullTile :: TileSet -> V2 Int -> Entity
+fullTile ts p = toEntity . set location loc $ makeTile TileRole_Full ts
     where
     loc = Location $ fmap fromIntegral p
 
-mkRole :: V2 Int -> TileRole -> Maybe Entity
-mkRole pos r = mkLocEnt pos <$> roleToOffset r
+-- mkRole :: TileSet -> V2 Int -> TileRole -> Maybe Entity
+-- mkRole ts pos r = mkLocRole ts pos r -- <$> roleToOffset r
 
+mkLocRole :: TileSet -> V2 Int -> TileRole -> Entity
+mkLocRole ts pos r = toEntity . set location loc $ makeTile r ts
+    where
+    loc = Location $ fmap fromIntegral pos
+
+{-
 mkLocEnt :: V2 Int -> Resource -> Entity
 mkLocEnt pos = toEntity . set location loc . makeSimpleTile
     where
@@ -247,6 +226,7 @@ mkBool p b = mkLocEnt p $ boolToRes b
     where
     boolToRes True  = Resource.mkEnvRect 42 10 2 2
     boolToRes False = Resource.mkEnvRect 54 10 2 2
+-}
 
 {-
 mk3x3 :: V2 Int -> Int -> [Entity]
@@ -259,7 +239,6 @@ mk3x3 (V2 x y) i = c -- [mkBool pp True]
 
 mk3x3Quad :: V2 Int -> M33 Bool -> [Entity]
 mk3x3Quad p = concatMap (mkTileQuad p) . gridToIndexedRoles . m33toGrid
--}
 
 mkTileQuad :: V2 Int -> (V2 Int, CornerQuad (Maybe TileRole)) -> [Entity]
 mkTileQuad offp (pos, q) = catMaybes
@@ -274,7 +253,7 @@ mkTileQuad offp (pos, q) = catMaybes
     pTL = pp & _x  -~ 1
     pTR = pp -- & _xy -~ 0 -- &  _y -~ 1
     pp  =  ((pos & _y %~ negate) ^* 2) + offp
-
+-}
 
 genTest :: MonadIO m => m ()
 genTest = do
@@ -293,6 +272,7 @@ allRoles =
    <> fmap TileRole_OuterCorner boundedRange
    <> fmap TileRole_InnerCorner boundedRange
 
+{-
 roleToOffset :: TileRole -> Maybe Resource
 roleToOffset = \case
     TileRole_Full          -> mkr 1 5
@@ -319,6 +299,7 @@ roleToOffset = \case
         Corner_TopRight    -> mkr 2 0
         Corner_BottomLeft  -> mkr 1 1
         Corner_BottomRight -> mkr 2 1
+-}
 
 {-
 coordToV2 :: Coord [a, b] -> V2 Int

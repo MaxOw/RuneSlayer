@@ -27,7 +27,7 @@ dhallToMap rdir fpath = do
     case dhallToJSON expr of
         Left err -> print err >> return mempty
         Right vl -> case fromJSON vl of
-            Error err -> putStrLn err >> return mempty
+            Error err -> putStrLn (fpath <> ": " <> err) >> return mempty
             Success v -> return v
 
 loadDhall :: (MonadIO m, FromJSON x, Default x) => FilePath -> FilePath -> m x

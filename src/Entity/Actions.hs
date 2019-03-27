@@ -20,7 +20,6 @@ module Entity.Actions
     -- Render Actions
     , maybeLocate, locate
     , withZIndex
-    , renderResource
     -- , renderSprite
     , renderAppearance
     , renderBBox
@@ -64,8 +63,7 @@ import Equipment (Equipment, contentList)
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
-import Resource (Resource)
-import ResourceManager (lookupSpriteName, lookupResource, Resources)
+import ResourceManager (lookupSpriteName, Resources)
 import Types.Sprite (pixelsPerUnit, SpriteName)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
@@ -332,15 +330,6 @@ locate x = x^.location._Wrapped.to translate
 withZIndex :: GetZIndex x Word32
     => x -> (RenderAction -> RenderAction)
 withZIndex x = setZIndexAtLeast (get_zindex x)
-
-renderResource :: HasResources c Resources => c -> Resource -> RenderAction
-renderResource ctx r = case lookupResource r $ ctx^.resources of
-    Nothing  -> renderShape shape
-    Just img -> renderImg img & scale (1/r^.pixelsPerUnit)
-    where
-    shape = def
-        & shapeType   .~ SimpleSquare
-        & color       .~ Color.opaque Color.gray
 
 renderSpriteN :: HasResources c Resources => c -> SpriteName -> RenderAction
 renderSpriteN ctx r = case lookupSpriteName r $ ctx^.resources of

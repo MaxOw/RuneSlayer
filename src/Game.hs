@@ -14,7 +14,6 @@ import Engine.Common.Types
 import Engine.Graphics.Scroller (newScroller)
 import Types.St
 import Types.Entity.Common
-import Types.Entity.Player
 import Entity.Player (makePlayer)
 import Types.ResourceManager
 import Types.DirectedAction
@@ -39,7 +38,7 @@ initSt = do
     rs <- loadResources
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
-    world <- generateWorld $ Size 30 30
+    world <- generateWorld rs $ Size 30 30
     let eix = st^.gameState.entities
     forM_ world $ \e -> EntityIndex.insert e eix
     pli <- loadDhall "data/desc" "Player.dhall"
@@ -57,11 +56,13 @@ loadResources :: Engine us Resources
 loadResources = do
     rs <- loadAllPaths
     ss <- loadDhallList "Sprites.dhall"
+    ts <- loadDhallList "TileSets.dhall"
     is <- loadDhallList "ItemTypes.dhall"
     us <- loadDhallList "UnitTypes.dhall"
     as <- loadDhallMap  "Animations.dhall"
     return $ def
         & resourceMap   .~ HashMap.fromList rs
+        & tileSetMap    .~ buildMap ts
         & spriteMap     .~ buildMap ss
         & itemsMap      .~ buildMap is
         & unitsMap      .~ buildMap us

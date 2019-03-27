@@ -15,7 +15,15 @@ Requirements for first release: v0.1
 ## Game/Gameplay
 
 * Load entity types from files (Json/Dhall)                                  [.]
-* Load resource files. (Json/Dhall)                                          [.]
+  - Declare/load static types via Dhall                                      [ ]
+  - Declare/load item types via Dhall                                        [X]
+  - Declare/load unit types via Dhall                                        [X]
+  - Declare/load player init file via Dhall                                  [X]
+* Load resource files. (Json/Dhall)                                          [X]
+  - Declare/load paths via Dhall                                             [X]
+  - Declare/load sprites via Dhall                                           [X]
+  - Declare/load animations via Dhall                                        [X]
+  - Declare/load tile sets via Dhall                                         [X]
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]
@@ -32,5 +40,3 @@ Requirements for first release: v0.1
 * Communication with NPCs.                                                   [ ]
 * Initial island.                                                            [ ]
 * Enemy units: Gore Bats, Shadow Spiders, Shadow Puppets (Skeletons)         [ ]
-
-* Declare animations via Dhall                                               [ ]

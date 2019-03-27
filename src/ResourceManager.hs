@@ -6,6 +6,7 @@ module ResourceManager
     , lookupSprite
     , lookupSpriteName
     , lookupAnimation
+    , lookupTileSet
 
     , renderSprite
     ) where
@@ -15,6 +16,7 @@ import Engine (Img, RenderAction, renderImg)
 import Diagrams.TwoD.Transform (scale)
 import Types.ResourceManager
 import Types.Entity.Animation (AnimationDesc)
+import Types.Entity.TileSet   (TileSetName, TileSet)
 import qualified Data.HashMap.Strict as HashMap
 
 lookupResource :: Resource -> Resources -> Maybe Img
@@ -38,6 +40,9 @@ lookupSpriteName n r = do
 
 lookupAnimation :: Text -> Resources -> Maybe AnimationDesc
 lookupAnimation x = HashMap.lookup x . view animationsMap
+
+lookupTileSet :: TileSetName -> Resources -> Maybe TileSet
+lookupTileSet x = HashMap.lookup x . view tileSetMap
 
 renderSprite :: Resources -> SpriteDesc -> RenderAction
 renderSprite rs s = case lookupSprite s rs of

@@ -3,13 +3,17 @@ module Types.Entity.Appearance where
 import Delude
 import Types.Sprite (SpriteName)
 
-data Appearance
-   = Appearance_Sprite SpriteName
-   | Appearance_Translate { _vector :: (V2 Float), _content :: Appearance }
-   | Appearance_Compose [Appearance]
-   deriving (Generic)
-instance Default Appearance where
-    def = Appearance_Compose []
+data Located x = Located
+   { located_vector :: V2 Float
+   , loacted_value  :: x
+   } deriving Generic
+newtype Appearance = Appearance [Located SpriteName]
+    deriving (Generic, Default)
+
+instance ToJSON x => ToJSON (Located x) where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON x => FromJSON (Located x) where
+    parseJSON = genericParseJSON customOptionsJSON
 
 instance ToJSON Appearance where
     toEncoding = genericToEncoding customOptionsJSON

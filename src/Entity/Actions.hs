@@ -342,10 +342,9 @@ renderSpriteN ctx r = case lookupSpriteName r $ ctx^.resources of
         & color       .~ Color.opaque Color.gray
 
 renderAppearance :: HasResources c Resources => c -> Appearance -> RenderAction
-renderAppearance ctx = \case
-    Appearance_Sprite         r -> renderSpriteN ctx r
-    Appearance_Translate    t a -> translate t $ renderAppearance ctx a
-    Appearance_Compose as -> renderComposition $ map (renderAppearance ctx) as
+renderAppearance ctx (Appearance ls) = renderComposition $ map renderLocated ls
+    where
+    renderLocated (Located v n) = translate v $ renderSpriteN ctx n
 
 renderBBox :: BBox Float -> RenderAction
 renderBBox bb = renderSimpleBox $ def

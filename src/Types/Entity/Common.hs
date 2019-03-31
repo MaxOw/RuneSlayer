@@ -41,7 +41,7 @@ type V2D = V2 Float
 -- type Basic a = (Generic a, Default a)
 
 newtype Location = Location { unLocation :: V2D    }
-    deriving (Generic, Default)
+    deriving (Generic, Default, ToJSON, FromJSON)
 makeWrapped ''Location
 
 instance Show Location where

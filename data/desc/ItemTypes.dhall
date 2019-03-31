@@ -19,7 +19,7 @@ in
   { name     = "Helmet"
   , volume   = 1.5
   , itemKind = ItemKind.BigItem
-  , appearance = appearance.sprite sprites.helmet
+  , appearance = appearance.simple sprites.helmet
   , fittingSlots = [ EquipmentSlot.Head ]
   }
 
@@ -27,14 +27,14 @@ in
   { name     = "Health Potion"
   , volume   = 0.1
   , itemKind = ItemKind.SmallItem
-  , appearance = appearance.sprite sprites.healthPotion
+  , appearance = appearance.simple sprites.healthPotion
   }
 
 , bag = defaultItemType //
   { name     = "Bag"
   , volume   = 15
   , itemKind = ItemKind.Container
-  , appearance = appearance.sprite sprites.bag
+  , appearance = appearance.simple sprites.bag
   , fittingSlots = [ EquipmentSlot.Backpack ]
   , containerType = Some { maxVolume = 15 }
   }

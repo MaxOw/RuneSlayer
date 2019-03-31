@@ -1,12 +1,12 @@
 module ResourceManager
-    ( Resources, Resource
+    ( Resources
     , SpriteName, SpriteDesc
-    , lookupResource
     , lookupImg
     , lookupSprite
     , lookupSpriteName
     , lookupAnimation
     , lookupTileSet
+    , lookupStaticEntity
 
     , renderSprite
     ) where
@@ -17,12 +17,8 @@ import Diagrams.TwoD.Transform (scale)
 import Types.ResourceManager
 import Types.Entity.Animation (AnimationDesc)
 import Types.Entity.TileSet   (TileSetName, TileSet)
+import Types.Entity.StaticEntity
 import qualified Data.HashMap.Strict as HashMap
-
-lookupResource :: Resource -> Resources -> Maybe Img
-lookupResource r = fmap f . HashMap.lookup (r^.path) . view resourceMap
-    where
-    f = set part (view part r)
 
 lookupImg :: FilePath -> Resources -> Maybe Img
 lookupImg p = HashMap.lookup (fromString p) . view resourceMap
@@ -43,6 +39,9 @@ lookupAnimation x = HashMap.lookup x . view animationsMap
 
 lookupTileSet :: TileSetName -> Resources -> Maybe TileSet
 lookupTileSet x = HashMap.lookup x . view tileSetMap
+
+lookupStaticEntity :: StaticEntityTypeName -> Resources -> Maybe StaticEntityType
+lookupStaticEntity x = HashMap.lookup x . view staticMap
 
 renderSprite :: Resources -> SpriteDesc -> RenderAction
 renderSprite rs s = case lookupSprite s rs of

@@ -6,6 +6,11 @@ let Sprite =
   , pixelsPerUnit : Optional Natural
   }
 
+let LocatedSprite =
+  { vector : List Double
+  , value  : Text
+  }
+
 let ContainerType =
   { maxVolue : Double
   }
@@ -24,6 +29,7 @@ let AnimationPart =
 in
 { Rect          = Rect
 , Sprite        = Sprite
+, LocatedSprite = LocatedSprite
 , ContainerType = ContainerType
 , Frame         = Frame
 , AnimationPart = AnimationPart

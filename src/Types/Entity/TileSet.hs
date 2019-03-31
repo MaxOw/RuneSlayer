@@ -23,22 +23,15 @@ data Cross
    | Cross_BottomLeftTopRight
    deriving (Eq, Enum, Bounded)
 
-data Level
-   = Level_Vertical
-   | Level_Horizontal
-   deriving (Eq, Enum, Bounded)
-
 data TileRole
    = TileRole_Full
-   | TileRole_Path
-   | TileRole_Hole
+   -- | TileRole_Path
+   -- | TileRole_Hole
    | TileRole_Edge        Edge
    | TileRole_OuterCorner Corner
    | TileRole_InnerCorner Corner
    | TileRole_Cross Cross
-   -- | TileRole_SemiCross Level Corner
    deriving (Eq)
-   -- deriving (Enum, Bounded)
 
 instance Default TileRole where def = TileRole_Full
 

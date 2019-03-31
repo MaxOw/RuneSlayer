@@ -2,7 +2,6 @@ module Entity.StaticEntity
     ( StaticEntity, staticEntityToEntity
 
     , makeStaticEntity
-    , testStaticEntityType_tree
     ) where
 
 import Delude
@@ -36,16 +35,16 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     renderDebug
         = renderComposition $ map snd
         $ filter (\(f, _) -> Set.member f $ ctx^.debugFlags)
-        [ (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
+        [ -- (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
         ]
 
-    cs = x^.entityType.collisionShape
+    -- cs = x^.entityType.collisionShape
 
 oracle :: StaticEntity -> EntityOracle
 oracle x = def
    & location       .~ Just (x^.location)
    & zindex         .~ Just EntityZIndex_Vertical
-   & collisionShape .~ (locate x <$> x^.entityType.collisionShape)
+   -- & collisionShape .~ (locate x <$> x^.entityType.collisionShape)
 
 --------------------------------------------------------------------------------
 
@@ -62,17 +61,6 @@ staticEntityToEntity = makeEntity $ EntityParts
 makeStaticEntity :: StaticEntityType -> StaticEntity
 makeStaticEntity t = set entityType t def
 
-testStaticEntityType_tree :: StaticEntityType
-testStaticEntityType_tree = def
-    & name       .~ "Tree"
-    & appearance .~ app
     -- & collisionShape .~ Just (
         -- translateY (-0.8) $ Collider.circle 0 0.3)
-    & collisionShape .~ Just (Collider.circle (P $ V2 0 (-0.3)) 0.3)
-    where
-    app = Appearance_Compose
-        [ Appearance_Sprite (SpriteName "Tree Trunk")
-        , Appearance_Translate (V2 0 2)
-        $ Appearance_Sprite (SpriteName "Tree Foliage")
-        ]
-
+    -- & collisionShape .~ Just (Collider.circle (P $ V2 0 (-0.3)) 0.3)

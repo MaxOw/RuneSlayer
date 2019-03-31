@@ -21,7 +21,7 @@ import Types.Entity.ItemType
 import Types.Entity.Unit
 import GameState
 import EntityLike
-import WorldGen (generateWorld, genTest)
+import WorldGen (generateWorld)
 
 -- import qualified Resource
 import qualified EntityIndex
@@ -31,7 +31,6 @@ import Dhall.Utils (dhallToMap, loadDhall)
 
 initSt :: Engine () St
 initSt = do
-    genTest
     scro <- newScroller $ def
     st <- defaultSt scro
     loadFontFamily "Arial"
@@ -56,12 +55,14 @@ loadResources :: Engine us Resources
 loadResources = do
     rs <- loadAllPaths
     ss <- loadDhallList "Sprites.dhall"
+    se <- loadDhallList "StaticTypes.dhall"
     ts <- loadDhallList "TileSets.dhall"
     is <- loadDhallList "ItemTypes.dhall"
     us <- loadDhallList "UnitTypes.dhall"
     as <- loadDhallMap  "Animations.dhall"
     return $ def
         & resourceMap   .~ HashMap.fromList rs
+        & staticMap     .~ buildMap se
         & tileSetMap    .~ buildMap ts
         & spriteMap     .~ buildMap ss
         & itemsMap      .~ buildMap is

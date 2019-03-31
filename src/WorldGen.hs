@@ -4,7 +4,6 @@ module WorldGen where
 
 import Delude
 import qualified Relude.Extra.Enum as Enum
--- import qualified Data.Set as Set
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import Engine.Types (Engine)
@@ -12,10 +11,11 @@ import Engine.Common.Types
 import Types.Entity (Entity)
 import Types.Entity.Common
 import Types.Entity.TileSet
+import Types.Entity.StaticEntity
 import Entity.StaticEntity
 import Entity.Tile (makeTile)
 import EntityLike (toEntity)
-import ResourceManager (Resources, lookupTileSet)
+import ResourceManager (Resources, lookupTileSet, lookupStaticEntity)
 
 import qualified Entity.TileSet as TileSet
 
@@ -30,6 +30,7 @@ import qualified Data.Array.Repa.Specialised.Dim2 as Repa
 
 --------------------------------------------------------------------------------
 
+{-
 data CornerQuad a = CornerQuad
    { cornerQuad_bottomRight :: a
    , cornerQuad_bottomLeft  :: a
@@ -37,6 +38,7 @@ data CornerQuad a = CornerQuad
    , cornerQuad_topRight    :: a
    } deriving (Functor)
 makeFieldsCustom ''CornerQuad
+-}
 
 type Meter = Float
 
@@ -51,16 +53,17 @@ generateWorld rs worldSize = do
     -- return $ Vector.fromList $ take 10 $ zipWith mkBool ps $ cycle [True, False]
     -- return $ Vector.fromList $ concat $ take 51 $ zipWith mk3x3 ps [0..]
     let pp = V2 ox oy
-    let dirtTileSet  = lookupTileSet (TileSetName "Wet Dirt") rs
-    let grassTileSet = lookupTileSet (TileSetName "Grass")    rs
-    print $ dirtTileSet
-    print $ grassTileSet
+    let dirtTileSet  = lookupTileSet (TileSetName "Dry Dirt") rs
+    let grassTileSet = lookupTileSet (TileSetName "Water")    rs
     let tiles = case (dirtTileSet, grassTileSet) of
             (Just dts, Just gts) ->
                 concatMap (mkRoleL dts gts pp) $ rndRoleGrid 18 (V2 w h)
             _ -> []
-    print $ length tiles
-    let trees = map (placeTree pp) $ rndTreeGrid 18 (V2 w h)
+    -- let se = testStaticEntityType_tree
+    let mse = lookupStaticEntity (StaticEntityTypeName "Tree") rs
+    let trees = case mse of
+            Nothing -> []
+            Just se -> map (placeStatic se pp) $ rndTreeGrid 18 (V2 w h)
     return $ Vector.fromList $ tiles <> trees
 
 --------------------------------------------------------------------------------
@@ -106,16 +109,13 @@ rndTreeGrid seed (V2 x y) = map fst $ filter snd $ Repa.toList imtr
     imtr :: Array V DIM2 (V2 Int, Bool)
     imtr = Repa.computeS $ addOffset andGrid
 
-placeTree :: V2 Int -> V2 Int -> Entity
-placeTree pp p = toEntity $ makeStaticEntity testStaticEntityType_tree
+placeStatic :: StaticEntityType -> V2 Int -> V2 Int -> Entity
+placeStatic se pp p = toEntity $ makeStaticEntity se
     & location .~ locM x y
     where
     V2 x y = fmap fromIntegral (pp + p)
 
-worldGenTest :: IO ()
-worldGenTest = do
-    return ()
-
+{-
 flipEdge :: Edge -> Edge
 flipEdge = \case
    Edge_Bottom -> Edge_Top
@@ -135,8 +135,8 @@ flipRole Nothing              = Just TileRole_Full
 flipRole (Just TileRole_Full) = Nothing
 flipRole (Just r) = Just $ case r of
    TileRole_Full          -> TileRole_Full
-   TileRole_Path          -> TileRole_Hole
-   TileRole_Hole          -> TileRole_Path
+   -- TileRole_Path          -> TileRole_Hole
+   -- TileRole_Hole          -> TileRole_Path
    TileRole_Edge        e -> TileRole_Edge        $ flipEdge   e
    TileRole_OuterCorner c -> TileRole_InnerCorner c -- $ flipCorner c
    TileRole_InnerCorner c -> TileRole_OuterCorner c -- $ flipCorner c
@@ -145,16 +145,29 @@ flipRole (Just r) = Just $ case r of
 flipRoles :: [TileRole] -> [TileRole]
 flipRoles [] = [TileRole_Full]
 flipRoles os = mapMaybe (flipRole . Just) os
+-}
 
 makeRoleGrid :: Source x Bool
     => Array x DIM2 Bool -> Array D DIM2 (V2 Int, [TileRole])
 -- makeRoleGrid = addOffset . Repa.map flipRoles . boolToRole . fixupGrid . fixupGrid
-makeRoleGrid = addOffset . boolToRole . fixupGrid . fixupGrid
+makeRoleGrid = addOffset . boolToRole
+-- makeRoleGrid = addOffset . boolToRole . fixupGrid . fixupGrid
 
 addOffset :: Source x a => Array x DIM2 a -> Array D DIM2 (V2 Int, a)
 addOffset s = Repa.traverse s id f
     where f g c@(Z :. x :. y) = (V2 x y, g c)
 
+boolToRole :: Source x Bool => Array x DIM2 Bool -> Array D DIM2 [TileRole]
+boolToRole s = Repa.traverse s id f
+    where
+    es = Repa.extent s
+    f g (Z :. x :. y) = TileSet.toRole atI
+        where atI (a,b) = g $ clamp2 es (a+x, b+y)
+
+clamp2 :: DIM2 -> (Int, Int) -> DIM2
+clamp2 es (a, b) = Repa.clampToBorder2 es $ Repa.ix2 a b
+
+{-
 fixupGrid :: Source x Bool => Array x DIM2 Bool -> Array D DIM2 Bool
 fixupGrid s = Repa.traverse s id f
     where
@@ -169,21 +182,13 @@ fixupGrid s = Repa.traverse s id f
         where
         atI (a,b) = g $ clamp2 es (a+x, b+y)
         isEdge = x==0 || y==0 || x==(w-1) || y==(h-1)
+-}
 
-boolToRole :: Source x Bool => Array x DIM2 Bool -> Array D DIM2 [TileRole]
-boolToRole s = Repa.traverse s id f
-    where
-    es = Repa.extent s
-    f g (Z :. x :. y) = TileSet.toRole atI
-        where atI (a,b) = g $ clamp2 es (a+x, b+y)
-
-clamp2 :: DIM2 -> (Int, Int) -> DIM2
-clamp2 es (a, b) = Repa.clampToBorder2 es $ Repa.ix2 a b
 
 --------------------------------------------------------------------------------
 
-pureCornerQuad :: x -> CornerQuad x
-pureCornerQuad x = CornerQuad x x x x
+-- pureCornerQuad :: x -> CornerQuad x
+-- pureCornerQuad x = CornerQuad x x x x
 
 {-
 mkGrass :: V2 Int -> Entity
@@ -255,6 +260,7 @@ mkTileQuad offp (pos, q) = catMaybes
     pp  =  ((pos & _y %~ negate) ^* 2) + offp
 -}
 
+{-
 genTest :: MonadIO m => m ()
 genTest = do
     -- print $ length allM33
@@ -265,14 +271,13 @@ genTest = do
 
 allRoles :: [TileRole]
 allRoles =
-   [ TileRole_Full
-   , TileRole_Path
-   , TileRole_Hole ]
+   [ TileRole_Full ]
+   -- , TileRole_Path
+   -- , TileRole_Hole ]
    <> fmap TileRole_Edge        boundedRange
    <> fmap TileRole_OuterCorner boundedRange
    <> fmap TileRole_InnerCorner boundedRange
 
-{-
 roleToOffset :: TileRole -> Maybe Resource
 roleToOffset = \case
     TileRole_Full          -> mkr 1 5

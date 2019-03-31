@@ -5,33 +5,15 @@ import Delude
 import Engine (Img)
 import Engine.Common.Types (Size, Rect)
 import Types.Sprite as Types.ResourceManager
+import Types.Entity.StaticEntity
 import Types.Entity.TileSet
 import Types.Entity.Animation
 import Types.Entity.ItemType
 import Types.Entity.Unit
 
-data Resource = Resource
-   { resource_path          :: Text
-   , resource_part          :: Maybe (Rect Int)
-   , resource_gridSize      :: Size Int
-   , resource_pixelsPerUnit :: Float
-   }
-   deriving (Show, Generic)
--- instance Hashable Resource
-makeFieldsCustom ''Resource
-instance Default Resource where
-    def = Resource
-        { resource_path          = def
-        , resource_part          = Nothing
-        , resource_gridSize      = pure 1
-        , resource_pixelsPerUnit = 1
-        }
--- instance ToJSON Resource where
-    -- toEncoding = genericToEncoding defaultOptions
-
-
 data Resources = Resources
    { resources_resourceMap   :: HashMap Text Img
+   , resources_staticMap     :: HashMap StaticEntityTypeName StaticEntityType
    , resources_tileSetMap    :: HashMap TileSetName TileSet
    , resources_spriteMap     :: HashMap SpriteName SpriteDesc
    , resources_itemsMap      :: HashMap ItemTypeName ItemType

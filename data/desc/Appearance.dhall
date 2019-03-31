@@ -1,11 +1,22 @@
-let types  = ./Types.dhall
-let Sprite = types.Sprite
+let types = ./Types.dhall
+
+let Sprite        = types.Sprite
+let LocatedSprite = types.LocatedSprite
 
 let makeSprite =
   λ(s : Sprite) →
-  { Sprite = s.name }
+  { vector = [0.0, 0.0], value = s.name }
+
+let makeLocated =
+  λ(v : List Double) →
+  λ(s : Sprite) →
+  { vector = v, value = s.name }
+
+let makeSimple = λ(s : Sprite) → [makeSprite s]
 
 in
-{ sprite = makeSprite
-, empty  = None {}
+{ simple    = makeSimple
+, sprite    = makeSprite
+, located   = makeLocated
+, empty     = [] : List LocatedSprite
 }

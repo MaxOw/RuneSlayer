@@ -19,8 +19,8 @@ selectPart :: SpriteDesc -> TileRole -> SpriteDesc
 selectPart s = \case
     -- TileRole_Full           -> mkPart 0 5 -- (0-2,5) or (1,3) for random
     TileRole_Full           -> mkPart 1 3
-    TileRole_Path           -> mkPart 0 0
-    TileRole_Hole           -> mkPart 1 3
+    -- TileRole_Path           -> mkPart 0 0
+    -- TileRole_Hole           -> mkPart 1 3
     TileRole_Edge        ed -> mkEdge ed
     TileRole_OuterCorner oc -> mkOuterCorner oc
     TileRole_InnerCorner ic -> mkInnerCorner ic
@@ -51,43 +51,36 @@ selectPart s = \case
         ss = 32
 
 toRole :: ((Int, Int) -> Bool) -> [TileRole]
-toRole atI
-    | atI ( 0, 0)                = [TileRole_Full]
+toRole atI = maybeToList . quadToRole $ V2
+    (V2 (atI (0, 1)) (atI (1, 1)))
+    (V2 (atI (0, 0)) (atI (1, 0)))
 
-    -- | atI (-1, 0) &&  atI ( 1, 0) = [TileRole_Cross Cross_TopLeftBottomRight]
-    -- | atI ( 0,-1) &&  atI ( 0, 1) = [TileRole_Cross Cross_BottomLeftTopRight]
+quadToRole :: M22 Bool -> Maybe TileRole
+quadToRole
+    (V2 (V2 a b)
+        (V2 d c))
+    | a = if
+        | b -> if
+            | c -> if
+                | d -> Just TileRole_Full
+                | otherwise -> Just $ TileRole_InnerCorner Corner_TopRight
+            | d -> Just $ TileRole_InnerCorner Corner_TopLeft
+            | otherwise -> Just $ TileRole_Edge Edge_Bottom
+        | c -> if
+            | d -> Just $ TileRole_InnerCorner Corner_BottomLeft
+            | otherwise -> Just $ TileRole_Cross Cross_BottomLeftTopRight
+        | d -> Just $ TileRole_Edge Edge_Right
+        | otherwise -> Just $ TileRole_OuterCorner Corner_BottomRight
+    | b = if
+        | c -> if
+            | d -> Just $ TileRole_InnerCorner Corner_BottomRight
+            | otherwise -> Just $ TileRole_Edge Edge_Left
+        | d -> Just $ TileRole_Cross Cross_TopLeftBottomRight
+        | otherwise -> Just $ TileRole_OuterCorner Corner_BottomLeft
+    | c = if
+        | d -> Just $ TileRole_Edge Edge_Top
+        | otherwise -> Just $ TileRole_OuterCorner Corner_TopLeft
+    | d = Just $ TileRole_OuterCorner Corner_TopRight
+    | otherwise = Nothing
 
-    | atI ( 1, 0) && atI (-1,-1) && atI ( 0, 1) = [TileRole_Hole]
-    | atI (-1, 0) && atI ( 1, 1) && atI ( 0,-1) = [TileRole_Hole]
-    | atI ( 0, 1) && atI ( 1,-1) && atI (-1, 0) = [TileRole_Hole]
-    | atI ( 0,-1) && atI (-1, 1) && atI ( 1, 0) = [TileRole_Hole]
-
-    | atI ( 1, 0) && atI ( 0, 1) = [TileRole_InnerCorner Corner_TopRight]
-    | atI (-1, 0) && atI ( 0, 1) = [TileRole_InnerCorner Corner_TopLeft]
-    | atI ( 1, 0) && atI ( 0,-1) = [TileRole_InnerCorner Corner_BottomRight]
-    | atI (-1, 0) && atI ( 0,-1) = [TileRole_InnerCorner Corner_BottomLeft]
-
-    | atI ( 1, 0) && atI (-1,-1) = [TileRole_InnerCorner Corner_BottomRight]
-    | atI (-1, 0) && atI ( 1, 1) = [TileRole_InnerCorner Corner_TopLeft]
-    | atI ( 0, 1) && atI ( 1,-1) = [TileRole_InnerCorner Corner_TopRight]
-    | atI ( 0,-1) && atI (-1, 1) = [TileRole_InnerCorner Corner_BottomLeft]
-
-    | atI ( 1, 0) && atI (-1, 1) = [TileRole_InnerCorner Corner_TopRight]
-    | atI (-1, 0) && atI ( 1,-1) = [TileRole_InnerCorner Corner_BottomLeft]
-    | atI ( 0, 1) && atI (-1,-1) = [TileRole_InnerCorner Corner_TopLeft]
-    | atI ( 0,-1) && atI ( 1, 1) = [TileRole_InnerCorner Corner_BottomRight]
-
-    | atI ( 1, 0)                = [TileRole_Edge Edge_Left]
-    | atI (-1, 0)                = [TileRole_Edge Edge_Right]
-    | atI ( 0, 1)                = [TileRole_Edge Edge_Bottom]
-    | atI ( 0,-1)                = [TileRole_Edge Edge_Top]
-
-    | otherwise
-        = ifI ( 1, 1) (TileRole_OuterCorner Corner_BottomLeft)
-        $ ifI (-1, 1) (TileRole_OuterCorner Corner_BottomRight)
-        $ ifI ( 1,-1) (TileRole_OuterCorner Corner_TopLeft)
-        $ ifI (-1,-1) (TileRole_OuterCorner Corner_TopRight)
-        $ []
-    where
-    ifI i v = if atI i then (v:) else id
 

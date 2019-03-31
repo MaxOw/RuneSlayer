@@ -11,11 +11,12 @@ Requirements for first release: v0.1
 * Benchmark and speedup rendering pipeline. [v0.2?]                          [ ]
 * Declarative config via Dhall. (Just keymap for now)                        [ ]
 * Improve text and layout rendering.                                         [ ]
+* Remove template haskell for record fields generation.                      [ ]
 
 ## Game/Gameplay
 
-* Load entity types from files (Json/Dhall)                                  [.]
-  - Declare/load static types via Dhall                                      [ ]
+* Load entity types from files (Json/Dhall)                                  [X]
+  - Declare/load static types via Dhall                                      [X]
   - Declare/load item types via Dhall                                        [X]
   - Declare/load unit types via Dhall                                        [X]
   - Declare/load player init file via Dhall                                  [X]
@@ -24,6 +25,7 @@ Requirements for first release: v0.1
   - Declare/load sprites via Dhall                                           [X]
   - Declare/load animations via Dhall                                        [X]
   - Declare/load tile sets via Dhall                                         [X]
+
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]

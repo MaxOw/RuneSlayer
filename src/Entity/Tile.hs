@@ -45,5 +45,5 @@ tileToEntity = makeEntity $ EntityParts
    }
 
 makeTile :: TileRole -> TileSet -> Tile
-makeTile tr ts = def { tile_tileSet = ts, tile_role = tr }
+makeTile tr ts = def { field_tileSet = ts, field_role = tr }
 

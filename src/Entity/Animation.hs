@@ -20,6 +20,7 @@ import Delude
 import qualified Data.Map as Map
 import Engine.Common.Types (Rect (..))
 import Diagrams.Angle
+import qualified Diagrams.TwoD.Transform as T
 import Entity.Utils
 import Types.Sprite
 import Types.Entity.Animation
@@ -122,15 +123,15 @@ update (Time delta) a
 type EffectUpdate = Time -> EffectState -> Maybe EffectState
 makeEffect :: EffectKind -> EffectUpdate -> EffectState
 makeEffect k f = EffectState
-   { effectState_effectUpdate = f
-   , effectState_kind         = k
-   , effectState_duration     = 1
-   , effectState_era          = 0
+   { field_effectUpdate = f
+   , field_kind         = k
+   , field_duration     = 1
+   , field_era          = 0
    }
 
 renderEffect :: EffectState -> RenderAction
 renderEffect e = case e^.kind of
     HitEffect x -> translateY (e^.era) $ renderHit x
     where
-    renderHit (AttackPower x) = scale (1/64) $ renderSimpleText d $ show (-x)
+    renderHit (AttackPower x) = T.scale (1/64) $ renderSimpleText d $ show (-x)
     d = def & color .~ Color.opaque Color.red

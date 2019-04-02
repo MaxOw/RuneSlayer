@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.TileSet where
 
 import Delude
@@ -47,25 +46,25 @@ data TileSetDesc
 newtype TileSetName = TileSetName { unTileSetName :: Text }
     deriving (Show, Generic, Eq, Hashable, ToJSON, FromJSON)
 data TileSet = TileSet
-   { tileSet_name     :: TileSetName
-   , tileSet_desc     :: TileSetDesc
-   , tileSet_zindex   :: Word32
+   { field_name     :: TileSetName
+   , field_desc     :: TileSetDesc
+   , field_zindex   :: Word32
    } deriving (Generic, Show)
 
 namedTileSet :: Text -> TileSet
 namedTileSet n = TileSet
-   { tileSet_name     = TileSetName n
-   , tileSet_desc     = TileSetDesc_Standard def
-   , tileSet_zindex   = 1
+   { field_name     = TileSetName n
+   , field_desc     = TileSetDesc_Standard def
+   , field_zindex   = 1
    }
 
 --------------------------------------------------------------------------------
 
 instance Default TileSet where
     def = TileSet
-        { tileSet_name   = TileSetName ""
-        , tileSet_desc   = TileSetDesc_Custom ()
-        , tileSet_zindex = 0
+        { field_name   = TileSetName ""
+        , field_desc   = TileSetDesc_Custom ()
+        , field_zindex = 0
         }
 
 instance ToJSON TileSetDesc where
@@ -78,4 +77,4 @@ instance ToJSON TileSet where
 instance FromJSON TileSet where
     parseJSON = genericParseJSON customOptionsJSON
 
-makeFieldsCustom ''TileSet
+

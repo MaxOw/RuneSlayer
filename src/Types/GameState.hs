@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.GameState where
 
 import Delude
@@ -9,15 +8,15 @@ import Types.DirectedAction (DirectedAction)
 import qualified EntityIndex
 
 data GameState = GameState
-   { gameState_entities       :: EntityIndex
-   , gameState_actions        :: [DirectedAction]
-   , gameState_focusId        :: Maybe EntityId
-   , gameState_gameScale      :: Float
-   , gameState_menuScale      :: Float
-   , gameState_frameCount     :: Word32
-   , gameState_changeCache    :: HashMap String Int
-   }
-makeFieldsCustom ''GameState
+   { field_entities       :: EntityIndex
+   , field_actions        :: [DirectedAction]
+   , field_focusId        :: Maybe EntityId
+   , field_gameScale      :: Float
+   , field_menuScale      :: Float
+   , field_frameCount     :: Word32
+   , field_changeCache    :: HashMap String Int
+   } deriving (Generic)
+
 
 type GameStateM = Lazy.StateT GameState IO
 
@@ -25,12 +24,12 @@ defaultGameState :: MonadIO m => m GameState
 defaultGameState = do
     eix <- EntityIndex.new
     return $ GameState
-        { gameState_entities       = eix
-        , gameState_actions        = []
-        , gameState_focusId        = Nothing
-        , gameState_gameScale      = 64
-        , gameState_menuScale      = 1.0
-        , gameState_frameCount     = 0
-        , gameState_changeCache    = mempty
+        { field_entities       = eix
+        , field_actions        = []
+        , field_focusId        = Nothing
+        , field_gameScale      = 64
+        , field_menuScale      = 1.0
+        , field_frameCount     = 0
+        , field_changeCache    = mempty
         }
 

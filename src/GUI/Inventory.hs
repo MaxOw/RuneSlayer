@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module GUI.Inventory
     ( inventoryLayout
     , groundPreviewPanelLayout
@@ -26,13 +25,13 @@ import qualified Equipment
 --------------------------------------------------------------------------------
 
 data SelectFieldEntry = SelectFieldEntry
-   { selectFieldEntry_prefix    :: Maybe String
-   , selectFieldEntry_label     :: Maybe Text
-   , selectFieldEntry_hint      :: Maybe String
-   , selectFieldEntry_isFocused :: Bool
-   , selectFieldEntry_content   :: Maybe EntityWithId
+   { field_prefix    :: Maybe String
+   , field_label     :: Maybe Text
+   , field_hint      :: Maybe String
+   , field_isFocused :: Bool
+   , field_content   :: Maybe EntityWithId
    } deriving (Generic)
-makeFieldsCustom ''SelectFieldEntry
+
 instance Default SelectFieldEntry
 
 --------------------------------------------------------------------------------

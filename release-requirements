@@ -11,7 +11,7 @@ Requirements for first release: v0.1
 * Benchmark and speedup rendering pipeline. [v0.2?]                          [ ]
 * Declarative config via Dhall. (Just keymap for now)                        [ ]
 * Improve text and layout rendering.                                         [ ]
-* Remove template haskell for record fields generation.                      [ ]
+* Remove template haskell for record fields generation.                      [X]
 
 ## Game/Gameplay
 

@@ -13,7 +13,7 @@ module ResourceManager
 
 import Delude
 import Engine (Img, RenderAction, renderImg)
-import Diagrams.TwoD.Transform (scale)
+import qualified Diagrams.TwoD.Transform as T
 import Types.ResourceManager
 import Types.Entity.Animation (AnimationDesc)
 import Types.Entity.TileSet   (TileSetName, TileSet)
@@ -49,7 +49,7 @@ renderSprite rs s = case lookupSprite s rs of
     Just img -> renderImg (set part (s^.part) img)
         & sscale (s^.pixelsPerUnit)
     where
-    sscale = maybe id (scale . (1/) . fromIntegral)
+    sscale = maybe id (T.scale . (1/) . fromIntegral)
     {-
     shape = def
         & shapeType   .~ SimpleSquare

@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Skills.Runes where
 
 import Delude
@@ -10,38 +9,38 @@ newtype RunePowerLevel = RunePowerLevel Int deriving (Num)
 newtype RuneName       = RuneName Text deriving (Eq, Hashable)
 
 data Rune = Rune
-   { rune_name    :: RuneName
-   , rune_reading :: Text -- TODO: allow multiple
-   , rune_level   :: RunePowerLevel
+   { field_name    :: RuneName
+   , field_reading :: Text -- TODO: allow multiple
+   , field_level   :: RunePowerLevel
    }
 
 data RuneMastery = RuneMastery
-   { runeMastery_successCount  :: Int
-   , runeMastery_failureCount  :: Int
-   , runeMastery_masteryLevel  :: Int
-   , runeMastery_usageHistory  :: [RuneUsage]
+   { field_successCount  :: Int
+   , field_failureCount  :: Int
+   , field_masteryLevel  :: Int
+   , field_usageHistory  :: [RuneUsage]
    } deriving (Generic)
 instance Default RuneMastery
 
 data RuneUsage = RuneUsage
-   -- { runeUsage_timestamp :: UTCTime
-   { runeUsage_success   :: Bool
+   -- { field_timestamp :: UTCTime
+   { field_success   :: Bool
    }
 
 data RunicLevel = RunicLevel
-   { runicLevel_knwon   :: HashMap RuneName Rune
-   , runicLevel_mastery :: HashMap RuneName RuneMastery
-   , runicLevel_level   :: RunePowerLevel -- cumulative power
+   { field_knwon   :: HashMap RuneName Rune
+   , field_mastery :: HashMap RuneName RuneMastery
+   , field_level   :: RunePowerLevel -- cumulative power
    }
 
 instance Default RunicLevel where
     def = RunicLevel
-        { runicLevel_knwon   = mempty
-        , runicLevel_mastery = mempty
-        , runicLevel_level   = 0
+        { field_knwon   = mempty
+        , field_mastery = mempty
+        , field_level   = 0
         }
 
-makeFieldsCustom ''Rune
-makeFieldsCustom ''RuneMastery
-makeFieldsCustom ''RuneUsage
-makeFieldsCustom ''RunicLevel
+
+
+
+

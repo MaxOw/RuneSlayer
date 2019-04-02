@@ -53,6 +53,7 @@ Executable RuneSlayer
                 , relude
                 , data-default
                 , lens
+                , generic-lens
                 , transformers
                 , text
                 , containers
@@ -73,7 +74,7 @@ Executable RuneSlayer
                 , dhall-json
 
                 , linear
-                , Carnot == 0.1.13.3
+                , Carnot == 0.1.14.0
                 , gl
                 , colour
                 , diagrams-core

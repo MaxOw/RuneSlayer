@@ -25,7 +25,6 @@ import qualified Data.Map as PrefixMap
 
 import Engine (userState)
 import Types (Game)
-import Types.St (inputState)
 import Types.Entity.Common (EntityId)
 import Types.InputState
 import GameState
@@ -117,9 +116,9 @@ startSelect f vs = do
     where
     (k, m) = makeSelectMap vs
     ss = SelectState
-        { selectState_selectKind    = f k
-        , selectState_selectMap     = m
-        , selectState_currentPrefix = empty
+        { field_selectKind    = f k
+        , field_selectMap     = m
+        , field_currentPrefix = empty
         }
 
     makeSelectMap es = (SelectValues (Vector.fromList es) revMap, selMap)

@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Debug where
 
 import Delude

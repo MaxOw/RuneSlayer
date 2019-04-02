@@ -21,7 +21,6 @@ import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex
 import Data.GridIndex.Types
-import Data.QuadTree.Types (minCellSize, maxBucketSize)
 import qualified Data.FullMap as FullMap
 
 --------------------------------------------------------------------------------
@@ -49,12 +48,12 @@ new = do
     dRef <- newIORef mempty
     aRef <- newIORef mempty
     return $ EntityIndex
-        { entityIndex_lastId              = lRef
-        , entityIndex_entities            = v
+        { field_lastId              = lRef
+        , field_entities            = v
 
-        , entityIndex_dynamicIndex        = dRef
-        , entityIndex_activatedList       = aRef
-        , entityIndex_spatialIndex        = FullMap.build f
+        , field_dynamicIndex        = dRef
+        , field_activatedList       = aRef
+        , field_spatialIndex        = FullMap.build f
         }
 
 noSetMoveVector :: EntityAction -> Bool
@@ -77,9 +76,9 @@ update handleWorldAction globalActions fct eix = do
     -- [(EntityId, (Maybe Entity, [DirectedEntityAction]))]
     updateResult <- forM toProcList $ \(EntityWithId k v) ->
         let ctx = EntityContext
-                { entityContext_entities   = eix
-                , entityContext_selfId     = k
-                , entityContext_frameCount = fct }
+                { field_entities   = eix
+                , field_selfId     = k
+                , field_frameCount = fct }
         in (k,) <$> liftIO (runQ (entityUpdate v ctx))
 
     -- List of directed actions resulting from update + global ones

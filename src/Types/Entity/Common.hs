@@ -24,12 +24,11 @@ data EntityKind
 instance Hashable EntityKind
 
 data EntityId = EntityId
-   { entityId_unique :: Word64
-   , entityId_offset :: Int
-   }
-   deriving (Eq, Ord, Generic)
+   { field_unique :: Word64
+   , field_offset :: Int
+   } deriving (Eq, Ord, Generic)
 instance Hashable EntityId
-makeFieldsCustom ''EntityId
+
 
 instance HasEntityId EntityId EntityId where entityId = id
 
@@ -78,9 +77,9 @@ makeWrapped ''Time
 --------------------------------------------------------------------------------
 
 data EntityDebugFlags = EntityDebugFlags
-   { entityDebugFlags_drawPickupRange :: Bool
+   { field_drawPickupRange :: Bool
    } deriving (Generic)
-makeFieldsCustom ''EntityDebugFlags
+
 instance Default EntityDebugFlags
 
 --------------------------------------------------------------------------------

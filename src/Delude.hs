@@ -62,7 +62,6 @@ instance Default (Bimap a b) where def = Bimap.empty
 instance Default (Vector.Vector a) where def = Vector.empty
 instance Default (HashMap a b) where def = HashMap.empty
 
-deriving instance Generic (Rect a)
 instance ToJSON a => ToJSON (V2 a)
 instance ToJSON a => ToJSON (Size a)
 instance FromJSON a => FromJSON (V2 a)

@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 {-# Language DeriveFunctor #-}
 module WorldGen where
 
@@ -32,12 +31,12 @@ import qualified Data.Array.Repa.Specialised.Dim2 as Repa
 
 {-
 data CornerQuad a = CornerQuad
-   { cornerQuad_bottomRight :: a
-   , cornerQuad_bottomLeft  :: a
-   , cornerQuad_topLeft     :: a
-   , cornerQuad_topRight    :: a
+   { field_bottomRight :: a
+   , field_bottomLeft  :: a
+   , field_topLeft     :: a
+   , field_topRight    :: a
    } deriving (Functor)
-makeFieldsCustom ''CornerQuad
+
 -}
 
 type Meter = Float
@@ -415,20 +414,20 @@ partitionCell x = case Grid.toNestedLists x of
     [ [a, b, c] ,
       [d, e, f] ,
       [g, h, i] ] -> CornerQuad
-        { cornerQuad_topLeft     = Grid.fromNestedLists' [ [a, b], [d, e] ]
-        , cornerQuad_topRight    = Grid.fromNestedLists' [ [b, c], [e, f] ]
-        , cornerQuad_bottomRight = Grid.fromNestedLists' [ [e, f], [h, i] ]
-        , cornerQuad_bottomLeft  = Grid.fromNestedLists' [ [d, e], [g, h] ] }
+        { field_topLeft     = Grid.fromNestedLists' [ [a, b], [d, e] ]
+        , field_topRight    = Grid.fromNestedLists' [ [b, c], [e, f] ]
+        , field_bottomRight = Grid.fromNestedLists' [ [e, f], [h, i] ]
+        , field_bottomLeft  = Grid.fromNestedLists' [ [d, e], [g, h] ] }
     _ -> error "This shouldn't be possible!"
 
 kernelToRoleQuad :: Grid [3, 3] Bool -> CornerQuad (Maybe TileRole)
 kernelToRoleQuad k
     | Grid.index k (Coord [1,1]) == True = pureCornerQuad (Just TileRole_Full)
     | otherwise = CornerQuad
-    { cornerQuad_topLeft     = cornerToRole_TL $ kk^.topLeft
-    , cornerQuad_topRight    = cornerToRole_TR $ kk^.topRight
-    , cornerQuad_bottomRight = cornerToRole_BR $ kk^.bottomRight
-    , cornerQuad_bottomLeft  = cornerToRole_BL $ kk^.bottomLeft
+    { field_topLeft     = cornerToRole_TL $ kk^.topLeft
+    , field_topRight    = cornerToRole_TR $ kk^.topRight
+    , field_bottomRight = cornerToRole_BR $ kk^.bottomRight
+    , field_bottomLeft  = cornerToRole_BL $ kk^.bottomLeft
     }
     where
     kk = partitionCell k

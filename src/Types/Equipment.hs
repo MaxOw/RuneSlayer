@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Equipment where
 
 import Delude
@@ -21,9 +20,9 @@ instance FromJSON EquipmentSlot where
     parseJSON = genericParseJSON customOptionsJSON
 
 data Equipment = Equipment
-   { equipment_slots   :: Set EquipmentSlot
-   , equipment_content :: Bimap EquipmentSlot EntityId
+   { field_slots   :: Set EquipmentSlot
+   , field_content :: Bimap EquipmentSlot EntityId
    } deriving (Generic)
-makeFieldsCustom ''Equipment
+
 
 instance Default Equipment

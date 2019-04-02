@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Sprite where
 
 import Delude
@@ -8,18 +7,18 @@ newtype SpriteName = SpriteName { unSpriteName :: Text }
     deriving (Generic, Eq, Hashable, ToJSON, FromJSON, Show)
 
 data SpriteDesc = SpriteDesc
-   { spriteDesc_name          :: SpriteName
-   , spriteDesc_path          :: Text
-   , spriteDesc_part          :: Maybe (Rect Int)
-   , spriteDesc_pixelsPerUnit :: Maybe Int
+   { field_name          :: SpriteName
+   , field_path          :: Text
+   , field_part          :: Maybe (Rect Int)
+   , field_pixelsPerUnit :: Maybe Int
    } deriving (Generic, Show)
-makeFieldsCustom ''SpriteDesc
+
 instance Default SpriteDesc where
     def = SpriteDesc
-        { spriteDesc_name          = SpriteName ""
-        , spriteDesc_path          = def
-        , spriteDesc_part          = Nothing
-        , spriteDesc_pixelsPerUnit = Nothing
+        { field_name          = SpriteName ""
+        , field_path          = def
+        , field_part          = Nothing
+        , field_pixelsPerUnit = Nothing
         }
 
 instance ToJSON SpriteDesc where

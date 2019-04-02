@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.Tile
     ( module Types.Entity.Tile
     , module Types.Entity.TileSet
@@ -12,12 +11,12 @@ import Types.Entity.TileSet
 --------------------------------------------------------------------------------
 
 data Tile = Tile
-   { tile_location :: Location
-   , tile_tileSet  :: TileSet
-   , tile_role     :: TileRole
+   { field_location :: Location
+   , field_tileSet  :: TileSet
+   , field_role     :: TileRole
    } deriving (Generic)
 instance Default Tile
-makeFieldsCustom ''Tile
+
 
 instance GetZIndex Tile Word32 where
     get_zindex = view (tileSet.zindex)

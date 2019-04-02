@@ -5,6 +5,7 @@ module Entity.Player
 
 import Delude
 import qualified Data.Set as Set
+import qualified Diagrams.TwoD.Transform as T
 
 import Types.Debug
 import Types.Entity
@@ -125,7 +126,7 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     cs = x^.collisionShape
 
     rangeScale = defaultPickupRange^._Wrapped
-    renderPickupRange = scale rangeScale $ renderShape $ def
+    renderPickupRange = T.scale rangeScale $ renderShape $ def
         & shapeType   .~ SimpleCircle
         & color       .~ Color.withOpacity Color.red 0.3
 

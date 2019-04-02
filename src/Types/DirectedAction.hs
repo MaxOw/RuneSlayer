@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.DirectedAction where
 
 import Delude
@@ -11,10 +10,10 @@ import Types.Entity.Unit
 --------------------------------------------------------------------------------
 
 data Spawn a = Spawn
-   { spawnItem_location :: Location
-   , spawnItem_name     :: a
+   { field_location :: Location
+   , field_name     :: a
    } deriving (Generic)
-makeFieldsCustom ''Spawn
+
 instance Default a => Default (Spawn a)
 
 data SpawnEntity

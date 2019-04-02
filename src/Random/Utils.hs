@@ -13,6 +13,7 @@ import qualified Data.Vector.Unboxed as Vector
 
 type RandomST a = forall s. MWC.GenST s -> ST s a
 
+{-
 pureRandomSeed :: MWC.Seed
 pureRandomSeed = runST $ MWC.save =<< MWC.create
 
@@ -25,6 +26,7 @@ withRandomSeed f = do
     let (a, s') = runST $ MWC.restore s >>= \g -> (,) <$> f g <*> MWC.save g
     assign randomSeed s'
     return a
+-}
 
 randomFromSeed :: [Word32] -> RandomST a -> a
 randomFromSeed s f = runST $ f =<< MWC.initialize (Vector.fromList s)

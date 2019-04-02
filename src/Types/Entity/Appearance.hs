@@ -4,8 +4,8 @@ import Delude
 import Types.Sprite (SpriteName)
 
 data Located x = Located
-   { located_vector :: V2 Float
-   , loacted_value  :: x
+   { field_vector :: V2 Float
+   , field_value  :: x
    } deriving Generic
 newtype Appearance = Appearance [Located SpriteName]
     deriving (Generic, Default)

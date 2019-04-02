@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity
     ( module All
     -- , Entity (..), EntityWithId (..)
@@ -29,9 +28,11 @@ import Data.FullMap (FullMap)
 --------------------------------------------------------------------------------
 
 data EntityWithId = EntityWithId
-   { entityWithId_entityId :: EntityId
-   , entityWithId_entity   :: Entity
-   }
+   { field_entityId :: EntityId
+   , field_entity   :: Entity
+   } deriving (Generic)
+instance HasEntityId EntityWithId EntityId
+instance HasEntity   EntityWithId Entity
 
 -- EntityIndex Query Monad
 newtype Q a = Q { unQ :: IO a } deriving (Functor, Applicative, Monad)
@@ -45,24 +46,25 @@ instance MonadQ (StateT us Q) where liftQ = lift
 
 type RangeBBox = BBox Float
 data EntityIndex = EntityIndex
-   { entityIndex_lastId              :: IORef (Maybe EntityId)
-   , entityIndex_entities            :: VectorIndex EntityWithId
+   { field_lastId              :: IORef (Maybe EntityId)
+   , field_entities            :: VectorIndex EntityWithId
 
-   , entityIndex_dynamicIndex        :: IORef (HashSet EntityId)
-   , entityIndex_activatedList       :: IORef [EntityId]
-   , entityIndex_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
-   }
+   , field_dynamicIndex        :: IORef (HashSet EntityId)
+   , field_activatedList       :: IORef [EntityId]
+   , field_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
+   } deriving (Generic)
 
 data EntityContext = EntityContext
-   { entityContext_entities   :: EntityIndex
-   , entityContext_selfId     :: EntityId
-   , entityContext_frameCount :: Word32
-   }
+   { field_entities   :: EntityIndex
+   , field_selfId     :: EntityId
+   , field_frameCount :: Word32
+   } deriving (Generic)
 
 data RenderContext = RenderContext
-   { renderContext_resources  :: Resources
-   , renderContext_debugFlags :: Set DebugFlag
-   }
+   { field_resources  :: Resources
+   , field_debugFlags :: Set DebugFlag
+   } deriving (Generic)
+instance HasResources RenderContext Resources
 
 data Entity = Entity
    { entityActOn  :: EntityAction -> Entity
@@ -75,15 +77,15 @@ data Entity = Entity
 
 instance HasEntity Entity Entity where entity = id
 
-makeFieldsCustom ''EntityIndex
-makeFieldsCustom ''EntityContext
-makeFieldsCustom ''RenderContext
+
+
+
 
 
 oracle :: Getter Entity EntityOracle
 oracle = to entityOracle
 
-makeFieldsCustom ''EntityWithId
+
 
 data EntityParts p = EntityParts
    { makeActOn  :: p -> EntityAction -> p

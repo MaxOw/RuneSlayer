@@ -2,7 +2,7 @@ module View
     ( renderView
     ) where
 
-import Delude
+import Delude hiding (context)
 
 import qualified Linear.Matrix as Matrix
 import qualified Engine
@@ -152,8 +152,8 @@ renderEntities es st = Engine.renderComposition rs
     ese = sortWith f es
     f x = Down $ fromMaybe 0 $ x^?entity.oracle.location.traverse._Wrapped._y
     ctx = RenderContext
-        { renderContext_resources  = st^.resources
-        , renderContext_debugFlags = st^.debugFlags
+        { field_resources  = st^.resources
+        , field_debugFlags = st^.debugFlags
         }
 
 --------------------------------------------------------------------------------

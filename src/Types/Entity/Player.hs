@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.Player where
 
 import Delude
@@ -15,21 +14,21 @@ import qualified Equipment
 --------------------------------------------------------------------------------
 
 data PlayerInit = PlayerInit
-   { playerInit_body :: [Text] -- BodyDesc
+   { field_body :: [Text] -- BodyDesc
    } deriving (Generic)
 
 data Player = Player
-   { player_location        :: Location
-   , player_velocity        :: Velocity
-   , player_maxSpeed        :: Speed
-   , player_equipment       :: Equipment
-   , player_debugFlags      :: EntityDebugFlags
-   , player_processOnUpdate :: [EntityAction]
-   , player_collisionShape  :: Maybe CollisionShape
-   , player_animationState  :: AnimationState
-   , player_bodyAnimation   :: Animation
-   , player_runicLevel      :: RunicLevel
-   , player_target          :: Maybe EntityId
+   { field_location        :: Location
+   , field_velocity        :: Velocity
+   , field_maxSpeed        :: Speed
+   , field_equipment       :: Equipment
+   , field_debugFlags      :: EntityDebugFlags
+   , field_processOnUpdate :: [EntityAction]
+   , field_collisionShape  :: Maybe CollisionShape
+   , field_animationState  :: AnimationState
+   , field_bodyAnimation   :: Animation
+   , field_runicLevel      :: RunicLevel
+   , field_target          :: Maybe EntityId
    } deriving (Generic)
 
 playerSlots :: Set EquipmentSlot
@@ -53,22 +52,22 @@ instance FromJSON PlayerInit where
 instance Default PlayerInit
 instance Default Player where
    def = Player
-    { player_location        = def
-    , player_velocity        = def
-    , player_maxSpeed        = baseWalkingSpeed
-    -- , player_maxSpeed        = baseRunningSpeed
-    , player_equipment       = Equipment.create playerSlots
-    , player_debugFlags      = def
-    , player_processOnUpdate = def
-    , player_collisionShape  = def
-    , player_animationState  = def
-    , player_bodyAnimation   = def
-    , player_runicLevel      = def
-    , player_target          = Nothing
+    { field_location        = def
+    , field_velocity        = def
+    , field_maxSpeed        = baseWalkingSpeed
+    -- , field_maxSpeed        = baseRunningSpeed
+    , field_equipment       = Equipment.create playerSlots
+    , field_debugFlags      = def
+    , field_processOnUpdate = def
+    , field_collisionShape  = def
+    , field_animationState  = def
+    , field_bodyAnimation   = def
+    , field_runicLevel      = def
+    , field_target          = Nothing
     }
 
 instance GetZIndex Player Word32 where
     get_zindex _ = toZIndex EntityZIndex_Vertical
 
-makeFieldsCustom ''PlayerInit
-makeFieldsCustom ''Player
+
+

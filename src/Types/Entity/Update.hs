@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.Update where
 
 import Delude
@@ -7,12 +6,12 @@ import Types.Entity
 --------------------------------------------------------------------------------
 
 data UpdateSt x = UpdateSt
-   { updateSt_self       :: x
-   , updateSt_context    :: EntityContext
-   , updateSt_deleteSelf :: Bool
-   , updateSt_actions    :: Seq DirectedAction
-   }
-makeFieldsCustom ''UpdateSt
+   { field_self       :: x
+   , field_context    :: EntityContext
+   , field_deleteSelf :: Bool
+   , field_actions    :: Seq DirectedAction
+   } deriving (Generic)
+
 
 type Update x = StateT (UpdateSt x) Q
 

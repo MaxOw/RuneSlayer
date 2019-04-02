@@ -42,10 +42,11 @@ data EntityAction
 makePrisms ''EntityAction
 
 data DirectedEntityAction = DirectedEntityAction
-   { directedEntity_entityId :: EntityId
-   , directedEntity_action   :: EntityAction
-   }
-makeFieldsCustom ''DirectedEntityAction
+   { field_entityId :: EntityId
+   , field_action   :: EntityAction
+   } deriving (Generic)
+instance HasEntityId DirectedEntityAction EntityId
+
 
 instance Show DirectedEntityAction where
     show (DirectedEntityAction i a) =

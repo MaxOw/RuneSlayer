@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.ResourceManager (module Types.ResourceManager) where
 
 import Delude
@@ -12,15 +11,15 @@ import Types.Entity.ItemType
 import Types.Entity.Unit
 
 data Resources = Resources
-   { resources_resourceMap   :: HashMap Text Img
-   , resources_staticMap     :: HashMap StaticEntityTypeName StaticEntityType
-   , resources_tileSetMap    :: HashMap TileSetName TileSet
-   , resources_spriteMap     :: HashMap SpriteName SpriteDesc
-   , resources_itemsMap      :: HashMap ItemTypeName ItemType
-   , resources_unitsMap      :: HashMap UnitTypeName UnitType
-   , resources_animationsMap :: HashMap Text AnimationDesc
+   { field_resourceMap   :: HashMap Text Img
+   , field_staticMap     :: HashMap StaticEntityTypeName StaticEntityType
+   , field_tileSetMap    :: HashMap TileSetName TileSet
+   , field_spriteMap     :: HashMap SpriteName SpriteDesc
+   , field_itemsMap      :: HashMap ItemTypeName ItemType
+   , field_unitsMap      :: HashMap UnitTypeName UnitType
+   , field_animationsMap :: HashMap Text AnimationDesc
    } deriving (Generic)
 instance Default Resources
 instance HasResources Resources Resources where resources = id
 
-makeFieldsCustom ''Resources
+

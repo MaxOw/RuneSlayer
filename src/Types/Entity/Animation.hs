@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.Animation where
 
 import Delude
@@ -32,14 +31,14 @@ data AnimationDesc
    deriving (Generic)
 
 data AnimationFrame = AnimationFrame
-   { animationFrame_duration :: Float
-   , animationFrame_sprite   :: SpriteDesc
+   { field_duration :: Float
+   , field_sprite   :: SpriteDesc
    } deriving (Generic)
 
 data AnimationPart = AnimationPart
-   { animationPart_direction :: Maybe AnimationDirection
-   , animationPart_kind      :: Maybe AnimationKind
-   , animationPart_frames    :: [AnimationFrame]
+   { field_direction :: Maybe AnimationDirection
+   , field_kind      :: Maybe AnimationKind
+   , field_frames    :: [AnimationFrame]
    } deriving (Generic)
 
 --------------------------------------------------------------------------------
@@ -49,16 +48,16 @@ newtype Animation = Animation
     deriving (Semigroup, Monoid)
 
 data AnimationState = AnimationState
-   { animationState_current     :: AnimationFrameState
-   , animationState_progression :: AnimationProgression
-   , animationState_speed       :: Float
-   }
+   { field_current     :: AnimationFrameState
+   , field_progression :: AnimationProgression
+   , field_speed       :: Float
+   } deriving (Generic)
 
 data AnimationFrameState = AnimationFrameState
-   { animationFrameState_direction :: AnimationDirection
-   , animationFrameState_kind      :: AnimationKind
-   , animationFrameState_era       :: Float
-   }
+   { field_direction :: AnimationDirection
+   , field_kind      :: AnimationKind
+   , field_era       :: Float
+   } deriving (Generic)
 
 data AnimationProgression
    = Stopped
@@ -70,11 +69,11 @@ data EffectKind
    = HitEffect AttackPower
 
 data EffectState = EffectState
-   { effectState_effectUpdate :: Time -> EffectState -> Maybe EffectState
-   , effectState_kind         :: EffectKind
-   , effectState_duration     :: Float
-   , effectState_era          :: Float
-   }
+   { field_effectUpdate :: Time -> EffectState -> Maybe EffectState
+   , field_kind         :: EffectKind
+   , field_duration     :: Float
+   , field_era          :: Float
+   } deriving (Generic)
 
 --------------------------------------------------------------------------------
 
@@ -96,24 +95,18 @@ instance Default AnimationDesc where
 
 instance Default AnimationState where
     def = AnimationState
-        { animationState_current     = def
-        , animationState_progression = Stopped
-        , animationState_speed       = 1
+        { field_current     = def
+        , field_progression = Stopped
+        , field_speed       = 1
         }
 
 instance Default AnimationFrameState where
     def = AnimationFrameState
-        { animationFrameState_direction = South
-        , animationFrameState_kind      = Walk
-        , animationFrameState_era       = 0
+        { field_direction = South
+        , field_kind      = Walk
+        , field_era       = 0
         }
 
 instance Default Animation where
     def = Animation $ const mempty
 
-makeFieldsCustom ''AnimationFrame
-makeFieldsCustom ''AnimationPart
-
-makeFieldsCustom ''AnimationState
-makeFieldsCustom ''AnimationFrameState
-makeFieldsCustom ''EffectState

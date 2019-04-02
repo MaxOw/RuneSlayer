@@ -47,15 +47,14 @@ import Random.Utils
 import Data.Hashable (hash)
 import Engine.Common.Types (BBox, bboxToRect, mkBBoxCenter)
 import Engine.Layout.Render (renderSimpleBox)
-import Engine.Layout.Types (border)
 
 import Types.Entity
 import Types.Entity.ItemType
 import Types.Entity.Appearance
-import Types.Entity.Animation
-    (AnimationState, EffectState, EffectKind, effectUpdate)
+import Types.Entity.Animation (AnimationState, EffectState, EffectKind)
 import qualified Entity.Animation as Animation
 import Entity.Utils
+import qualified Diagrams.TwoD.Transform as T
 import qualified EntityIndex
 import qualified Equipment
 import Types.Equipment
@@ -64,7 +63,7 @@ import Equipment (Equipment, contentList)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import ResourceManager (lookupSpriteName, Resources)
-import Types.Sprite (pixelsPerUnit, SpriteName)
+import Types.Sprite (SpriteName)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -82,9 +81,10 @@ setMoveVector moveVector s = set velocity vel s
 
 toggleDebugFlag :: HasDebugFlags x EntityDebugFlags => EntityDebugFlag -> x -> x
 toggleDebugFlag = \case
-    EntityDebugFlag_DrawPickupRange -> flipFlag drawPickupRange
+    -- EntityDebugFlag_DrawPickupRange -> flipFlag drawPickupRange
+    EntityDebugFlag_DrawPickupRange -> over (debugFlags . drawPickupRange) not
     where
-    flipFlag f = over (debugFlags.f) not
+    -- flipFlag f = over (debugFlags . f) not
 
 handleOnUpdate :: HasProcessOnUpdate s [a] => a -> s -> s
 handleOnUpdate a = over processOnUpdate (a:)
@@ -247,21 +247,33 @@ splitItemKind k = List.partition properKind
 
 equipItems
     :: HasEquipment x Equipment
-    => [EntityWithId] -> Update x [EntityWithId]
+    => [EntityWithId]
+    -> Update x [EntityWithId]
 equipItems eis = do
     p <- use self
     let (newSelf, os) = go p (emptySlots p) [] eis
     self .= newSelf
     return os
     where
+    go :: HasEquipment x Equipment
+       => x
+       -> Set EquipmentSlot
+       -> [EntityWithId]
+       -> [EntityWithId]
+       -> (x, [EntityWithId])
     go x Empty bs    es  = (x, bs <> es)
     go x  _    bs    []  = (x, bs)
     go x ss    bs (e:es) = case fitEntity (e^.entity) ss of
         Just t  -> go (equipItem (e^.entityId) t x) (Set.delete t ss) bs es
         Nothing -> go x ss (e:bs) es
 
+    emptySlots :: HasEquipment x Equipment => x -> Set EquipmentSlot
     emptySlots = Equipment.emptySlots . view equipment
+
     fitEntity e = find $ flip Set.member (e^.oracle.fittingSlots)
+
+    equipItem :: HasEquipment x Equipment
+        => EntityId -> EquipmentSlot -> (x -> x)
     equipItem e eslot = over equipment $ Equipment.insert eslot e
 
 getItemsToAdd
@@ -336,7 +348,7 @@ renderSpriteN ctx r = case lookupSpriteName r $ ctx^.resources of
     Nothing      -> renderShape shape
     Just (s,img) -> renderImg img & sscale (s^.pixelsPerUnit)
     where
-    sscale = maybe id (\s -> scale $ 1/(fromIntegral s))
+    sscale = maybe id (\s -> T.scale $ 1/(fromIntegral s))
     shape = def
         & shapeType   .~ SimpleSquare
         & color       .~ Color.opaque Color.gray
@@ -357,16 +369,16 @@ renderCollisionShape cs = monoidJust cs $ \case
     Collider.Circle d -> renderShape $ def
         & shapeType .~ SimpleCircle
         & color     .~ Color.withOpacity Color.red 0.3
-        & scale     (d^.Collider.radius)
-        & translate (d^.Collider.center._Wrapped)
+        & T.scale     (d^.radius)
+        & translate (d^.center._Wrapped)
         & zindex    .~ 10000
 
 renderTargetMark :: RenderAction
 renderTargetMark = renderShape $ def
     & shapeType .~ SimpleCircle
     & color     .~ Color.withOpacity Color.red 0.3
-    & scale  0.4
-    & scaleY 0.7
+    & T.scale  0.4
+    & T.scaleY 0.7
 
 renderEffects :: HasEffects x [EffectState] => x -> RenderAction
 renderEffects = renderComposition . map Animation.renderEffect . view effects

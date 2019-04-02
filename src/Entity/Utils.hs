@@ -9,7 +9,7 @@ import Types.Entity            as Utils hiding (oracle)
 import Entity                  as Utils (makeEntity)
 import Entity.Update           as Utils
 import Engine.Graphics         as Utils hiding (scale, context)
-import Diagrams.TwoD.Transform as Utils
+import Diagrams.TwoD.Transform as Utils hiding (scale)
 import HasField                as Utils
 import Engine.Graphics.Utils   as Utils (mkMatHomo2)
 

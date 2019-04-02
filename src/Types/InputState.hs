@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 {-# Language PatternSynonyms #-}
 module Types.InputState where
 
@@ -47,8 +46,8 @@ pattern Inventory = StatusMenu_Inventory
 type SelectMap = PrefixMap Char Int
 
 data SelectValues a = SelectValues
-   { selectValues_values  :: Vector a
-   , selectValues_hintMap :: Map a [Char]
+   { field_values  :: Vector a
+   , field_hintMap :: Map a [Char]
    } deriving (Show, Generic)
 instance Default (SelectValues a)
 
@@ -118,42 +117,42 @@ type InputKeymap = Map InputMode Keymap
 --------------------------------------------------------------------------------
 
 data SelectState = SelectState
-   { selectState_selectKind    :: SelectKind
-   , selectState_selectMap     :: SelectMap
-   , selectState_currentPrefix :: Seq Char
+   { field_selectKind    :: SelectKind
+   , field_selectMap     :: SelectMap
+   , field_currentPrefix :: Seq Char
    } deriving (Generic)
-makeFieldsCustom ''SelectState
+
 
 data InventoryState = InventoryState
-   { inventoryState_focusedItem :: Maybe EntityId
+   { field_focusedItem :: Maybe EntityId
    } deriving (Generic)
-makeFieldsCustom ''InventoryState
+
 instance Default InventoryState
 
 data InputState = InputState
-   { inputState_mode           :: InputMode
-   , inputState_hist           :: Seq Keypress
-   , inputState_active         :: Map ActiveAction Int
-   , inputState_commonKeymap   :: Keymap
-   , inputState_inputKeymap    :: InputKeymap
-   , inputState_deactivators   :: Map Keypress [InputAction]
-   , inputState_selectState    :: Maybe SelectState
-   , inputState_visiblePanels  :: Set PanelName
-   , inputState_inventoryState :: InventoryState
+   { field_mode           :: InputMode
+   , field_hist           :: Seq Keypress
+   , field_active         :: Map ActiveAction Int
+   , field_commonKeymap   :: Keymap
+   , field_inputKeymap    :: InputKeymap
+   , field_deactivators   :: Map Keypress [InputAction]
+   , field_selectState    :: Maybe SelectState
+   , field_visiblePanels  :: Set PanelName
+   , field_inventoryState :: InventoryState
    } deriving (Generic)
-makeFieldsCustom ''InputState
+
 instance Default InputState where
     def = InputState
-        { inputState_mode           = def
-     -- { inputState_mode           = StatusMode StatusMenu_Inventory
-        , inputState_hist           = def
-        , inputState_active         = def
-        , inputState_commonKeymap   = defaultCommonKeymap
-        , inputState_inputKeymap    = defaultInputKeymap
-        , inputState_deactivators   = def
-        , inputState_selectState    = Nothing
-        , inputState_visiblePanels  = def
-        , inputState_inventoryState = def
+        { field_mode           = def
+     -- { field_mode           = StatusMode StatusMenu_Inventory
+        , field_hist           = def
+        , field_active         = def
+        , field_commonKeymap   = defaultCommonKeymap
+        , field_inputKeymap    = defaultInputKeymap
+        , field_deactivators   = def
+        , field_selectState    = Nothing
+        , field_visiblePanels  = def
+        , field_inventoryState = def
         }
 
 type InputStateM = Lazy.StateT InputState IO
@@ -294,4 +293,4 @@ defaultInputKeymap = buildInputKeymap
         ]
     ]
 
-makeFieldsCustom ''SelectValues
+

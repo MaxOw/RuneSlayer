@@ -29,7 +29,6 @@ import Types.EntityAction
 import Types.DirectedAction
 import Types.Entity.ItemType
 import Types.Entity.Unit
-import Types.ResourceManager (itemsMap, unitsMap)
 import Focus
 
 import EntityLike (toEntity)

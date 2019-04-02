@@ -12,10 +12,10 @@ import Types.Entity.Update
 
 makeUpdateSt :: x -> EntityContext -> UpdateSt x
 makeUpdateSt x ctx = UpdateSt
-   { updateSt_self       = x
-   , updateSt_context    = ctx
-   , updateSt_deleteSelf = False
-   , updateSt_actions    = def
+   { field_self       = x
+   , field_context    = ctx
+   , field_deleteSelf = False
+   , field_actions    = def
    }
 
 runUpdate

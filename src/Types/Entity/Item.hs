@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.Item where
 
 import Delude
@@ -11,14 +10,14 @@ import Types.Entity.ZIndex
 --------------------------------------------------------------------------------
 
 data Item = Item
-   { item_location        :: Maybe Location
-   , item_owner           :: Maybe EntityId
-   , item_itemType        :: ItemType
-   , item_processOnUpdate :: [EntityAction]
-   , item_content         :: [EntityId]
-   , item_contentVolume   :: Volume
+   { field_location        :: Maybe Location
+   , field_owner           :: Maybe EntityId
+   , field_itemType        :: ItemType
+   , field_processOnUpdate :: [EntityAction]
+   , field_content         :: [EntityId]
+   , field_contentVolume   :: Volume
    } deriving (Generic)
-makeFieldsCustom ''Item
+
 
 instance Default Item
 instance GetZIndex Item Word32 where get_zindex _ = toZIndex EntityZIndex_Item

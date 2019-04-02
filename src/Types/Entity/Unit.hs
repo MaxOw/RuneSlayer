@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.Unit where
 
 import Delude
@@ -14,22 +13,22 @@ import Types.Entity.Animation
 newtype UnitTypeName = UnitTypeName { unUnitTypeName :: Text }
     deriving (Default, Eq, Hashable, Generic, ToJSON, FromJSON)
 data UnitType = UnitType
-   { unitType_name      :: UnitTypeName
-   , unitType_corpse    :: Maybe ItemTypeName
-   , unitType_animation :: AnimationDesc
-   , unitType_maxHealth :: Health
+   { field_name      :: UnitTypeName
+   , field_corpse    :: Maybe ItemTypeName
+   , field_animation :: AnimationDesc
+   , field_maxHealth :: Health
    } deriving (Generic)
 
 data Unit = Unit
-   { unit_location        :: Location
-   , unit_velocity        :: Velocity
-   , unit_animationState  :: AnimationState
-   , unit_animation       :: Animation
-   , unit_effects         :: [EffectState]
-   , unit_health          :: Health
-   , unit_unitType        :: UnitType
-   , unit_isMarked        :: Bool
-   , unit_processOnUpdate :: [EntityAction]
+   { field_location        :: Location
+   , field_velocity        :: Velocity
+   , field_animationState  :: AnimationState
+   , field_animation       :: Animation
+   , field_effects         :: [EffectState]
+   , field_health          :: Health
+   , field_unitType        :: UnitType
+   , field_isMarked        :: Bool
+   , field_processOnUpdate :: [EntityAction]
    } deriving (Generic)
 
 instance GetZIndex Unit Word32 where
@@ -37,11 +36,11 @@ instance GetZIndex Unit Word32 where
 
 --------------------------------------------------------------------------------
 
-makeFieldsCustom ''UnitType
+
 instance Default UnitType
 
 instance ToJSON   UnitType where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON UnitType where parseJSON  = genericParseJSON  customOptionsJSON
 
-makeFieldsCustom ''Unit
+
 instance Default Unit

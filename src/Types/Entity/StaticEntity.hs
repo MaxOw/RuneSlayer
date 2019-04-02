@@ -1,4 +1,3 @@
-{-# Language TemplateHaskell #-}
 module Types.Entity.StaticEntity where
 
 import Delude
@@ -11,14 +10,14 @@ newtype StaticEntityTypeName
     = StaticEntityTypeName { unStaticEntityTypeName :: Text }
     deriving (Default, Eq, Hashable, Generic, ToJSON, FromJSON)
 data StaticEntityType = StaticEntityType
-   { staticEntityType_name           :: StaticEntityTypeName
-   , staticEntityType_appearance     :: Appearance
-   -- , staticEntityType_collisionShape :: Maybe CollisionShape
+   { field_name           :: StaticEntityTypeName
+   , field_appearance     :: Appearance
+   -- , field_collisionShape :: Maybe CollisionShape
    } deriving (Generic)
 
 data StaticEntity = StaticEntity
-   { staticEntity_location   :: Location
-   , staticEntity_entityType :: StaticEntityType
+   { field_location   :: Location
+   , field_entityType :: StaticEntityType
    } deriving (Generic)
 
 --------------------------------------------------------------------------------
@@ -39,5 +38,5 @@ instance FromJSON StaticEntity where
 instance GetZIndex StaticEntity Word32 where
     get_zindex _ = toZIndex EntityZIndex_Vertical
 
-makeFieldsCustom ''StaticEntityType
-makeFieldsCustom ''StaticEntity
+
+

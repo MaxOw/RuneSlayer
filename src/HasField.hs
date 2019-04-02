@@ -1,49 +1,138 @@
+{-# Language CPP #-}
+{-# Language DefaultSignatures #-}
+{-# Language MonoLocalBinds #-}
 module HasField (module HasField) where
 
 import Control.Lens
 -- import Types.Entity.Common
 import Engine.HasField as HasField
+import Data.Generics.Product as HasField (HasField'(field'))
 
-class HasLocation        s t | s -> t where location        :: Lens' s t
-class HasVelocity        s t | s -> t where velocity        :: Lens' s t
-class HasMaxSpeed        s t | s -> t where maxSpeed        :: Lens' s t
-class HasEquipment       s t | s -> t where equipment       :: Lens' s t
-class HasSlots           s t | s -> t where slots           :: Lens' s t
-class HasItemType        s t | s -> t where itemType        :: Lens' s t
-class HasItemKind        s t | s -> t where itemKind        :: Lens' s t
-class HasContent         s t | s -> t where content         :: Lens' s t
-class HasContainerType   s t | s -> t where containerType   :: Lens' s t
-class HasName            s t | s -> t where name            :: Lens' s t
-class HasVolume          s t | s -> t where volume          :: Lens' s t
-class HasMaxVolume       s t | s -> t where maxVolume       :: Lens' s t
-class HasEntityId        s t | s -> t where entityId        :: Lens' s t
-class HasEntity          s t | s -> t where entity          :: Lens' s t
-class HasSelfId          s t | s -> t where selfId          :: Lens' s t
-class HasEntities        s t | s -> t where entities        :: Lens' s t
-class HasOwner           s t | s -> t where owner           :: Lens' s t
-class HasFittingSlots    s t | s -> t where fittingSlots    :: Lens' s t
-class HasProcessOnUpdate s t | s -> t where processOnUpdate :: Lens' s t
-class HasDebugFlags      s t | s -> t where debugFlags      :: Lens' s t
-class HasRandomSeed      s t | s -> t where randomSeed      :: Lens' s t
-class HasFrameCount      s t | s -> t where frameCount      :: Lens' s t
-class HasLabel           s t | s -> t where label           :: Lens' s t
-class HasContentVolume   s t | s -> t where contentVolume   :: Lens' s t
-class HasResources       s t | s -> t where resources       :: Lens' s t
-class HasPath            s t | s -> t where path            :: Lens' s t
-class HasLastId          s t | s -> t where lastId          :: Lens' s t
-class HasUnique          s t | s -> t where unique          :: Lens' s t
-class HasSprite          s t | s -> t where sprite          :: Lens' s t
-class HasCollisionShape  s t | s -> t where collisionShape  :: Lens' s t
-class HasAnimation       s t | s -> t where animation       :: Lens' s t
-class HasAnimationState  s t | s -> t where animationState  :: Lens' s t
-class HasEffects         s t | s -> t where effects         :: Lens' s t
-class HasDirection       s t | s -> t where direction       :: Lens' s t
-class HasEra             s t | s -> t where era             :: Lens' s t
-class HasDuration        s t | s -> t where duration        :: Lens' s t
-class HasKind            s t | s -> t where kind            :: Lens' s t
-class HasCurrent         s t | s -> t where current         :: Lens' s t
-class HasProgression     s t | s -> t where progression     :: Lens' s t
-class HasHealth          s t | s -> t where health          :: Lens' s t
--- class HasPart            s t | s -> t where part            :: Lens' s t
+class HasEntityId s a | s -> a where
+    entityId :: Lens' s a
+    default entityId :: HasField' "field_entityId" s a => Lens' s a
+    entityId = field' @"field_entityId"
+
+class HasEntity s a | s -> a where
+    entity :: Lens' s a
+    default entity :: HasField' "field_entity" s a => Lens' s a
+    entity = field' @"field_entity"
+
+class HasResources s a | s -> a where
+    resources :: Lens' s a
+    default resources :: HasField' "field_resources" s a => Lens' s a
+    resources = field' @"field_resources"
 
 class GetZIndex          s t | s -> t where get_zindex      :: s -> t
+
+type HasName            = HasField' "field_name"
+type HasKind            = HasField' "field_kind"
+type HasEra             = HasField' "field_era"
+type HasVelocity        = HasField' "field_velocity"
+type HasMaxSpeed        = HasField' "field_maxSpeed"
+type HasLocation        = HasField' "field_location"
+type HasDebugFlags      = HasField' "field_debugFlags"
+type HasProcessOnUpdate = HasField' "field_processOnUpdate"
+type HasAnimationState  = HasField' "field_animationState"
+type HasEffects         = HasField' "field_effects"
+type HasOwner           = HasField' "field_owner"
+type HasHealth          = HasField' "field_health"
+type HasEquipment       = HasField' "field_equipment"
+type HasCollisionShape  = HasField' "field_collisionShape"
+
+#define MakeField2(X,FX) X :: HasField' "FX" s a => Lens' s a; X = field' @"FX"
+#define MakeField(X) MakeField2(X,field_/**/X)
+
+MakeField(name)
+MakeField(self)
+MakeField(target)
+MakeField(bodyAnimation)
+MakeField(body)
+MakeField(isMarked)
+MakeField(unitType)
+MakeField(animation)
+MakeField(corpse)
+MakeField(entityType)
+MakeField(maxHealth)
+MakeField(appearance)
+MakeField(contentVolume)
+MakeField(itemType)
+MakeField(containerType)
+MakeField(maxVolume)
+MakeField(volume)
+MakeField(role)
+MakeField(deleteSelf)
+MakeField(actions)
+MakeField(current)
+MakeField(kind)
+MakeField(frames)
+MakeField(duration)
+MakeField(desc)
+MakeField(title)
+MakeField(resourceMap)
+MakeField(spriteMap)
+MakeField(animationsMap)
+MakeField(tileSetMap)
+MakeField(staticMap)
+MakeField(itemsMap)
+MakeField(unitsMap)
+MakeField(pixelsPerUnit)
+MakeField(tileSet)
+MakeField(path)
+MakeField(sprite)
+MakeField(era)
+MakeField(progression)
+MakeField(speed)
+MakeField(activatedList)
+MakeField(dynamicIndex)
+MakeField(action)
+MakeField(entities)
+MakeField(spatialIndex)
+MakeField(lastId)
+MakeField(unique)
+MakeField(location)
+MakeField(velocity)
+MakeField(maxSpeed)
+MakeField(drawPickupRange)
+MakeField(debugFlags)
+MakeField(processOnUpdate)
+MakeField(animationState)
+MakeField(effects)
+MakeField(effectUpdate)
+MakeField(collisionShape)
+
+MakeField(gameState)
+MakeField(inputState)
+MakeField(selectState)
+MakeField(inventoryState)
+MakeField(selectMap)
+MakeField(selectKind)
+MakeField(focusId)
+MakeField(itemKind)
+MakeField(equipment)
+MakeField(label)
+MakeField(prefix)
+MakeField(currentPrefix)
+MakeField(hint)
+MakeField(hintMap)
+MakeField(isFocused)
+MakeField(focusedItem)
+MakeField(owner)
+MakeField(selfId)
+MakeField(context)
+MakeField(fittingSlots)
+MakeField(frameCount)
+MakeField(health)
+MakeField(mode)
+MakeField(active)
+MakeField(deactivators)
+MakeField(commonKeymap)
+MakeField(inputKeymap)
+MakeField(hist)
+MakeField(values)
+MakeField(visiblePanels)
+MakeField(changeCache)
+MakeField(menuState)
+MakeField(gameScale)
+MakeField(menuScale)
+MakeField(scroller)

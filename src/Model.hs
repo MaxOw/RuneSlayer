@@ -6,7 +6,6 @@ import Delude
 import Data.Hashable (hash)
 import qualified Data.HashMap.Strict as HashMap
 import Engine (userState)
-import Types.St (gameState)
 
 import Types (Game, Integrator)
 import Types.EntityAction

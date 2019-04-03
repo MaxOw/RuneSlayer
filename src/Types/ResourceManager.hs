@@ -12,9 +12,9 @@ import Types.Entity.Unit
 
 data Resources = Resources
    { field_resourceMap   :: HashMap Text Img
+   , field_spriteMap     :: HashMap Text SpriteDesc
    , field_staticMap     :: HashMap StaticEntityTypeName StaticEntityType
    , field_tileSetMap    :: HashMap TileSetName TileSet
-   , field_spriteMap     :: HashMap SpriteName SpriteDesc
    , field_itemsMap      :: HashMap ItemTypeName ItemType
    , field_unitsMap      :: HashMap UnitTypeName UnitType
    , field_animationsMap :: HashMap Text AnimationDesc

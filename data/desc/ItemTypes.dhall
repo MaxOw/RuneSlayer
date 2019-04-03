@@ -38,4 +38,11 @@ in
   , fittingSlots = [ EquipmentSlot.Backpack ]
   , containerType = Some { maxVolume = 15 }
   }
+
+, batCorpse = defaultItemType //
+  { name     = "Corpse of a Bat"
+  , volume   = 30
+  , itemKind = ItemKind.BigItem
+  , appearance = appearance.simple sprites.batCorpse
+  }
 }

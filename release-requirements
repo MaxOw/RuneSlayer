@@ -29,7 +29,7 @@ Requirements for first release: v0.1
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]
-* Enemy unit spwan corpse on death.                                          [.]
+* Enemy unit spawn corpse on death.                                          [X]
 * Named entity types                                                         [.]
 * Enemy unit go towards & attack player.                                     [ ]
 * Render equipped items.                                                     [ ]

@@ -1,5 +1,5 @@
 module Entity.Animation
-    ( AnimationDirection (..)
+    ( Direction (..)
     , AnimationKind (..)
     , AnimationProgression (..)
     , EffectKind (..)
@@ -43,10 +43,10 @@ makeCustomAnimation
     :: Resources -> [AnimationPart] -> Animation
 makeCustomAnimation rs ps = Animation $ maybe mempty (renderSprite rs) . amap
     where
-    pmap :: Map (Maybe AnimationKind, Maybe AnimationDirection) [AnimationFrame]
+    pmap :: Map (Maybe AnimationKind, Maybe Direction) [AnimationFrame]
     pmap = Map.fromList $ map (\p -> ((p^.kind, p^.direction), p^.frames)) ps
 
-    selectFrames :: AnimationKind -> AnimationDirection -> [AnimationFrame]
+    selectFrames :: AnimationKind -> Direction -> [AnimationFrame]
     selectFrames k d = fromMaybe [] $ listToMaybe $ catMaybes
         [ Map.lookup (Just  k, Just  d) pmap
         , Map.lookup (Just  k, Nothing) pmap
@@ -80,7 +80,7 @@ makeCharacterAnimation rs sd = Animation $ \s ->
     makePart x y = Rect (ss *^ V2 x y) (pure ss)
         where ss = 64
 
-vecToDir :: V2 Float -> AnimationDirection -> AnimationDirection
+vecToDir :: V2 Float -> Direction -> Direction
 vecToDir v defDir
     | v == 0 = defDir
     | angleBetween v (V2   0   1 ) < 40 @@ deg = North

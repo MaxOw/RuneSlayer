@@ -6,7 +6,7 @@ let makeTileSet =
   λ(n : Text) →
   λ(p : Text) →
     { name = n
-    , desc = { Standard = utils.makeSprite "" p }
+    , desc = { Standard = utils.makeSprite p }
     , zindex = i
     }
 

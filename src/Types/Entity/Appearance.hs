@@ -1,13 +1,13 @@
 module Types.Entity.Appearance where
 
 import Delude
-import Types.Sprite (SpriteName)
+import Types.Sprite (SpriteDesc)
 
 data Located x = Located
    { field_vector :: V2 Float
    , field_value  :: x
    } deriving Generic
-newtype Appearance = Appearance [Located SpriteName]
+newtype Appearance = Appearance [Located SpriteDesc]
     deriving (Generic, Default)
 
 instance ToJSON x => ToJSON (Located x) where

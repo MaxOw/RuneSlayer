@@ -5,12 +5,12 @@ let LocatedSprite = types.LocatedSprite
 
 let makeSprite =
   λ(s : Sprite) →
-  { vector = [0.0, 0.0], value = s.name }
+  { vector = [0.0, 0.0], value = s }
 
 let makeLocated =
   λ(v : List Double) →
   λ(s : Sprite) →
-  { vector = v, value = s.name }
+  { vector = v, value = s }
 
 let makeSimple = λ(s : Sprite) → [makeSprite s]
 

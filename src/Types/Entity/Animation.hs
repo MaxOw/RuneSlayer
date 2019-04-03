@@ -7,7 +7,7 @@ import Types.Sprite
 
 --------------------------------------------------------------------------------
 
-data AnimationDirection
+data Direction
    = North
    | West
    | South
@@ -36,7 +36,7 @@ data AnimationFrame = AnimationFrame
    } deriving (Generic)
 
 data AnimationPart = AnimationPart
-   { field_direction :: Maybe AnimationDirection
+   { field_direction :: Maybe Direction
    , field_kind      :: Maybe AnimationKind
    , field_frames    :: [AnimationFrame]
    } deriving (Generic)
@@ -54,7 +54,7 @@ data AnimationState = AnimationState
    } deriving (Generic)
 
 data AnimationFrameState = AnimationFrameState
-   { field_direction :: AnimationDirection
+   { field_direction :: Direction
    , field_kind      :: AnimationKind
    , field_era       :: Float
    } deriving (Generic)
@@ -77,13 +77,13 @@ data EffectState = EffectState
 
 --------------------------------------------------------------------------------
 
-instance ToJSON AnimationDirection where
+instance ToJSON Direction where
     toEncoding = genericToEncoding customOptionsJSON
 instance ToJSON AnimationKind  where toEncoding = genericToEncoding customOptionsJSON
 instance ToJSON AnimationDesc  where toEncoding = genericToEncoding customOptionsJSON
 instance ToJSON AnimationFrame where toEncoding = genericToEncoding customOptionsJSON
 instance ToJSON AnimationPart  where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON AnimationDirection where
+instance FromJSON Direction where
     parseJSON = genericParseJSON customOptionsJSON
 instance FromJSON AnimationKind  where parseJSON = genericParseJSON customOptionsJSON
 instance FromJSON AnimationDesc  where parseJSON = genericParseJSON customOptionsJSON

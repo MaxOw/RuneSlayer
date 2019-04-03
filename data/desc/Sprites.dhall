@@ -6,13 +6,14 @@ let makeItem   = utils.makeItem
 let makeEnv    = utils.makeEnv
 
 in
-{ healthPotion = makeSprite "Health Potion" paths.healthPotion
+{ healthPotion = makeSprite paths.healthPotion
 
-, bag    = makeItem "Bag"    4 2
-, helmet = makeItem "Helmet" 1 1
+, bag    = makeItem 4 2
+, helmet = makeItem 1 1
 
-, treeTrunk   = makeEnv "Tree Trunk"   50 38 6 6
-, treeFoliage = makeEnv "Tree Foliage" 48 24 6 6
+, treeTrunk   = makeEnv 50 38 6 6
+, treeFoliage = makeEnv 48 24 6 6
 
-, bat = makeSprite "Bat" paths.bat
+, bat = makeSprite paths.bat
+, batCorpse = utils.selectSpritePart 32 0 0 (makeSprite paths.bat)
 }

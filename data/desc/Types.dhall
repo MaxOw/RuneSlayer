@@ -1,14 +1,13 @@
 let Rect   = { offset : List Natural, size : List Natural }
 let Sprite =
-  { name : Text
-  , path : Text
+  { path : Text
   , part : Optional Rect
   , pixelsPerUnit : Optional Natural
   }
 
 let LocatedSprite =
   { vector : List Double
-  , value  : Text
+  , value  : Sprite
   }
 
 let ContainerType =

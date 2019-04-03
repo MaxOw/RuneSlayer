@@ -6,6 +6,7 @@ import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ItemType
 import Types.Entity.ZIndex
+import Types.Entity.Animation (Direction)
 
 --------------------------------------------------------------------------------
 
@@ -16,6 +17,7 @@ data Item = Item
    , field_processOnUpdate :: [EntityAction]
    , field_content         :: [EntityId]
    , field_contentVolume   :: Volume
+   , field_direction     :: Maybe Direction
    } deriving (Generic)
 
 

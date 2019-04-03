@@ -54,7 +54,7 @@ initSt = do
 loadResources :: Engine us Resources
 loadResources = do
     rs <- loadAllPaths
-    ss <- loadDhallList "Sprites.dhall"
+    ss <- loadDhallMap  "Sprites.dhall"
     se <- loadDhallList "StaticTypes.dhall"
     ts <- loadDhallList "TileSets.dhall"
     is <- loadDhallList "ItemTypes.dhall"
@@ -62,9 +62,9 @@ loadResources = do
     as <- loadDhallMap  "Animations.dhall"
     return $ def
         & resourceMap   .~ HashMap.fromList rs
+        & spriteMap     .~ ss
         & staticMap     .~ buildMap se
         & tileSetMap    .~ buildMap ts
-        & spriteMap     .~ buildMap ss
         & itemsMap      .~ buildMap is
         & unitsMap      .~ buildMap us
         & animationsMap .~ as

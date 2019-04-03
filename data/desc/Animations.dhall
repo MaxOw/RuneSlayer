@@ -15,7 +15,7 @@ let AnimationKind = enums.AnimationKind
 
 let Any = None Text
 let makeCharAnimation = λ(p : Text) →
-  { CharacterAnimation = utils.makeSprite "" p }
+  { CharacterAnimation = utils.makeSprite p }
 
 let selectSpritePart = utils.selectSpritePart
 

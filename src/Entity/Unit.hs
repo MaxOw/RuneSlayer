@@ -41,12 +41,12 @@ procAttack as = do
         deleteSelf .= True
         loc <- use $ self.location
         mco <- use $ self.unitType.corpse
+        dir <- use $ self.animationState.current.direction
         whenJust mco $ \c ->
             addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
-                & location .~ loc
-                & name     .~ c
-            -- testItemType_healthPotion
-        -- TODO: spawn item: self.corpse
+                & location  .~ loc
+                & name      .~ c
+                & direction .~ Just dir
     where
     applyDefence     x = return x
 

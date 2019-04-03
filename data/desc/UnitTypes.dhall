@@ -6,6 +6,6 @@ in
   { name      = "Bat"
   , animation = animations.bat
   , maxHealth = 3
-  , corpse    = Some items.healthPotion.name
+  , corpse    = Some items.batCorpse.name
   }
 }

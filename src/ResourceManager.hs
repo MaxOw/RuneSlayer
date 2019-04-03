@@ -1,9 +1,8 @@
 module ResourceManager
     ( Resources
-    , SpriteName, SpriteDesc
+    , SpriteDesc
     , lookupImg
     , lookupSprite
-    , lookupSpriteName
     , lookupAnimation
     , lookupTileSet
     , lookupStaticEntity
@@ -27,12 +26,6 @@ lookupSprite :: SpriteDesc -> Resources -> Maybe Img
 lookupSprite r = fmap f . HashMap.lookup (r^.path) . view resourceMap
     where
     f = set part (view part r)
-
-lookupSpriteName :: SpriteName -> Resources -> Maybe (SpriteDesc, Img)
-lookupSpriteName n r = do
-    d <- HashMap.lookup n (r^.spriteMap)
-    i <- HashMap.lookup (d^.path) (r^.resourceMap)
-    return (d, set part (view part d) i)
 
 lookupAnimation :: Text -> Resources -> Maybe AnimationDesc
 lookupAnimation x = HashMap.lookup x . view animationsMap

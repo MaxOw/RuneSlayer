@@ -62,8 +62,8 @@ import Equipment (Equipment, contentList)
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
-import ResourceManager (lookupSpriteName, Resources)
-import Types.Sprite (SpriteName)
+import ResourceManager (Resources, renderSprite)
+import Types.Sprite (SpriteDesc)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -343,20 +343,10 @@ withZIndex :: GetZIndex x Word32
     => x -> (RenderAction -> RenderAction)
 withZIndex x = setZIndexAtLeast (get_zindex x)
 
-renderSpriteN :: HasResources c Resources => c -> SpriteName -> RenderAction
-renderSpriteN ctx r = case lookupSpriteName r $ ctx^.resources of
-    Nothing      -> renderShape shape
-    Just (s,img) -> renderImg img & sscale (s^.pixelsPerUnit)
-    where
-    sscale = maybe id (\s -> T.scale $ 1/(fromIntegral s))
-    shape = def
-        & shapeType   .~ SimpleSquare
-        & color       .~ Color.opaque Color.gray
-
 renderAppearance :: HasResources c Resources => c -> Appearance -> RenderAction
 renderAppearance ctx (Appearance ls) = renderComposition $ map renderLocated ls
     where
-    renderLocated (Located v n) = translate v $ renderSpriteN ctx n
+    renderLocated (Located v s) = translate v $ renderSprite (ctx^.resources) s
 
 renderBBox :: BBox Float -> RenderAction
 renderBBox bb = renderSimpleBox $ def

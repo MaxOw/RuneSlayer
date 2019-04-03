@@ -5,15 +5,16 @@ import Types.Entity.Common
 import Types.EntityAction
 import Types.Entity.ItemType
 import Types.Entity.Unit
+import Types.Entity.Animation (Direction)
 -- import Types.Entity.EntityType
 
 --------------------------------------------------------------------------------
 
 data Spawn a = Spawn
-   { field_location :: Location
-   , field_name     :: a
+   { field_location  :: Location
+   , field_direction :: Maybe Direction
+   , field_name      :: a
    } deriving (Generic)
-
 instance Default a => Default (Spawn a)
 
 data SpawnEntity

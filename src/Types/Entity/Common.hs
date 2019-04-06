@@ -120,17 +120,6 @@ speedInMetersPerSecond = Speed
 
 --------------------------------------------------------------------------------
 
-baseWalkingSpeed :: Speed
-baseWalkingSpeed = speedInMetersPerSecond 2
-
-baseRunningSpeed :: Speed
-baseRunningSpeed = speedInMetersPerSecond 6
-
-baseSprintingSpeed :: Speed
-baseSprintingSpeed = speedInMetersPerSecond 8
-
---------------------------------------------------------------------------------
-
 isWithinDistance :: Distance -> Location -> Location -> Bool
 isWithinDistance d a b = distance (a^._Wrapped) (b^._Wrapped) <= (d^._Wrapped)
 

@@ -6,19 +6,24 @@ import qualified Data.Set as Set
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ZIndex
-import Types.Entity.Animation (AnimationState, Animation, EffectState)
+import Types.Entity.Animation
 import Types.Equipment
 import Types.Skills.Runes (RunicLevel)
 import Types.Entity.Reactivity
-import qualified Equipment
 
 --------------------------------------------------------------------------------
 
+data UpdateOnce
+   = UpdateOnce_Equipment
+   deriving (Eq, Ord)
+
 data PlayerInit = PlayerInit
-   { field_body        :: [Text] -- BodyDesc
+   { field_body        :: [AnimationName] -- BodyDesc
    , field_reactivity  :: Map ReactivCategory ReactivValue
    , field_attackRange :: Distance
+   , field_maxSpeed    :: Speed
    } deriving (Generic)
+instance HasMaxSpeed PlayerInit Speed
 
 data Player = Player
    { field_location           :: Location
@@ -27,10 +32,12 @@ data Player = Player
    , field_equipment          :: Equipment
    , field_debugFlags         :: EntityDebugFlags
    , field_processOnUpdate    :: [EntityAction]
+   , field_updateOnce         :: Set UpdateOnce
    , field_collisionShape     :: Maybe CollisionShape
    , field_animationState     :: AnimationState
    , field_animateWhenStopped :: Bool
    , field_bodyAnimation      :: Animation
+   , field_equipmentAnimation :: Animation
    , field_effects            :: [EffectState]
    , field_runicLevel         :: RunicLevel
    , field_target             :: Maybe EntityId
@@ -59,25 +66,7 @@ instance FromJSON PlayerInit where
     parseJSON = genericParseJSON customOptionsJSON
 
 instance Default PlayerInit
-instance Default Player where
-   def = Player
-    { field_location           = def
-    , field_velocity           = def
-    , field_maxSpeed           = baseWalkingSpeed
-    -- , field_maxSpeed        = baseRunningSpeed
-    , field_equipment          = Equipment.create playerSlots
-    , field_debugFlags         = def
-    , field_processOnUpdate    = def
-    , field_collisionShape     = def
-    , field_animationState     = def
-    , field_animateWhenStopped = False
-    , field_bodyAnimation      = def
-    , field_effects            = []
-    , field_runicLevel         = def
-    , field_target             = Nothing
-    , field_reactivity         = def
-    , field_attackRange        = disM 2
-    }
+instance Default Player
 
 instance GetZIndex Player Word32 where
     get_zindex _ = toZIndex EntityZIndex_Vertical

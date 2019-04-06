@@ -1,6 +1,7 @@
 module Types.Entity.Animation where
 
 import Delude
+import Data.Aeson (ToJSONKey, FromJSONKey)
 import Engine (RenderAction)
 import Types.Entity.Common
 import Types.Sprite
@@ -42,6 +43,9 @@ data AnimationPart = AnimationPart
    } deriving (Generic)
 
 --------------------------------------------------------------------------------
+
+newtype AnimationName = AnimationName Text
+   deriving (Eq, Hashable, Generic, FromJSON, ToJSON, ToJSONKey, FromJSONKey)
 
 newtype Animation = Animation
     { runAnimation :: AnimationFrameState -> RenderAction }

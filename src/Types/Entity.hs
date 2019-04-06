@@ -58,7 +58,9 @@ data EntityContext = EntityContext
    { field_entities   :: EntityIndex
    , field_selfId     :: EntityId
    , field_frameCount :: Word32
+   , field_resources  :: Resources
    } deriving (Generic)
+instance HasResources EntityContext Resources
 
 data RenderContext = RenderContext
    { field_resources  :: Resources

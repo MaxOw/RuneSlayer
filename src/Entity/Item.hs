@@ -9,7 +9,6 @@ import qualified Data.List as List
 
 import Types.Entity (oracle)
 import Types.Entity.Item
-import Types.Entity.ItemType
 import Types.Debug
 import Engine.Common.Types (BBox(..))
 import Entity.Utils
@@ -115,13 +114,14 @@ render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
 
 thisOracle :: Item -> EntityOracle
 thisOracle x = def
-   & location     .~ (x^.location)
-   & name         .~ Just (x^.itemType.name._Wrapped)
-   & volume       .~ Just (x^.itemType.volume)
-   & itemKind     .~ Just (x^.itemType.itemKind)
-   & fittingSlots .~ (x^.itemType.fittingSlots)
-   & content      .~ Just (x^.content)
-   & maxVolume    .~ (x^?itemType.containerType.traverse.maxVolume)
+   & location      .~ (x^.location)
+   & name          .~ Just (x^.itemType.name._Wrapped)
+   & volume        .~ Just (x^.itemType.volume)
+   & itemKind      .~ Just (x^.itemType.itemKind)
+   & fittingSlots  .~ (x^.itemType.fittingSlots)
+   & content       .~ Just (x^.content)
+   & maxVolume     .~ (x^?itemType.containerType.traverse.maxVolume)
+   & itemAnimation .~ (x^.itemType.animation)
 
 --------------------------------------------------------------------------------
 

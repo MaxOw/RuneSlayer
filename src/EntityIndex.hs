@@ -22,6 +22,7 @@ import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex
 import Data.GridIndex.Types
 import qualified Data.FullMap as FullMap
+import Types.ResourceManager (Resources)
 
 --------------------------------------------------------------------------------
 
@@ -61,9 +62,10 @@ noSetMoveVector (EntityAction_SetMoveVector {}) = False
 noSetMoveVector _                               = True
 
 update :: MonadIO m
-    => (WorldAction -> m (Maybe Entity))
+    => Resources
+    -> (WorldAction -> m (Maybe Entity))
     -> [DirectedAction] -> Word32 -> EntityIndex -> m ()
-update handleWorldAction globalActions fct eix = do
+update res handleWorldAction globalActions fct eix = do
 
     actList <- readIORef $ eix^.activatedList
     dynSet  <- readIORef $ eix^.dynamicIndex
@@ -78,7 +80,8 @@ update handleWorldAction globalActions fct eix = do
         let ctx = EntityContext
                 { field_entities   = eix
                 , field_selfId     = k
-                , field_frameCount = fct }
+                , field_frameCount = fct
+                , field_resources  = res }
         in (k,) <$> liftIO (runQ (entityUpdate v ctx))
 
     -- List of directed actions resulting from update + global ones

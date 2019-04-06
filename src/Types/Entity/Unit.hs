@@ -6,7 +6,7 @@ import Types.Entity.Timer
 import Types.Entity.Reactivity
 import Types.Entity.Common
 import Types.Entity.ZIndex
-import Types.Entity.ItemType (ItemTypeName)
+import Types.Entity.Item (ItemTypeName)
 import Types.Entity.Animation
     (Animation, AnimationState, AnimationDesc, EffectState)
 

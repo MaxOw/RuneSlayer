@@ -4,8 +4,9 @@ import Delude
 import Types.Entity.Reactivity
 import Types.Equipment
 import Types.Entity.Common
-import Types.Entity.ItemType
+import Types.Entity.Item
 import Types.Entity.ZIndex
+import Types.Entity.Animation
 
 data EntityOracle = EntityOracle
    { field_name           :: Maybe Text
@@ -19,6 +20,7 @@ data EntityOracle = EntityOracle
    , field_zindex         :: Maybe EntityZIndex
    , field_collisionShape :: Maybe CollisionShape
    , field_reactivity     :: Map ReactivCategory ReactivValue
+   , field_itemAnimation  :: Maybe AnimationName
    } deriving (Generic)
 
 

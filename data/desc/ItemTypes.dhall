@@ -21,6 +21,7 @@ in
   , itemKind = ItemKind.BigItem
   , appearance = appearance.simple sprites.helmet
   , fittingSlots = [ EquipmentSlot.Head ]
+  , animation = Some "helmet"
   }
 
 , healthPotion = defaultItemType //

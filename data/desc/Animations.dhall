@@ -41,5 +41,7 @@ in
 , malePantsTeal      = makeCharAnimation paths.malePantsTeal
 , maleShirtWhite     = makeCharAnimation paths.maleShirtWhite
 
+, helmet = makeCharAnimation paths.helmetAnimation
+
 , bat = simpleCustomAnimation (map Natural Frame makeBatFrame [1, 2, 3])
 }

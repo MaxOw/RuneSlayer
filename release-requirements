@@ -31,9 +31,8 @@ Requirements for first release: v0.1
 * World actions.                                                             [X]
 * Enemy unit spawn corpse on death.                                          [X]
 * Named entity types                                                         [X]
-
 * Enemy unit go towards & attack player.                                     [X]
-* Render equipped items.                                                     [ ]
+* Render equipped items.                                                     [X]
 
 * Offensive skill.                                                           [ ]
 * Defensive skill.                                                           [ ]

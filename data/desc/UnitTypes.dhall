@@ -1,6 +1,7 @@
 let animations = ./Animations.dhall
 let items      = ./ItemTypes.dhall
 let enums      = ./Enums.dhall
+let constants  = ./Constants.dhall
 let Reactivity = enums.Reactivity
 
 in
@@ -8,7 +9,7 @@ in
   { name      = "Bat"
   , animation = animations.bat
   , maxHealth = 3
-  , maxSpeed  = 2 -- meters per second
+  , maxSpeed  = constants.baseWalkingSpeed
   , corpse    = Some items.batCorpse.name
   , animateWhenStopped = True
   , attackRange = 1  -- meter

@@ -13,6 +13,7 @@ import Types.Entity.Player
 import Entity.Utils
 import Entity.Actions
 import ResourceManager (Resources, lookupAnimation)
+import qualified Equipment
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
@@ -42,7 +43,7 @@ actOn x a = x & case a of
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_ExecuteAttack executeAttack
-    updateAnimation
+    updateAnimationState
     updateEffects defaultDelta
     playerIntegrateLocation
     separateCollision
@@ -50,8 +51,21 @@ update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_AddItem      addItems
     whenMatch _EntityAction_DropAllItems dropAllItems
     anyMatch  _EntityAction_SelfAttacked procAttacked
+    mapM_ processUpdateOnce =<< use (self.ff#updateOnce)
     mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
+
+processUpdateOnce :: UpdateOnce -> Update Player ()
+processUpdateOnce = \case
+    UpdateOnce_Equipment -> updateEquipment
+    where
+    updateEquipment = do
+        eis <- uses (self.equipment) Equipment.contentList
+        es <- catMaybes <$> mapM queryById eis
+        let as = mapMaybe (view (entity.oracle.itemAnimation)) es
+        rs <- use $ context.resources
+        let eqAnim = mconcat $ mapMaybe (flip lookupAnimation rs) as
+        self.ff#equipmentAnimation .= eqAnim
 
 procAttacked :: NonEmpty AttackPower -> Update Player ()
 procAttacked as = do
@@ -119,13 +133,15 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
     , translateY 0.8 $ renderComposition
         [ renderBody
+        , renderEquipment
         , renderEffects x ]
     ]
     where
-    renderDebug = renderComposition $ localDebug <> globalDebug
-    renderBody
-        = translateY 0.8
-        $ Animation.renderAnimation (x^.animationState) (x^.bodyAnimation)
+    renderDebug     = renderComposition $ localDebug <> globalDebug
+
+    renderAnim      = Animation.renderAnimation (x^.animationState)
+    renderBody      = renderAnim (x^.ff#bodyAnimation)
+    renderEquipment = renderAnim (x^.ff#equipmentAnimation)
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)
@@ -165,9 +181,11 @@ playerToEntity = makeEntity $ EntityParts
 
 makePlayer :: Resources -> PlayerInit -> Player
 makePlayer rs p = def
-    & bodyAnimation .~ as
-    & reactivity    .~ (p^.reactivity)
+    & ff#bodyAnimation .~ as
+    & reactivity       .~ (p^.reactivity)
+    & maxSpeed         .~ (p^.maxSpeed)
+    & equipment        .~ Equipment.create playerSlots
+    & ff#attackRange   .~ disM 2
     where
-    as = mconcat $ map (Animation.makeAnimation rs)
-       $ mapMaybe (flip lookupAnimation rs) (p^.body)
+    as = mconcat $ mapMaybe (flip lookupAnimation rs) (p^.body)
 

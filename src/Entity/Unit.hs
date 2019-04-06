@@ -13,7 +13,6 @@ import Types.Entity.Unit
 import Types.Entity.Timer
 import Types.ResourceManager (Resources)
 
-import qualified Entity.Timer as Timer
 import Entity.Utils
 import Entity.Actions
 import qualified Entity.Animation as Animation
@@ -30,7 +29,7 @@ actOn x a = x & case a of
 update :: Unit -> EntityContext -> Q (Maybe Unit, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     decideAction
-    updateAnimation
+    updateAnimationState
     updateTimer
     integrateLocation
     updateEffects defaultDelta

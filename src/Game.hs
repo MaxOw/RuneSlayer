@@ -17,10 +17,12 @@ import Types.Entity.Common
 import Entity.Player (makePlayer)
 import Types.ResourceManager
 import Types.DirectedAction
-import Types.Entity.ItemType
+import Types.Entity.Item
 import Types.Entity.Unit
 import EntityLike
 import WorldGen (generateWorld)
+import Types.Entity.Animation
+import qualified Entity.Animation as Animation
 
 -- import qualified Resource
 import qualified EntityIndex
@@ -59,14 +61,19 @@ loadResources = do
     is <- loadDhallList "ItemTypes.dhall"
     us <- loadDhallList "UnitTypes.dhall"
     as <- loadDhallMap  "Animations.dhall"
-    return $ def
-        & resourceMap   .~ HashMap.fromList rs
-        & spriteMap     .~ ss
-        & staticMap     .~ buildMap se
-        & tileSetMap    .~ buildMap ts
-        & itemsMap      .~ buildMap is
-        & unitsMap      .~ buildMap us
-        & animationsMap .~ as
+    let res = def
+            & resourceMap   .~ HashMap.fromList rs
+            & spriteMap     .~ ss
+            & staticMap     .~ buildMap se
+            & tileSetMap    .~ buildMap ts
+            & itemsMap      .~ buildMap is
+            & unitsMap      .~ buildMap us
+    let pr = fmap (Animation.makeAnimation res)
+           $ HashMap.fromList
+           $ map (over _1 AnimationName)
+           $ HashMap.toList as
+    return $ res
+        & animationsMap .~ pr
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))

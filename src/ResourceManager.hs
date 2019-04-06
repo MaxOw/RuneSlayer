@@ -14,7 +14,7 @@ import Delude
 import Engine (Img, RenderAction, renderImg)
 import qualified Diagrams.TwoD.Transform as T
 import Types.ResourceManager
-import Types.Entity.Animation (AnimationDesc)
+import Types.Entity.Animation
 import Types.Entity.TileSet   (TileSetName, TileSet)
 import Types.Entity.StaticEntity
 import qualified Data.HashMap.Strict as HashMap
@@ -27,7 +27,7 @@ lookupSprite r = fmap f . HashMap.lookup (r^.path) . view resourceMap
     where
     f = set part (view part r)
 
-lookupAnimation :: Text -> Resources -> Maybe AnimationDesc
+lookupAnimation :: AnimationName -> Resources -> Maybe Animation
 lookupAnimation x = HashMap.lookup x . view animationsMap
 
 lookupTileSet :: TileSetName -> Resources -> Maybe TileSet

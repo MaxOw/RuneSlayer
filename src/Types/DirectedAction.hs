@@ -3,7 +3,7 @@ module Types.DirectedAction where
 import Delude
 import Types.Entity.Common
 import Types.EntityAction
-import Types.Entity.ItemType
+import Types.Entity.Item
 import Types.Entity.Unit
 import Types.Entity.Animation (Direction)
 -- import Types.Entity.EntityType

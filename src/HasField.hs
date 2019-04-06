@@ -69,6 +69,7 @@ type HasOwner           = HasF "owner"
 type HasHealth          = HasF "health"
 type HasEquipment       = HasF "equipment"
 type HasCollisionShape  = HasF "collisionShape"
+type HasUpdateOnce      = HasF "updateOnce"
 
 #define MakeFieldLens(X) X :: HasF "X" s a => Lens' s a; X = ff#X
 
@@ -76,6 +77,7 @@ MakeFieldLens(name)
 MakeFieldLens(self)
 MakeFieldLens(target)
 MakeFieldLens(bodyAnimation)
+MakeFieldLens(itemAnimation)
 MakeFieldLens(body)
 MakeFieldLens(isMarked)
 MakeFieldLens(unitType)

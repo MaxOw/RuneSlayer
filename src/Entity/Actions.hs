@@ -9,7 +9,7 @@ module Entity.Actions
     -- Update Actions
     , integrateLocation
     , moveTowards
-    , updateAnimation
+    , updateAnimationState
     , updateEffects, addEffect
     , updateTimer, startTimer, checkTimeUp
     , separateCollision
@@ -19,6 +19,8 @@ module Entity.Actions
     , dropItem, dropItemAction
     , getItemsToAdd
     , makeDropItem, splitItemKind
+    , getEquippedItem
+    , flagUpdate
 
     -- Render Actions
     , maybeLocate, locate
@@ -53,8 +55,9 @@ import Engine.Layout.Render (renderSimpleBox)
 
 import Types.Entity
 import Types.Entity.Timer
-import Types.Entity.ItemType
+import Types.Entity.Item
 import Types.Entity.Appearance
+import Types.Entity.Player
 import Types.Entity.Animation (AnimationState, EffectState, EffectKind)
 import qualified Entity.Animation as Animation
 import Entity.Utils
@@ -131,12 +134,12 @@ moveTowards (view entity -> e) = do
     where
     directionToTarget (Location a) (Location b) = b - a
 
-updateAnimation
+updateAnimationState
     :: HasVelocity           s Velocity
     => HasAnimationState     s AnimationState
     => HasAnimateWhenStopped s Bool
     => Update s ()
-updateAnimation = do
+updateAnimationState = do
     vel <- use $ self.velocity._Wrapped
     a <- use $ self.animationState
     dontStop <- use $ self.animateWhenStopped
@@ -208,11 +211,13 @@ separateCollision = do
 dropAllItems
     :: HasEquipment       x Equipment
     => HasLocation        x Location
+    => HasUpdateOnce      x (Set UpdateOnce)
     => Update             x ()
 dropAllItems = do
     is <- use $ self.equipment.to contentList
     self.equipment %= Equipment.deleteAll
     mapM_ dropItemAction is
+    flagUpdate UpdateOnce_Equipment
 
 --------------------------------------------------------------------------------
 
@@ -238,6 +243,7 @@ addItems
     :: HasProcessOnUpdate x [EntityAction]
     => HasEquipment       x Equipment
     => HasLocation        x Location
+    => HasUpdateOnce      x (Set UpdateOnce)
     => Update x ()
 addItems = do
     os <- equipItems =<< getItemsToAdd
@@ -246,6 +252,20 @@ addItems = do
         Just ct -> mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
         Nothing -> mapM_ (dropItemAction . view entityId) sit
     mapM_ (dropItemAction . view entityId) oit
+    flagUpdate UpdateOnce_Equipment
+
+getEquippedItem
+    :: HasEquipment x Equipment
+    => EquipmentSlot
+    -> Update x (Maybe EntityWithId)
+getEquippedItem s = fmap join . mapM queryById
+    =<< Equipment.lookupSlot s <$> use (self.equipment)
+
+flagUpdate
+    :: HasUpdateOnce x (Set UpdateOnce)
+    => UpdateOnce
+    -> Update x ()
+flagUpdate f = self.ff#updateOnce %= Set.insert f
 
 useSelfId :: Update x EntityId
 useSelfId = use $ context.selfId
@@ -327,6 +347,7 @@ getItemsToAdd = do
 dropItem
     :: HasEquipment       x Equipment
     => HasLocation        x Location
+    => HasUpdateOnce      x (Set UpdateOnce)
     => EntityId -> Update x ()
 dropItem i = do
     eq <- use $ self.equipment
@@ -334,6 +355,7 @@ dropItem i = do
     then do
         self.equipment %= Equipment.deleteId i
         dropItemAction i
+        flagUpdate UpdateOnce_Equipment
     else whenJustM equippedBackpack $ \b -> do
         addAction b $ EntityAction_DropItem i
 

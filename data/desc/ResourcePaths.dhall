@@ -17,6 +17,8 @@ in
 , malePantsTeal      = makeCharPath "legs/pants/male/teal_pants_male"
 , maleShirtWhite     = makeCharPath "torso/shirts/longsleeve/male/white_longsleeve"
 
+, helmetAnimation = makeCharPath "head/helms/male/metal_helm_male"
+
 , bat = makeUnitPath "bat"
 
 , healthPotion = makeImgsPath "items0/P_Red07"

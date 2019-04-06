@@ -25,7 +25,7 @@ import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
-import Types.Entity.ItemType
+import Types.Entity.Item
 import Types.Entity.Unit
 import Focus
 
@@ -43,7 +43,8 @@ zoomGameState = zoom (userState.gameState)
 updateGameState :: Game ()
 updateGameState = do
     join $ EntityIndex.update
-        <$> pure handleWorldAction
+        <$> use (userState.resources)
+        <*> pure handleWorldAction
         <*> use (gs actions)
         <*> use (gs frameCount)
         <*> use (gs entities)

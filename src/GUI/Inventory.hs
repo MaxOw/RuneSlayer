@@ -8,12 +8,11 @@ import qualified Data.Text as Text
 import qualified Data.Map as Map
 
 import Engine hiding (slots)
-import Engine.Layout.Types hiding (HasContent, content)
+import Engine.Layout.Types
 
 import Types
 import Types.Entity
 import Types.InputState
-import Types.GUI
 import Focus
 
 import Types.Entity.Common

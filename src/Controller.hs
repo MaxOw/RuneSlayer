@@ -9,7 +9,6 @@ import Engine (userState)
 import Engine.Events.Types hiding (Event)
 
 import Types (Game, Event)
-import Types.St
 import Types.MenuState
 import InputState
 import GameState

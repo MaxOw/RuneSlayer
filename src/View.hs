@@ -15,7 +15,6 @@ import Types.Entity.Common
 import Types.Entity
 import Types.St
 import Types.MenuState
-import Types.GameState
 import Types.Debug
 import EntityIndex (lookupInRange)
 import GameState (isDebugFlagOn)

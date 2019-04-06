@@ -31,7 +31,7 @@ data AnimationDesc
    deriving (Generic)
 
 data AnimationFrame = AnimationFrame
-   { field_duration :: Float
+   { field_duration :: Duration
    , field_sprite   :: SpriteDesc
    } deriving (Generic)
 
@@ -69,9 +69,9 @@ data EffectKind
    = HitEffect AttackPower
 
 data EffectState = EffectState
-   { field_effectUpdate :: Time -> EffectState -> Maybe EffectState
+   { field_effectUpdate :: Duration -> EffectState -> Maybe EffectState
    , field_kind         :: EffectKind
-   , field_duration     :: Float
+   , field_duration     :: Duration
    , field_era          :: Float
    } deriving (Generic)
 

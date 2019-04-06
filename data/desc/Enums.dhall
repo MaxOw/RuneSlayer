@@ -45,19 +45,18 @@ let AnimationKind =
    , Die    = "Die"
    }
 
-{-
-allDirections =
-  [ Direction.North
-  , Direction.West
-  , Direction.South
-  , Direction.East
-  ]
--}
+let Reactivity =
+   { Shadow = "Shadow"
+   , Light  = "Light"
+   , Poison = "Poison"
+   , Blood  = "Blood"
+   , Life   = "Life"
+   }
 
 in
 { ItemKind      = ItemKind
 , EquipmentSlot = EquipmentSlot
 , Direction     = Direction
 , AnimationKind = AnimationKind
--- , allDirections = allDirections
+, Reactivity    = Reactivity
 }

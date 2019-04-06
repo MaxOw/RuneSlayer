@@ -10,10 +10,9 @@ import Types.Entity.TileSet
 import Types.Sprite
 
 selectTile :: TileRole -> TileSet -> SpriteDesc
-selectTile r ts = case ts^.desc of
+selectTile r ts = case ts^.ff#desc of
     TileSetDesc_Custom   _ -> def
     TileSetDesc_Standard s -> selectPart s r
-    where
 
 selectPart :: SpriteDesc -> TileRole -> SpriteDesc
 selectPart s = \case
@@ -82,5 +81,4 @@ quadToRole
         | otherwise -> Just $ TileRole_OuterCorner Corner_TopLeft
     | d = Just $ TileRole_OuterCorner Corner_TopRight
     | otherwise = Nothing
-
 

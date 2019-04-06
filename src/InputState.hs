@@ -95,9 +95,9 @@ matchKeymap keyseq = do
     return $ PrefixMap.lookup (toList keyseq) km
 
 isPartialMatch :: Ord k => PrefixMap k v -> Seq k -> Bool
-isPartialMatch m s = not (null valid || PrefixMap.member slist m)
+isPartialMatch m s = not (isValid || PrefixMap.member slist m)
     where
-    valid = take 2 $ filter (isPrefixOf slist) $ PrefixMap.keys m
+    isValid = null $ take 2 $ filter (isPrefixOf slist) $ PrefixMap.keys m
     slist = toList s
 
 appendHist :: Keypress -> Game (Seq Keypress)

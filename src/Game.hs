@@ -19,7 +19,6 @@ import Types.ResourceManager
 import Types.DirectedAction
 import Types.Entity.ItemType
 import Types.Entity.Unit
-import GameState
 import EntityLike
 import WorldGen (generateWorld)
 

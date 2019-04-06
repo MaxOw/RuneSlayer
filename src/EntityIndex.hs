@@ -168,6 +168,8 @@ update handleWorldAction globalActions fct eix = do
                 i <- insert en eix
                 return $ Just $ EntityWithId i en
 
+    action = field' @"field_action"
+
     ----------------------------------------------------------------------------
     debugPrintActions = mapM_ prt . filter (noSetMoveVector . view action)
     prt x = putStrLn ((printf "%d: %s" fct (show x :: String)) :: String)

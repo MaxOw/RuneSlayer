@@ -1,6 +1,7 @@
 module Types.EntityOracle where
 
 import Delude
+import Types.Entity.Reactivity
 import Types.Equipment
 import Types.Entity.Common
 import Types.Entity.ItemType
@@ -17,6 +18,7 @@ data EntityOracle = EntityOracle
    , field_fittingSlots   :: Set EquipmentSlot
    , field_zindex         :: Maybe EntityZIndex
    , field_collisionShape :: Maybe CollisionShape
+   , field_reactivity     :: Map ReactivCategory ReactivValue
    } deriving (Generic)
 
 

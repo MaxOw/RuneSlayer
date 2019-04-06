@@ -19,10 +19,8 @@ import qualified Data.HashMap.Strict as HashMap
 import Engine (userState)
 import Types (Game)
 import Types.Entity (Entity)
--- import Types.Entity.EntityType
 import Types.Entity.Common (EntityId)
 import Types.Entity.Animation (AnimationKind)
-import Types.St
 import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction

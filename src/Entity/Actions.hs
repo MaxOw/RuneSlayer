@@ -2,13 +2,16 @@ module Entity.Actions
     ( EntityAction (..)
     -- ActOn Actions
     , setMoveVector
+    , distanceToEntity
     , toggleDebugFlag
     , handleOnUpdate
 
     -- Update Actions
     , integrateLocation
+    , moveTowards
     , updateAnimation
     , updateEffects, addEffect
+    , updateTimer, startTimer, checkTimeUp
     , separateCollision
     , addItems
     , dropAllItems
@@ -49,6 +52,7 @@ import Engine.Common.Types (BBox, bboxToRect, mkBBoxCenter)
 import Engine.Layout.Render (renderSimpleBox)
 
 import Types.Entity
+import Types.Entity.Timer
 import Types.Entity.ItemType
 import Types.Entity.Appearance
 import Types.Entity.Animation (AnimationState, EffectState, EffectKind)
@@ -59,11 +63,11 @@ import qualified EntityIndex
 import qualified Equipment
 import Types.Equipment
 import Equipment (Equipment, contentList)
+import qualified Entity.Timer as Timer
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import ResourceManager (Resources, renderSprite)
-import Types.Sprite (SpriteDesc)
 import qualified Data.Collider as Collider
 import qualified Data.Collider.Types as Collider
 
@@ -76,15 +80,25 @@ setMoveVector
     => V2D -> s -> s
 setMoveVector moveVector s = set velocity vel s
     where
-    Speed speed = view maxSpeed s
-    vel = velocityInMetersPerSecond $ normalize moveVector ^* speed
+    Speed sv = view maxSpeed s
+    vel = velocityInMetersPerSecond $ normalize moveVector ^* sv
+
+distanceToEntity
+    :: HasLocation s Location
+    => HasEntity e Entity
+    => Distance -> e -> Update s Distance
+distanceToEntity defr (view entity -> e) = do
+    loc <- use $ self.location._Wrapped
+    let tmloc = e^.oracle.location
+    return $ fromMaybe defr $
+        (Distance . distance loc . view _Wrapped <$> tmloc)
 
 toggleDebugFlag :: HasDebugFlags x EntityDebugFlags => EntityDebugFlag -> x -> x
 toggleDebugFlag = \case
-    -- EntityDebugFlag_DrawPickupRange -> flipFlag drawPickupRange
-    EntityDebugFlag_DrawPickupRange -> over (debugFlags . drawPickupRange) not
+    EntityDebugFlag_DrawPickupRange -> flipFlag drawPickupRange
     where
-    -- flipFlag f = over (debugFlags . f) not
+    flipFlag :: HasDebugFlags x f => Lens' f Bool -> (x -> x)
+    flipFlag f = over (debugFlags . f) not
 
 handleOnUpdate :: HasProcessOnUpdate s [a] => a -> s -> s
 handleOnUpdate a = over processOnUpdate (a:)
@@ -100,39 +114,43 @@ integrateLocation = do
     vel <- use (self.velocity)
     self.location %= upd defaultDelta vel
     where
-    upd (Time t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
+    upd (Duration t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
+
+moveTowards
+    :: HasLocation s Location
+    => HasVelocity s Velocity
+    => HasMaxSpeed s Speed
+    => HasEntity e Entity
+    => e -> Update s ()
+moveTowards (view entity -> e) = do
+    loc <- use $ self.location
+    let mtloc = e^.oracle.location
+    whenJust mtloc $ \tloc -> do
+        let dir = directionToTarget loc tloc
+        self %= setMoveVector dir
+    where
+    directionToTarget (Location a) (Location b) = b - a
 
 updateAnimation
-    :: HasVelocity       s Velocity
-    => HasAnimationState s AnimationState
+    :: HasVelocity           s Velocity
+    => HasAnimationState     s AnimationState
+    => HasAnimateWhenStopped s Bool
     => Update s ()
 updateAnimation = do
     vel <- use $ self.velocity._Wrapped
     a <- use $ self.animationState
+    dontStop <- use $ self.animateWhenStopped
     when (a^.current.kind == Animation.Walk) $
-        if (norm vel == 0)
+        if (norm vel == 0 && not dontStop)
         then self.animationState.progression .= Animation.Stopped
         else do
             self.animationState.progression       .= Animation.Cycle
             self.animationState.current.direction %= Animation.vecToDir vel
     self.animationState %= Animation.update defaultDelta
 
-    {-
-    let Time t = defaultDelta
-    d <- use $ self.animation.current.direction
-    let animationSpeed = -- 1 --  0.01
-            if d == Animation.North || d == Animation.South then 1.6 else 1.2
-    let upd x = if x > 1 then x - 1 else x
-    let eraChange = n * t * animationSpeed
-    self.animation.current.direction %= Animation.vecToDir vel
-    self.animation.current.era       %= upd . (+eraChange)
-    when (n == 0) $
-        self.animation.current.era .= 0
-    -}
-
 updateEffects
     :: HasEffects s [EffectState]
-    => Time -> Update s ()
+    => Duration -> Update s ()
 updateEffects delta = self.effects %= mapMaybe (\x -> (x^.effectUpdate) delta x)
 
 addEffect
@@ -143,9 +161,26 @@ addEffect k = case k of
     where
     hitUpdate dt s = endByEra dt $ s
     endByEra dt s
-        | ss^.era >= s^.duration = Nothing
-        | otherwise              = Just ss
+        | ss^.era >= s^.duration._Wrapped = Nothing
+        | otherwise                       = Just ss
         where ss = s & era +~ (dt^._Wrapped)
+
+updateTimer
+    :: HasTimer s Timer
+    => Update s ()
+updateTimer = self.timer %= Timer.update defaultDelta
+
+startTimer
+    :: HasTimer s Timer
+    => TimerType -> Duration -> Update s ()
+startTimer tt d = self.timer %= Timer.start tt d
+
+checkTimeUp
+    :: HasTimer s Timer
+    => TimerType -> Update s Bool
+checkTimeUp tt = do
+    d <- uses (self.timer) (Timer.lookup tt)
+    return (d <= 0)
 
 separateCollision
     :: HasLocation s Location

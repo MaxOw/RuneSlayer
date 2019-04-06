@@ -6,7 +6,6 @@ import Engine.Common.Types (mkBBoxCenter)
 import Types
 import Types.Entity
 import Types.Entity.Common
-import Types.GameState
 import Equipment (EquipmentSlot(..), contentList)
 import qualified Equipment
 import EntityIndex

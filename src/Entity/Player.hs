@@ -22,16 +22,17 @@ import qualified Entity.Animation as Animation
 --------------------------------------------------------------------------------
 
 actOn :: Player -> EntityAction -> Player
-actOn x a = case a of
-    EntityAction_ToggleDebug       f -> toggleDebugFlag  f x
-    EntityAction_DebugRunAnimation k -> setAnimationKind k x
-    EntityAction_SetMoveVector     v -> setMoveVector    v x
-    EntityAction_DropAllItems        -> handleOnUpdate   a x
-    EntityAction_AddItem           _ -> handleOnUpdate   a x
-    EntityAction_DropItem          _ -> handleOnUpdate   a x
-    EntityAction_OwnerDropItem     _ -> handleOnUpdate   a x
-    EntityAction_ExecuteAttack       -> handleOnUpdate   a x
-    _ -> x
+actOn x a = x & case a of
+    EntityAction_ToggleDebug       f -> toggleDebugFlag  f
+    EntityAction_DebugRunAnimation k -> setAnimationKind k
+    EntityAction_SetMoveVector     v -> setMoveVector    v
+    EntityAction_DropAllItems        -> handleOnUpdate   a
+    EntityAction_AddItem           _ -> handleOnUpdate   a
+    EntityAction_DropItem          _ -> handleOnUpdate   a
+    EntityAction_OwnerDropItem     _ -> handleOnUpdate   a
+    EntityAction_ExecuteAttack       -> handleOnUpdate   a
+    EntityAction_SelfAttacked      _ -> handleOnUpdate   a
+    _ -> id
     where
     setAnimationKind k _ = x
         & animationState.current.kind .~ k
@@ -42,13 +43,22 @@ update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_ExecuteAttack executeAttack
     updateAnimation
+    updateEffects defaultDelta
     playerIntegrateLocation
     separateCollision
     autoTarget
-    whenMatch _EntityAction_AddItem  addItems
+    whenMatch _EntityAction_AddItem      addItems
     whenMatch _EntityAction_DropAllItems dropAllItems
+    anyMatch  _EntityAction_SelfAttacked procAttacked
     mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
+
+procAttacked :: NonEmpty AttackPower -> Update Player ()
+procAttacked as = do
+    ds <- mapM applyDefence as
+    mapM_ (addEffect . Animation.HitEffect) ds
+    where
+    applyDefence     x = return x
 
 executeAttack :: Update Player ()
 executeAttack = do
@@ -61,16 +71,18 @@ executeAttack = do
 
 executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
 executeAttackAt targetEntity vectorToTarget = do
-    -- TODO: Choose attack animation based on weapon
-    -- TODO: Only execute attack if dist is withing weapon range
-    -- let dist = norm vectorToTarget
-    self.animationState.current.direction %= Animation.vecToDir vectorToTarget
-    self.animationState.current.kind .= Animation.Slash
-    self.animationState.current.era  .= 0
-    self.animationState.progression  .= Animation.defaultTransition
+    -- attackRange <- use $ self.ff#attackRange
+    let attackRange = Distance 2
+    dist <- distanceToEntity attackRange targetEntity
+    when (dist < attackRange) $ do
+        -- TODO: Choose attack animation based on weapon
+        self.animationState.current.direction %= Animation.vecToDir vectorToTarget
+        self.animationState.current.kind .= Animation.Slash
+        self.animationState.current.era  .= 0
+        self.animationState.progression  .= Animation.defaultTransition
 
-    let attackPower = AttackPower 1 -- TODO: Calculate attack power
-    addAction targetEntity $ EntityAction_SelfAttacked attackPower
+        let attackPower = AttackPower 1 -- TODO: Calculate attack power
+        addAction targetEntity $ EntityAction_SelfAttacked attackPower
 
 playerIntegrateLocation :: Update Player ()
 playerIntegrateLocation = do
@@ -105,7 +117,9 @@ processAction = \case
 render :: Player -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
-    , renderBody
+    , translateY 0.8 $ renderComposition
+        [ renderBody
+        , renderEffects x ]
     ]
     where
     renderDebug = renderComposition $ localDebug <> globalDebug
@@ -135,6 +149,7 @@ thisOracle x = def
    & location       .~ Just (x^.location)
    & equipment      .~ Just (x^.equipment)
    & collisionShape .~ (locate x <$> x^.collisionShape)
+   & reactivity     .~ (x^.reactivity)
 
 --------------------------------------------------------------------------------
 
@@ -151,6 +166,7 @@ playerToEntity = makeEntity $ EntityParts
 makePlayer :: Resources -> PlayerInit -> Player
 makePlayer rs p = def
     & bodyAnimation .~ as
+    & reactivity    .~ (p^.reactivity)
     where
     as = mconcat $ map (Animation.makeAnimation rs)
        $ mapMaybe (flip lookupAnimation rs) (p^.body)

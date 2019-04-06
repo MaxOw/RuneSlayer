@@ -47,11 +47,11 @@ instance Show Location where
     show (Location (V2 x y)) = printf "(Location x=%.2f y=%.2f)" x y
 
 newtype Distance = Distance { unDistance :: Float }
-    deriving (Generic, Default, Show)
+    deriving (Generic, Default, Show, Eq, Ord, ToJSON, FromJSON)
 makeWrapped ''Distance
 
 newtype Velocity = Velocity { unVelocity :: V2D    }
-    deriving (Generic, Default, Show)
+    deriving (Generic, Default, Show, Num)
 makeWrapped ''Velocity
 
 newtype Health   = Health   { unHealth   :: Int    }
@@ -59,20 +59,24 @@ newtype Health   = Health   { unHealth   :: Int    }
 makeWrapped ''Health
 
 newtype AttackPower = AttackPower { unAttackPower :: Int    }
-    deriving (Generic, Default, Show)
+    deriving (Generic, Default, Show, ToJSON, FromJSON)
 makeWrapped ''AttackPower
 
 newtype Speed    = Speed    { unSpeed    :: Float }
-    deriving (Generic, Default, Show)
+    deriving (Generic, Default, Show, ToJSON, FromJSON)
 makeWrapped ''Speed
 
 newtype Volume   = Volume   { unVolume   :: Float }
     deriving (Generic, Default, Show, Num, Eq, Ord, ToJSON, FromJSON)
 makeWrapped ''Volume
 
-newtype Time     = Time     { unTime     :: Float }
-makeWrapped ''Time
+-- newtype Time     = Time Float
+-- makeWrapped ''Time
     -- deriving (Generic, Default, Show)
+
+newtype Duration = Duration Float
+    deriving (Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
+makeWrapped ''Duration
 
 --------------------------------------------------------------------------------
 
@@ -102,10 +106,10 @@ locationInMeters = Location
 velocityInMetersPerSecond :: V2D -> Velocity
 velocityInMetersPerSecond = Velocity
 
-timeInSeconds :: Float -> Time
-timeInSeconds = Time
+timeInSeconds :: Float -> Duration
+timeInSeconds = Duration
 
-defaultDelta :: Time
+defaultDelta :: Duration
 defaultDelta = timeInSeconds 0.01 -- 10ms = 0.01s
 
 type family   Delta a :: *

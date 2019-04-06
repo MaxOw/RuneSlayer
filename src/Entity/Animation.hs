@@ -58,7 +58,7 @@ makeCustomAnimation rs ps = Animation $ maybe mempty (renderSprite rs) . amap
     selectFrame t = select t 0 . normalizeFrames
 
     select _ _ []     = Nothing
-    select t d (f:fs) = let d' = d + f^.duration in if t < d'
+    select t d (f:fs) = let d' = d + f^.duration in if Duration t < d'
         then Just (f^.sprite)
         else select t d' fs
 
@@ -104,8 +104,8 @@ eraToFrame a = floor $ (kindFrameCount $ a^.kind) * (a^.era)
 defaultTransition :: AnimationProgression
 defaultTransition = TransitionInto Walk Stopped
 
-update :: Time -> AnimationState -> AnimationState
-update (Time delta) a
+update :: Duration -> AnimationState -> AnimationState
+update (Duration delta) a
     | newEra >= 1 = progressKind (a^.progression) $ a & current.era .~ newEra-1
     | otherwise   = a & current.era .~ newEra
     where
@@ -120,7 +120,7 @@ update (Time delta) a
         Cycle   -> id
         TransitionInto k p -> set (current.kind) k . set progression p
 
-type EffectUpdate = Time -> EffectState -> Maybe EffectState
+type EffectUpdate = Duration -> EffectState -> Maybe EffectState
 makeEffect :: EffectKind -> EffectUpdate -> EffectState
 makeEffect k f = EffectState
    { field_effectUpdate = f

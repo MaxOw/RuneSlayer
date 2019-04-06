@@ -7,6 +7,7 @@ let defaultBody =
   ]
 
 in
-{ body = defaultBody
-
+{ body        = defaultBody
+, reactivity  = { Life = 0.1 }
+, attackRange = 2.0
 }

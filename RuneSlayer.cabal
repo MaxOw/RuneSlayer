@@ -46,6 +46,7 @@ Executable RuneSlayer
     DataKinds
     ConstraintKinds
     DuplicateRecordFields
+    OverloadedLabels
 
     StrictData
 

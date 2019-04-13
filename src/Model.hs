@@ -16,12 +16,15 @@ import InputState
 --------------------------------------------------------------------------------
 
 integrate :: Integrator
-integrate _time = do -- getMenuState >>= \case
+integrate _time = unlessDebugMode $ do -- getMenuState >>= \case
     updateGameState
     preformActiveActions
     zoomGameState $ frameCount += 1
 
 --------------------------------------------------------------------------------
+
+unlessDebugMode :: Game () -> Game ()
+unlessDebugMode = whenNothingM_ (use $ userState.config.debugMode)
 
 preformActiveActions :: Game ()
 preformActiveActions = do

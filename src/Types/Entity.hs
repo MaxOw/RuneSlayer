@@ -18,21 +18,16 @@ import Types.EntityOracle   as All
 import Types.EntitySum      as All
 import Engine (RenderAction (..))
 import Engine.Common.Types (BBox)
-import Data.VectorIndex (VectorIndex)
 
 import Types.ResourceManager (Resources)
-import Types.Entity.Common (EntityId, EntityKind) -- , Location)
-import Data.SpatialIndex (SpatialIndex)
-import Data.FullMap (FullMap)
+import Types.Entity.Common as All (EntityId, EntityWithIdT(..), EntityKind)
+
+import Types.EntityIndex as All
 
 --------------------------------------------------------------------------------
 
-data EntityWithId = EntityWithId
-   { field_entityId :: EntityId
-   , field_entity   :: Entity
-   } deriving (Generic)
-instance HasEntityId EntityWithId EntityId
-instance HasEntity   EntityWithId Entity
+type EntityWithId = EntityWithIdT Entity
+type EntityIndex  = EntityIndexT Entity
 
 -- EntityIndex Query Monad
 newtype Q a = Q { unQ :: IO a } deriving (Functor, Applicative, Monad)
@@ -45,14 +40,6 @@ instance MonadQ (Lazy.StateT us IO) where liftQ = runQ
 instance MonadQ (StateT us Q) where liftQ = lift
 
 type RangeBBox = BBox Float
-data EntityIndex = EntityIndex
-   { field_lastId              :: IORef (Maybe EntityId)
-   , field_entities            :: VectorIndex EntityWithId
-
-   , field_dynamicIndex        :: IORef (HashSet EntityId)
-   , field_activatedList       :: IORef [EntityId]
-   , field_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
-   } deriving (Generic)
 
 data EntityContext = EntityContext
    { field_entities   :: EntityIndex

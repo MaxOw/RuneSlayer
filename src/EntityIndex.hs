@@ -20,20 +20,20 @@ import Types.Entity.Common (EntityId (..), EntityKind (..))
 import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex
-import Data.GridIndex.Types
 import qualified Data.FullMap as FullMap
 import Types.ResourceManager (Resources)
 
 --------------------------------------------------------------------------------
 
-new :: MonadIO m => m EntityIndex
-new = do
+new :: MonadIO m => EntityIndexConfig -> m EntityIndex
+new conf = do
+    let maxSizeDim = fromMaybe 1 $ maximumOf traverse $ conf^.size
     v <- VectorIndex.new
     let g = def
-          & gridSize .~ pure 30
-          & cellSize .~ pure 2
+          & ff#gridSize .~ (floor <$> conf^.size)
+          & ff#cellSize .~ pure 2
     let qt = def
-          & size          .~ 30
+          & size          .~ maxSizeDim
           & minCellSize   .~ 2
           & maxBucketSize .~ 4
     sTile    <- SpatialIndex.createGrid g

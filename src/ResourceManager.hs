@@ -1,5 +1,5 @@
 module ResourceManager
-    ( Resources
+    ( Resources, imgMap
     , SpriteDesc
     , lookupImg
     , lookupSprite
@@ -20,10 +20,10 @@ import Types.Entity.StaticEntity
 import qualified Data.HashMap.Strict as HashMap
 
 lookupImg :: FilePath -> Resources -> Maybe Img
-lookupImg p = HashMap.lookup (fromString p) . view resourceMap
+lookupImg p = HashMap.lookup (fromString p) . view imgMap
 
 lookupSprite :: SpriteDesc -> Resources -> Maybe Img
-lookupSprite r = fmap f . HashMap.lookup (r^.path) . view resourceMap
+lookupSprite r = fmap f . HashMap.lookup (r^.path) . view imgMap
     where
     f = set part (view part r)
 

@@ -10,7 +10,7 @@ import Types.Entity.Item
 import Types.Entity.Unit
 
 data Resources = Resources
-   { field_resourceMap   :: HashMap Text Img
+   { field_imgMap        :: HashMap Text Img
    , field_spriteMap     :: HashMap Text SpriteDesc
    , field_staticMap     :: HashMap StaticEntityTypeName StaticEntityType
    , field_tileSetMap    :: HashMap TileSetName TileSet
@@ -21,4 +21,6 @@ data Resources = Resources
 instance Default Resources
 instance HasResources Resources Resources where resources = id
 
+imgMap :: Lens' Resources (HashMap Text Img)
+imgMap = ff#imgMap
 

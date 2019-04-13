@@ -6,8 +6,11 @@ module Types.St
 
 import Delude
 
+import Engine (RenderAction)
 import Engine.Graphics.Scroller.Types (Scroller)
 
+import Types.Config (Config)
+import Types.Entity (EntityIndex)
 import Types.MenuState
 import Types.InputState
 import Types.GameState
@@ -21,13 +24,15 @@ data St = St
    , field_gameState  :: GameState
    , field_scroller   :: Scroller
    , field_debugFlags :: Set DebugFlag
+   , field_overview   :: RenderAction
+   , field_config     :: Config
    } deriving (Generic)
 instance HasResources St Resources
 
 
-defaultSt :: MonadIO m => Scroller -> m St
-defaultSt scro = do
-    gs <- defaultGameState
+defaultSt :: MonadIO m => EntityIndex -> Scroller -> m St
+defaultSt eix scro = do
+    gs <- defaultGameState eix
     return $ St
         { field_resources  = def
         , field_inputState = def
@@ -35,6 +40,7 @@ defaultSt scro = do
         , field_menuState  = def
         , field_scroller   = scro
         , field_debugFlags = def
+        , field_overview   = mempty
+        , field_config     = def
         }
-
 

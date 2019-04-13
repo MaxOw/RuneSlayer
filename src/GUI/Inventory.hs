@@ -15,7 +15,6 @@ import Types.Entity
 import Types.InputState
 import Focus
 
-import Types.Entity.Common
 import Types.Equipment
 import qualified GUI.Style as Style
 import GUI.Common

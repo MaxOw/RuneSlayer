@@ -7,11 +7,13 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
 import Engine.Graphics.Utils (delObject)
 import Graphics.GL (glDeleteTextures)
-import Engine (Img, userState, texture)
+import Engine (RenderAction, Img, userState, texture)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
+import qualified Diagrams.TwoD.Transform as T
 import Engine.Types (Engine)
 import Engine.Common.Types
 import Engine.Graphics.Scroller (newScroller)
+import Types.Config
 import Types.St
 import Types.Entity.Common
 import Entity.Player (makePlayer)
@@ -20,7 +22,7 @@ import Types.DirectedAction
 import Types.Entity.Item
 import Types.Entity.Unit
 import EntityLike
-import WorldGen (generateWorld)
+import WorldGen
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
 
@@ -32,48 +34,69 @@ import Dhall.Utils (dhallToMap, loadDhall)
 
 initSt :: Engine () St
 initSt = do
+    conf <- loadDhall @_ @Config "" "Config.dhall"
+
+    let worldSize = Size 100 100
     scro <- newScroller $ def
-    st <- defaultSt scro
+    eix <- EntityIndex.new $ def & size .~ worldSize
+    st <- defaultSt eix scro
+
     loadFontFamily "Arial"
-    rs <- loadResources
+    rs <- loadResources conf
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
-    world <- generateWorld rs $ Size 30 30
-    let eix = st^.gameState.entities
-    forM_ world $ \e -> EntityIndex.insert e eix
+
+    world <- generateWorld rs $ def & size .~ worldSize
+    rnd <- makeRenderOverview world
+    whenNothing_ (conf^.debugMode) $
+        forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
+
     pli <- loadDhall "data/desc" "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
     return $ st
         & gameState.focusId .~ Just pid
         & gameState.actions .~ testInitialActions
         & resources .~ rs
+        & overview  .~ rnd
+        & config    .~ conf
     where
     playerEntity rs pli = toEntity $ makePlayer rs pli
         & location .~ locM 0 0
         & collisionShape .~ Just (Collider.circle 0 0.3)
 
-loadResources :: Engine us Resources
-loadResources = do
-    rs <- loadAllPaths
-    ss <- loadDhallMap  "Sprites.dhall"
-    se <- loadDhallList "StaticTypes.dhall"
-    ts <- loadDhallList "TileSets.dhall"
-    is <- loadDhallList "ItemTypes.dhall"
-    us <- loadDhallList "UnitTypes.dhall"
-    as <- loadDhallMap  "Animations.dhall"
-    let res = def
-            & resourceMap   .~ HashMap.fromList rs
-            & spriteMap     .~ ss
-            & staticMap     .~ buildMap se
-            & tileSetMap    .~ buildMap ts
-            & itemsMap      .~ buildMap is
-            & unitsMap      .~ buildMap us
-    let pr = fmap (Animation.makeAnimation res)
-           $ HashMap.fromList
-           $ map (over _1 AnimationName)
-           $ HashMap.toList as
-    return $ res
-        & animationsMap .~ pr
+    overview = ff#overview
+
+makeRenderOverview :: WorldGenOutput -> Engine us RenderAction
+makeRenderOverview out = case out^.overviewImage of
+    Nothing -> return mempty
+    Just oi -> do
+        img <- Engine.addImageToAtlas oi
+        return $ T.scale 4 $ Engine.renderImg img
+
+loadResources :: Config -> Engine us Resources
+loadResources conf = case conf^.debugMode of
+    Just _m -> return def
+    Nothing -> do
+        rs <- loadAllPaths
+        ss <- loadDhallMap  "Sprites.dhall"
+        se <- loadDhallList "StaticTypes.dhall"
+        ts <- loadDhallList "TileSets.dhall"
+        is <- loadDhallList "ItemTypes.dhall"
+        us <- loadDhallList "UnitTypes.dhall"
+        as <- loadDhallMap  "Animations.dhall"
+        let res = def
+                & imgMap        .~ HashMap.fromList rs
+                & spriteMap     .~ ss
+                & staticMap     .~ buildMap se
+                & tileSetMap    .~ buildMap ts
+                & itemsMap      .~ buildMap is
+                & unitsMap      .~ buildMap us
+        let pr = fmap (Animation.makeAnimation res)
+               $ HashMap.fromList
+               $ map (over _1 AnimationName)
+               $ HashMap.toList as
+        return $ res
+            & animationsMap .~ pr
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
@@ -91,7 +114,7 @@ loadDhallMap = liftIO . dhallToMap "data/desc"
 
 endSt :: Engine St ()
 endSt = do
-    rs <- uses (userState.resources.resourceMap) HashMap.elems
+    rs <- uses (userState.resources.imgMap) HashMap.elems
     mapM_ (delObject glDeleteTextures . view texture) rs
 
 loadResource :: Text -> Engine us (Maybe (Text, Img))

@@ -13,6 +13,7 @@ import Graphics.GL
 import Types (Graphics, Renderer)
 import Types.Entity.Common
 import Types.Entity
+import Types.Config
 import Types.St
 import Types.MenuState
 import Types.Debug
@@ -30,18 +31,18 @@ import Engine.Graphics
 import Engine.Common.Types
 import Engine.Graphics.Scroller (updateScroller, makeRenderScroller)
 
--- import qualified Resource
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
--- import Resource (Resource)
 -- import ResourceManager (lookupResource, ResourceMap)
 
 --------------------------------------------------------------------------------
 
 renderView :: Renderer
-renderView delta st = case st^.menuState of
-    MainMenu -> renderMainMenu delta st
-    InGame   -> renderGame     delta st
+renderView delta st = case st^.config.debugMode of
+    Just dm -> renderDebugMode dm delta st
+    Nothing -> case st^.menuState of
+        MainMenu -> renderMainMenu delta st
+        InGame   -> renderGame     delta st
 
 renderMainMenu :: Renderer
 renderMainMenu delta st = do
@@ -86,6 +87,7 @@ renderGame _delta st = do
             , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
+        , setZIndexAtLeast 20000 $ st^.ff#overview
         ]
 
     whenJustM focusEntity $ \_ -> do
@@ -94,6 +96,25 @@ renderGame _delta st = do
         Engine.draw menuProjM =<< makeRenderLayout =<< gameMenuLayout
 
     Engine.swapBuffers
+
+--------------------------------------------------------------------------------
+-- Debug Render Modes
+
+renderDebugMode :: DebugMode -> Renderer
+renderDebugMode dm delta st = case dm of
+    DebugMode_WorldGen -> renderWorldGen delta st
+    DebugMode_Nothing  -> return ()
+
+renderWorldGen :: Renderer
+renderWorldGen _delta st = do
+    renderSetup
+
+    projM <- orthoProjection $ def
+    Engine.draw projM $ st^.ff#overview
+
+    Engine.swapBuffers
+
+--------------------------------------------------------------------------------
 
 renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  x = x

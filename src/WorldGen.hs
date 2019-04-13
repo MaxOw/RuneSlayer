@@ -1,9 +1,12 @@
 {-# Language DeriveFunctor #-}
-module WorldGen where
+module WorldGen
+    ( WorldGenConfig, WorldGenOutput
+    , overviewImage
+    , generateWorld
+    ) where
 
 import Delude
-import qualified Relude.Extra.Enum as Enum
-import Data.Vector (Vector)
+-- import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import Engine.Types (Engine)
 import Engine.Common.Types
@@ -20,20 +23,24 @@ import qualified Entity.TileSet as TileSet
 
 --------------------------------------------------------------------------------
 
-import Data.Array.Repa (Array, U, D, DIM2, Z(..), (:.)(..), Source)
+import Data.Array.Repa (Array, D, DIM2, Z(..), (:.)(..), Source)
 import Data.Array.Repa.Repr.Vector (V)
 -- import Data.Array.Repa.Repr.Unboxed (Unbox)
 import qualified Data.Array.Repa.Algorithms.Randomish as Repa
 import qualified Data.Array.Repa as Repa
 import qualified Data.Array.Repa.Specialised.Dim2 as Repa
+-- import qualified Data.Array.Repa.Repr.ForeignPtr as Repa
+-- import qualified Data.Vector.Storable as F
+
+import Types.WorldGen
+import WorldGen.Utils
 
 --------------------------------------------------------------------------------
 
-generateWorld :: Resources -> Size Float -> Engine us (Vector Entity)
-generateWorld rs worldSize = do
-    -- mapM_ print offM33
-    let Size ox oy = fmap (negate . floor) $ worldSize ^/ 2
-    let Size w  h  = fmap floor worldSize
+generateWorld :: Resources -> WorldGenConfig -> Engine us WorldGenOutput
+generateWorld rs conf = do
+    let Size ox oy = fmap (negate . floor) $ conf^.size ^/ 2
+    let Size w  h  = fmap floor $ conf^.size
     -- let ps = [V2 (ox+x) (oy+y) | x <- [0..w], y <- [0..h]]
     -- return $ Vector.fromList $ map mkGrass ps
     -- return $ Vector.fromList $ catMaybes $ zipWith mkRole ps allRoles
@@ -42,16 +49,22 @@ generateWorld rs worldSize = do
     let pp = V2 ox oy
     let dirtTileSet  = lookupTileSet (TileSetName "Dry Dirt") rs
     let grassTileSet = lookupTileSet (TileSetName "Water")    rs
+    let seed = 11 -- 18
+    let repaWorldSize = (Z :. w :. h)
+    -- let boolMap = rndBool seed 2 repaWorldSize
+    let boolMap = Repa.fromFunction repaWorldSize $ boolCircle 30 0 repaWorldSize
+    let mapImg = imgToImage $ boolToImg boolMap
+    let roleList = boolToRoleList boolMap
     let tiles = case (dirtTileSet, grassTileSet) of
-            (Just dts, Just gts) ->
-                concatMap (mkRoleL dts gts pp) $ rndRoleGrid 18 (V2 w h)
+            (Just dts, Just gts) -> concatMap (mkRoleL dts gts pp) roleList
             _ -> []
-    -- let se = testStaticEntityType_tree
     let mse = lookupStaticEntity (StaticEntityTypeName "Tree") rs
     let trees = case mse of
             Nothing -> []
-            Just se -> map (placeStatic se pp) $ rndTreeGrid 18 (V2 w h)
-    return $ Vector.fromList $ tiles <> trees
+            Just se -> map (placeStatic se pp) $ rndTreeGrid seed (V2 w h)
+    return $ def
+        & entities      .~ Vector.fromList (tiles <> trees)
+        & overviewImage .~ Just mapImg
 
 --------------------------------------------------------------------------------
 
@@ -61,14 +74,11 @@ rndBool seed rng sh = intToBool $ Repa.randomishIntArray sh 0 rng seed
 intToBool :: Source x Int => Array x DIM2 Int -> Array D DIM2 Bool
 intToBool = Repa.map (== 0)
 
-testArray :: Array U DIM2 Bool
-testArray = Repa.fromListUnboxed (Z :. 3 :. 3) $ replicate (3*3) False
-
-rndRoleGrid :: Int -> V2 Int -> [(V2 Int, [TileRole])]
-rndRoleGrid seed (V2 x y) = Repa.toList imtr
+boolToRoleList :: RepaBool -> [(V2 Int, [TileRole])]
+boolToRoleList bm = Repa.toList imtr
     where
     imtr :: Array V DIM2 (V2 Int, [TileRole])
-    imtr = Repa.computeS $ makeRoleGrid $ rndBool seed 2 (Z :. x :. y)
+    imtr = Repa.computeS $ makeRoleGrid bm
 
 rndTreeGrid :: Int -> V2 Int -> [V2 Int]
 rndTreeGrid seed (V2 x y) = map fst $ filter snd $ Repa.toList imtr

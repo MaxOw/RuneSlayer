@@ -28,12 +28,19 @@ data EntityId = EntityId
    , field_offset :: Int
    } deriving (Eq, Ord, Generic)
 instance Hashable EntityId
-
-
 instance HasEntityId EntityId EntityId where entityId = id
 
 instance Show EntityId where
     show (EntityId x _) = "EID:" <> show x
+
+data EntityWithIdT a = EntityWithId
+   { field_entityId :: EntityId
+   , field_entity   :: a
+   } deriving (Generic)
+instance HasEntityId (EntityWithIdT a) EntityId
+instance HasEntity   (EntityWithIdT a) a
+
+--------------------------------------------------------------------------------
 
 type V2D = V2 Float
 

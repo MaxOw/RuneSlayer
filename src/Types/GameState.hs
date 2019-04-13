@@ -5,7 +5,6 @@ import qualified Control.Monad.Trans.State.Lazy as Lazy
 import Types.Entity.Common (EntityId)
 import Types.Entity (EntityIndex)
 import Types.DirectedAction (DirectedAction)
-import qualified EntityIndex
 
 data GameState = GameState
    { field_entities       :: EntityIndex
@@ -20,9 +19,8 @@ data GameState = GameState
 
 type GameStateM = Lazy.StateT GameState IO
 
-defaultGameState :: MonadIO m => m GameState
-defaultGameState = do
-    eix <- EntityIndex.new
+defaultGameState :: MonadIO m => EntityIndex -> m GameState
+defaultGameState eix = do
     return $ GameState
         { field_entities       = eix
         , field_actions        = []

@@ -16,15 +16,16 @@ Requirements for first release: v0.1
 ## Game/Gameplay
 
 * Load entity types from files (Json/Dhall)                                  [X]
-  - Declare/load static types via Dhall                                      [X]
-  - Declare/load item types via Dhall                                        [X]
-  - Declare/load unit types via Dhall                                        [X]
-  - Declare/load player init file via Dhall                                  [X]
+  - Declare/load static types via Dhall                                      (#)
+  - Declare/load item types via Dhall                                        (#)
+  - Declare/load unit types via Dhall                                        (#)
+  - Declare/load player init file via Dhall                                  (#)
+
 * Load resource files. (Json/Dhall)                                          [X]
-  - Declare/load paths via Dhall                                             [X]
-  - Declare/load sprites via Dhall                                           [X]
-  - Declare/load animations via Dhall                                        [X]
-  - Declare/load tile sets via Dhall                                         [X]
+  - Declare/load paths via Dhall                                             (#)
+  - Declare/load sprites via Dhall                                           (#)
+  - Declare/load animations via Dhall                                        (#)
+  - Declare/load tile sets via Dhall                                         (#)
 
 * Save/Load map description. (What format?)                                  [ ]
 
@@ -33,6 +34,11 @@ Requirements for first release: v0.1
 * Named entity types                                                         [X]
 * Enemy unit go towards & attack player.                                     [X]
 * Render equipped items.                                                     [X]
+
+* Proper world generator.                                                    [ ]
+  - Add WorldGen debug mode.                                                 (#)
+  - Make world gen reloading fast.                                           (#)
+  - Add WorldGen.dhall watcher/reloader                                      ( )
 
 * Offensive skill.                                                           [ ]
 * Defensive skill.                                                           [ ]

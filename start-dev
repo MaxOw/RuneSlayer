@@ -1,1 +1,2 @@
-ghcid -W --test 'main' --command "cabal repl --ghc-options '-fobject-code -O2'"
+ghcid -W --test 'main'
+# ghcid -W --test 'main' --command "cabal repl --ghc-options '-fobject-code -O2'"

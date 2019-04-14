@@ -87,7 +87,7 @@ renderGame _delta st = do
             , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
-        , setZIndexAtLeast 20000 $ st^.ff#overview
+        -- , setZIndexAtLeast 20000 $ st^.ff#overview
         ]
 
     whenJustM focusEntity $ \_ -> do

@@ -49,10 +49,9 @@ generateWorld rs conf = do
     let pp = V2 ox oy
     let dirtTileSet  = lookupTileSet (TileSetName "Dry Dirt") rs
     let grassTileSet = lookupTileSet (TileSetName "Water")    rs
-    let seed = 11 -- 18
-    let repaWorldSize = (Z :. w :. h)
+    let seed = conf^.ff#seed
     -- let boolMap = rndBool seed 2 repaWorldSize
-    let boolMap = Repa.fromFunction repaWorldSize $ boolCircle 30 0 repaWorldSize
+    let boolMap = generateLandmass conf
     let mapImg = imgToImage $ boolToImg boolMap
     let roleList = boolToRoleList boolMap
     let tiles = case (dirtTileSet, grassTileSet) of
@@ -66,13 +65,24 @@ generateWorld rs conf = do
         & entities      .~ Vector.fromList (tiles <> trees)
         & overviewImage .~ Just mapImg
 
+generateLandmass :: WorldGenConfig -> RepaBool
+generateLandmass conf
+    -- = simplePerlinNoise sh
+    = Repa.zipWith (&&)
+    (circleCutoff sh $ Repa.zipWith (*)
+        (simplePerlinNoise (conf^.ff#seed) sh)
+        (simplePerlinNoise (conf^.ff#seed+1) sh))
+    (circleCutoff sh $ simplePerlinNoise (conf^.ff#seed+3) sh)
+    {-
+    = Repa.zipWith (||)
+    (boolCircle 20 0 sh)
+    (rndBoolCircle (conf^.ff#seed) 1 30 0 sh)
+    -}
+    where
+    sh = (Z :. w :. h)
+    Size w h = fmap floor $ conf^.size
+
 --------------------------------------------------------------------------------
-
-rndBool :: Int -> Int -> DIM2 -> Array D DIM2 Bool
-rndBool seed rng sh = intToBool $ Repa.randomishIntArray sh 0 rng seed
-
-intToBool :: Source x Int => Array x DIM2 Int -> Array D DIM2 Bool
-intToBool = Repa.map (== 0)
 
 boolToRoleList :: RepaBool -> [(V2 Int, [TileRole])]
 boolToRoleList bm = Repa.toList imtr

@@ -9,6 +9,7 @@ import Codec.Picture (DynamicImage)
 
 data WorldGenConfig = WorldGenConfig
    { field_size          :: Size Float
+   , field_seed          :: Int
    } deriving (Generic)
 
 data WorldGenOutput = WorldGenOutput
@@ -24,6 +25,7 @@ overviewImage = ff#overviewImage
 instance Default WorldGenConfig where
     def = WorldGenConfig
         { field_size = pure 100
+        , field_seed = 29
         }
 
 instance Default WorldGenOutput

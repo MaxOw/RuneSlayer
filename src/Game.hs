@@ -36,7 +36,7 @@ initSt :: Engine () St
 initSt = do
     conf <- loadDhall @_ @Config "" "Config.dhall"
 
-    let worldSize = Size 100 100
+    let worldSize = Size 200 200
     scro <- newScroller $ def
     eix <- EntityIndex.new $ def & size .~ worldSize
     st <- defaultSt eix scro

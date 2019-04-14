@@ -13,6 +13,8 @@ import qualified Data.Vector.Unboxed as Vector
 
 type RandomST a = forall s. MWC.GenST s -> ST s a
 
+-- type RandomST a = ReaderT (ST s
+
 {-
 pureRandomSeed :: MWC.Seed
 pureRandomSeed = runST $ MWC.save =<< MWC.create
@@ -30,6 +32,9 @@ withRandomSeed f = do
 
 randomFromSeed :: [Word32] -> RandomST a -> a
 randomFromSeed s f = runST $ f =<< MWC.initialize (Vector.fromList s)
+
+runRandom :: Int -> RandomST a -> a
+runRandom s = randomFromSeed [fromIntegral s]
 
 uniformRange :: MWC.Variate a => (a,a) -> RandomST a
 uniformRange = MWC.uniformR

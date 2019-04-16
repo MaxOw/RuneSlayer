@@ -24,9 +24,11 @@ update x _ = return (Just x, [])
 render :: Tile -> RenderContext -> RenderAction
 render x ctx
     = withZIndex x $ locate x
-    $ renderSprite rs $ selectTile (x^.role) (x^.tileSet)
+    $ renderSprite rs $ selectTile rndSeed (x^.role) (x^.tileSet)
     where
     rs = ctx^.resources
+    loc = x^.location._Wrapped
+    rndSeed = (floor $ loc^._x+10000) + (floor $ loc^._y+10000) * 1234
 
 oracle :: Tile -> EntityOracle
 oracle x = def

@@ -11,9 +11,12 @@ import qualified Data.Vector.Unboxed as Vector
 
 --------------------------------------------------------------------------------
 
-type RandomST a = forall s. MWC.GenST s -> ST s a
+-- type RandomST a = forall s. MWC.GenST s -> ST s a
 
--- type RandomST a = ReaderT (ST s
+type RandomST a = forall s. ReaderT (MWC.GenST s) (ST s) a
+
+liftRandom :: (forall s. MWC.GenST s -> ST s a) -> RandomST a
+liftRandom = ReaderT
 
 {-
 pureRandomSeed :: MWC.Seed
@@ -31,16 +34,27 @@ withRandomSeed f = do
 -}
 
 randomFromSeed :: [Word32] -> RandomST a -> a
-randomFromSeed s f = runST $ f =<< MWC.initialize (Vector.fromList s)
+randomFromSeed s f = runST $ do
+    runReaderT (do {_ <- uniform :: RandomST Int; f})
+    =<< MWC.initialize (Vector.fromList s)
 
 runRandom :: Int -> RandomST a -> a
 runRandom s = randomFromSeed [fromIntegral s]
 
+uniform :: MWC.Variate a => RandomST a
+uniform = ReaderT MWC.uniform
+
 uniformRange :: MWC.Variate a => (a,a) -> RandomST a
-uniformRange = MWC.uniformR
+uniformRange r = ReaderT $ \gen -> MWC.uniformR r gen
 
 randomDirection :: RandomST V2D
-randomDirection gen = do
-    r <- MWC.uniform gen
+randomDirection = do
+    r <- ReaderT MWC.uniform
     return $ rotate (r @@ turn) unitX
+
+randomListSelect :: [a] -> RandomST (Maybe a)
+randomListSelect ls = do
+    let l = length ls
+    r <- uniformRange (0, l-1)
+    return $ viaNonEmpty head $ drop r ls
 

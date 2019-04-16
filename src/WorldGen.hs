@@ -41,29 +41,31 @@ generateWorld :: Resources -> WorldGenConfig -> Engine us WorldGenOutput
 generateWorld rs conf = do
     let Size ox oy = fmap (negate . floor) $ conf^.size ^/ 2
     let Size w  h  = fmap floor $ conf^.size
-    -- let ps = [V2 (ox+x) (oy+y) | x <- [0..w], y <- [0..h]]
-    -- return $ Vector.fromList $ map mkGrass ps
-    -- return $ Vector.fromList $ catMaybes $ zipWith mkRole ps allRoles
-    -- return $ Vector.fromList $ take 10 $ zipWith mkBool ps $ cycle [True, False]
-    -- return $ Vector.fromList $ concat $ take 51 $ zipWith mk3x3 ps [0..]
+
+    let baseTileSet = requireTileSet rs $ conf^.ff#baseTileSet
+    let landTileSet = requireTileSet rs $ conf^.ff#baseLandTileSet
+
     let pp = V2 ox oy
-    let dirtTileSet  = lookupTileSet (TileSetName "Dry Dirt") rs
-    let grassTileSet = lookupTileSet (TileSetName "Water")    rs
+
     let seed = conf^.ff#seed
-    -- let boolMap = rndBool seed 2 repaWorldSize
     let boolMap = generateLandmass conf
-    let mapImg = imgToImage $ boolToImg boolMap
+
     let roleList = boolToRoleList boolMap
-    let tiles = case (dirtTileSet, grassTileSet) of
-            (Just dts, Just gts) -> concatMap (mkRoleL dts gts pp) roleList
-            _ -> []
+    let tiles = concatMap (mkRoleL landTileSet baseTileSet pp) roleList
+
     let mse = lookupStaticEntity (StaticEntityTypeName "Tree") rs
     let trees = case mse of
             Nothing -> []
             Just se -> map (placeStatic se pp) $ rndTreeGrid seed (V2 w h)
+
+    let mapImg = imgToImage $ boolToImg boolMap
     return $ def
         & entities      .~ Vector.fromList (tiles <> trees)
         & overviewImage .~ Just mapImg
+
+requireTileSet :: Resources -> Maybe TileSetName -> TileSet
+requireTileSet rs mn = require "Unable to load tile set."
+    $ flip lookupTileSet rs =<< mn
 
 generateLandmass :: WorldGenConfig -> RepaBool
 generateLandmass conf

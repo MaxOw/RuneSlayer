@@ -6,20 +6,19 @@ module Entity.TileSet
 
 import Delude
 import Engine.Common.Types
+import Random.Utils
+
 import Types.Entity.TileSet
 import Types.Sprite
 
-selectTile :: TileRole -> TileSet -> SpriteDesc
-selectTile r ts = case ts^.ff#desc of
+selectTile :: Int -> TileRole -> TileSet -> SpriteDesc
+selectTile rndSeed r ts = case ts^.ff#desc of
     TileSetDesc_Custom   _ -> def
-    TileSetDesc_Standard s -> selectPart s r
+    TileSetDesc_Standard s -> selectPart rndSeed s r
 
-selectPart :: SpriteDesc -> TileRole -> SpriteDesc
-selectPart s = \case
-    -- TileRole_Full           -> mkPart 0 5 -- (0-2,5) or (1,3) for random
-    TileRole_Full           -> mkPart 1 3
-    -- TileRole_Path           -> mkPart 0 0
-    -- TileRole_Hole           -> mkPart 1 3
+selectPart :: Int -> SpriteDesc -> TileRole -> SpriteDesc
+selectPart rndSeed s = \case
+    TileRole_Full           -> mkPartSelect
     TileRole_Edge        ed -> mkEdge ed
     TileRole_OuterCorner oc -> mkOuterCorner oc
     TileRole_InnerCorner ic -> mkInnerCorner ic
@@ -48,6 +47,11 @@ selectPart s = \case
         where
         p = Rect (ss *^ (V2 x y)) (pure ss)
         ss = 32
+
+    mkPartSelect
+        = uncurry mkPart $ fromMaybe (1,2)
+        $ runRandom rndSeed $ randomListSelect
+        $ replicate 12 (1,3) <> replicate 2 (2,5) <> [(0,5), (1,5)]
 
 toRole :: ((Int, Int) -> Bool) -> [TileRole]
 toRole atI = maybeToList . quadToRole $ V2

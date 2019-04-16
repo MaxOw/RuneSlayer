@@ -481,8 +481,8 @@ ifJustLocation x a
     | otherwise            = mempty
 
 genDropOffset :: [Word32] -> V2D
-genDropOffset s = randomFromSeed s $ \gen -> do
-    r <- uniformRange (0.5, 1.5) gen -- make this into global constants
-    d <- randomDirection gen
+genDropOffset s = randomFromSeed s $ do
+    r <- uniformRange (0.5, 1.5) -- make this into global constants
+    d <- randomDirection
     return (r*^d)
 

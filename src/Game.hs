@@ -34,11 +34,12 @@ import Dhall.Utils (dhallToMap, loadDhall)
 
 initSt :: Engine () St
 initSt = do
-    conf <- loadDhall @_ @Config "" "Config.dhall"
+    conf   <- loadDhall "" "Config.dhall"
+    wgconf <- loadDhall "data/desc" "WorldGen.dhall"
 
     let worldSize = Size 200 200
     scro <- newScroller $ def
-    eix <- EntityIndex.new $ def & size .~ worldSize
+    eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
     st <- defaultSt eix scro
 
     loadFontFamily "Arial"
@@ -46,7 +47,7 @@ initSt = do
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
 
-    world <- generateWorld rs $ def & size .~ worldSize
+    world <- generateWorld rs $ wgconf -- def & size .~ worldSize
     rnd <- makeRenderOverview world
     whenNothing_ (conf^.debugMode) $
         forM_ (world^.entities) $ \e -> EntityIndex.insert e eix

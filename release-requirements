@@ -38,8 +38,10 @@ Requirements for first release: v0.1
 * Proper world generator.                                                    [ ]
   - Add WorldGen debug mode.                                                 (#)
   - Make world gen reloading fast.                                           (#)
+  - Add baseTileSet & baseLandTileSet fields to world gen config.            (#)
   - Add WorldGen.dhall watcher/reloader.                                     ( )
   - Perlin noise based landmass generator.                                   (#)
+  - Add random tile variants.                                                (#)
 
 * Offensive skill.                                                           [ ]
 * Defensive skill.                                                           [ ]

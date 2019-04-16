@@ -16,6 +16,7 @@ module Delude
     , nothingFalse2
 
     , toggleSet
+    , require
     ) where
 
 import Relude         as All
@@ -107,3 +108,8 @@ toggleSet :: Ord a => a -> Set a -> Set a
 toggleSet a s
     | Set.member a s = Set.delete a s
     | otherwise      = Set.insert a s
+
+require :: HasCallStack => Text -> Maybe a -> a
+require _   (Just a) = a
+require msg Nothing  = error msg
+

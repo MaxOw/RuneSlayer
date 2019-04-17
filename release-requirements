@@ -9,7 +9,11 @@ Requirements for first release: v0.1
 * Sqlite powered, nix-like immutable data storage. [v0.2?]                   [ ]
 * Fix scroller lag.                                                          [ ]
 * Benchmark and speedup rendering pipeline. [v0.2?]                          [ ]
-* Declarative config via Dhall. (Just keymap for now)                        [ ]
+
+* Declarative config via Dhall.                                              [ ]
+  - Debug modes.                                                             (#)
+  - Keymaps.                                                                 ( )
+
 * Improve text and layout rendering.                                         [ ]
 * Remove template haskell for record fields generation.                      [X]
 
@@ -30,25 +34,35 @@ Requirements for first release: v0.1
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]
-* Enemy unit spawn corpse on death.                                          [X]
 * Named entity types                                                         [X]
-* Enemy unit go towards & attack player.                                     [X]
 * Render equipped items.                                                     [X]
+* Enemy unit spawn corpse on death.                                          [X]
+* Enemy unit go towards & attack player.                                     [X]
 
 * Proper world generator.                                                    [ ]
   - Add WorldGen debug mode.                                                 (#)
   - Make world gen reloading fast.                                           (#)
   - Add baseTileSet & baseLandTileSet fields to world gen config.            (#)
+  - Generate landmass covering layers.                                       (#)
   - Add WorldGen.dhall watcher/reloader.                                     ( )
   - Perlin noise based landmass generator.                                   (#)
   - Add random tile variants.                                                (#)
 
-* Offensive skill.                                                           [ ]
-* Defensive skill.                                                           [ ]
-* Runic levels.                                                              [ ]
-* Add hint/help/tutorial windows.                                            [ ]
 * Initial vilige.                                                            [ ]
+* Initial island.                                                            [ ]
+
+* Learning mechanics                                                         [ ]
+  - Offensive skill.                                                         ( )
+  - Defensive skill.                                                         ( )
+  - Runic levels.                                                            ( )
+
+* Add hint/help/tutorial windows.                                            [ ]
 * NPCs.                                                                      [ ]
 * Communication with NPCs.                                                   [ ]
-* Initial island.                                                            [ ]
-* Enemy units: Gore Bats, Shadow Spiders, Shadow Puppets (Skeletons)         [ ]
+
+* Enemy units:                                                               [ ]
+  - Gore Bats                                                                (#)
+  - Shadow Spiders                                                           ( )
+  - Shadow Puppets (Skeletons)                                               ( )
+  - Shadow Puppets (Zombies)                                                 ( )
+

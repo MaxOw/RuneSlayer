@@ -80,6 +80,7 @@ Executable RuneSlayer
                 , Carnot == 0.1.15.3
                 , gl
                 , colour
+                , palette
                 , diagrams-core
                 , diagrams-lib
                 -- , bytestring-trie

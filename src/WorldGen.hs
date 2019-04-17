@@ -6,9 +6,7 @@ module WorldGen
     ) where
 
 import Delude
--- import Data.Vector (Vector)
 import qualified Data.Vector as Vector
-import Engine.Types (Engine)
 import Engine.Common.Types
 import Types.Entity (Entity)
 import Types.Entity.Common
@@ -25,97 +23,163 @@ import qualified Entity.TileSet as TileSet
 
 import Data.Array.Repa (Array, D, DIM2, Z(..), (:.)(..), Source)
 import Data.Array.Repa.Repr.Vector (V)
--- import Data.Array.Repa.Repr.Unboxed (Unbox)
-import qualified Data.Array.Repa.Algorithms.Randomish as Repa
 import qualified Data.Array.Repa as Repa
 import qualified Data.Array.Repa.Specialised.Dim2 as Repa
--- import qualified Data.Array.Repa.Repr.ForeignPtr as Repa
--- import qualified Data.Vector.Storable as F
+import qualified Color
+import qualified Data.Colour.Palette.ColorSet as Palette
+
+import Random.Utils (runRandom, randomListSelect, uniformRange, randomDirection)
+import Data.Hashable (hash)
 
 import Types.WorldGen
 import WorldGen.Utils
 
 --------------------------------------------------------------------------------
 
-generateWorld :: Resources -> WorldGenConfig -> Engine us WorldGenOutput
-generateWorld rs conf = do
-    let Size ox oy = fmap (negate . floor) $ conf^.size ^/ 2
-    let Size w  h  = fmap floor $ conf^.size
+generateWorld :: Resources -> WorldGenConfig -> WorldGenOutput
+generateWorld rs conf = def
+    & entities      .~ Vector.fromList (tiles <> statics)
+    & overviewImage .~ Just (imgToImage fullImg)
 
-    let baseTileSet = requireTileSet rs $ conf^.ff#baseTileSet
-    let landTileSet = requireTileSet rs $ conf^.ff#baseLandTileSet
+--------------------------------------------------------------------------------
 
-    let pp = V2 ox oy
+    where
+    Size ox oy = fmap (negate . floor) $ conf^.size ^/ 2
+    pp = V2 ox oy
 
-    let seed = conf^.ff#seed
-    let boolMap = generateLandmass conf
+    seed = conf^.ff#seed
 
-    let roleList = boolToRoleList boolMap
-    let tiles = concatMap (mkRoleL landTileSet baseTileSet pp) roleList
+    fullImg = foldr genLayer baseImg prepLayers
 
-    let mse = lookupStaticEntity (StaticEntityTypeName "Tree") rs
-    let trees = case mse of
-            Nothing -> []
-            Just se -> map (placeStatic se pp) $ rndTreeGrid seed (V2 w h)
+    baseImg = boolToImg landColor baseColor baseMap
 
-    let mapImg = imgToImage $ boolToImg boolMap
-    return $ def
-        & entities      .~ Vector.fromList (tiles <> trees)
-        & overviewImage .~ Just mapImg
+    baseMap = generateLandmass conf
+    mkLayerBoolMap i = generateLayer conf i baseMap
+    layerBoolMaps = map mkLayerBoolMap $ zipWith const [1..] layers
+    genLayer (l,c) = colorImg c l
 
-requireTileSet :: Resources -> Maybe TileSetName -> TileSet
-requireTileSet rs mn = require "Unable to load tile set."
-    $ flip lookupTileSet rs =<< mn
+    layers        = conf^.ff#coveringLayers
+    layerTilesets = layers^..traverse.ff#tileset.to (requireTileSet rs)
+    prepLayers    = zip layerBoolMaps $ zipWith tsColor defColors layerTilesets
+    statics       = concat $ zipWith (placeStatics rs seed pp) layers layerBoolMaps
+
+    defColors = map Color.colourConvert Palette.infiniteWebColors
+
+    tsColor d t = fromMaybe d $ Color.fromColorDesc =<< t^.color
+    baseColor = tsColor Color.blue baseTileSet
+    landColor = tsColor Color.peru landTileSet
+
+    baseTileSet = requireTileSetM rs $ conf^.ff#baseTileSet
+    landTileSet = requireTileSetM rs $ conf^.ff#baseLandTileSet
+
+--------------------------------------------------------------------------------
+
+    baseRoles :: RepaD2 [(TileRole, TileSet)]
+    baseRoles = Repa.map f $ boolToRole baseMap
+        where
+        f :: Maybe TileRole -> [(TileRole, TileSet)]
+        f Nothing              = [(TileRole_Full, baseTileSet)]
+        f (Just TileRole_Full) = [(TileRole_Full, landTileSet)]
+        f (Just r)             = [(TileRole_Full, landTileSet)
+                                 ,(TileSet.complem r, baseTileSet)]
+    layerRoles :: [RepaD2 [(TileRole, TileSet)]]
+    layerRoles = zipWith (\rtr ts -> Repa.map (mkLayerRole ts) rtr)
+        (map boolToRole layerBoolMaps)
+        layerTilesets
+
+    mkLayerRole :: TileSet -> Maybe TileRole -> [(TileRole, TileSet)]
+    mkLayerRole _ Nothing  = []
+    mkLayerRole t (Just r) = [(r, t)]
+
+    outRoles :: RepaD2 [(TileRole, TileSet)]
+    outRoles = foldr (Repa.zipWith (<>)) baseRoles layerRoles
+
+    tiles = buildEntities pp $ downselectTileSets outRoles
+
+--------------------------------------------------------------------------------
+
+placeStatics
+    :: Resources -> Int -> V2 Int -> CoveringLayer -> RepaBool -> [Entity]
+placeStatics rs seed pp layer bm = mapMaybe (selectStatic seed sts) vsv
+    where
+    rnd = rndBool seed 20 (Repa.extent bm)
+    psl :: Array V DIM2 (V2 Int, Bool)
+    psl = Repa.computeS $ addOffset pp $ Repa.zipWith (&&) rnd $ shrinkBool bm
+    vsv = map fst $ filter snd $ Repa.toList psl
+    sts = map (requireStatic rs) $ layer^.ff#statics
+
+selectStatic :: Int -> [StaticEntityType] -> V2 Int -> Maybe Entity
+selectStatic seed ss p = flip placeStatic (pp+off) <$> s
+    where
+    pp = fmap fromIntegral p
+    ps = xor seed (hash p)
+    (s, off) = runRandom ps $ do
+        ls <- randomListSelect ss
+        d  <- randomDirection
+        sc <- uniformRange (0, 0.4)
+        return (ls, d^*sc)
+
+downselectTileSets
+    :: RepaD2 [(TileRole, TileSet)] -> RepaD2 [(TileRole, TileSet)]
+downselectTileSets = Repa.map f
+    where
+    f :: [(TileRole, TileSet)] -> [(TileRole, TileSet)]
+    f is = case topz of
+        Nothing -> is
+        Just tz -> filter (\x -> x^._2.zindex >= tz^._2.zindex) is
+        where
+        fulls = filter (\x -> fst x == TileRole_Full) is
+        topz = viaNonEmpty head $ sortOn (view (_2.zindex)) fulls
+
+buildEntities :: V2 Int -> RepaD2 [(TileRole, TileSet)] -> [Entity]
+buildEntities pp = concat . Repa.toList . Repa.map f . addOffset pp
+    where
+    f (v, ls) = map (\(tr, ts) -> mkLocRole ts v tr) ls
+
+--------------------------------------------------------------------------------
+
+requireTileSetM :: Resources -> Maybe TileSetName -> TileSet
+requireTileSetM rs mn = require "Unable to load tile set." $
+    flip lookupTileSet rs =<< mn
+
+requireTileSet :: Resources -> TileSetName -> TileSet
+requireTileSet rs n = require "Unable to load tile set." $
+    lookupTileSet n rs
+
+requireStatic :: Resources -> StaticEntityTypeName -> StaticEntityType
+requireStatic rs n = require "Unable to load static entity." $
+    lookupStaticEntity n rs
 
 generateLandmass :: WorldGenConfig -> RepaBool
 generateLandmass conf
-    -- = simplePerlinNoise sh
-    = Repa.zipWith (&&)
+    = Repa.map not $ Repa.zipWith (&&)
     (circleCutoff sh $ Repa.zipWith (*)
         (simplePerlinNoise (conf^.ff#seed) sh)
         (simplePerlinNoise (conf^.ff#seed+1) sh))
     (circleCutoff sh $ simplePerlinNoise (conf^.ff#seed+3) sh)
-    {-
-    = Repa.zipWith (||)
-    (boolCircle 20 0 sh)
-    (rndBoolCircle (conf^.ff#seed) 1 30 0 sh)
-    -}
+    where
+    sh = (Z :. w :. h)
+    Size w h = fmap floor $ conf^.size
+
+generateLayer :: WorldGenConfig -> Int -> RepaBool -> RepaBool
+generateLayer conf i b
+    = Repa.zipWith (&&) b
+    $ circleCutoff sh $ simplePerlinNoise (conf^.ff#seed+i+10) sh
     where
     sh = (Z :. w :. h)
     Size w h = fmap floor $ conf^.size
 
 --------------------------------------------------------------------------------
 
-boolToRoleList :: RepaBool -> [(V2 Int, [TileRole])]
-boolToRoleList bm = Repa.toList imtr
-    where
-    imtr :: Array V DIM2 (V2 Int, [TileRole])
-    imtr = Repa.computeS $ makeRoleGrid bm
-
-rndTreeGrid :: Int -> V2 Int -> [V2 Int]
-rndTreeGrid seed (V2 x y) = map fst $ filter snd $ Repa.toList imtr
-    where
-    grassGrid = rndBool seed 2 (Z :. x :. y)
-    topGrid   = rndBool 8 (seed+1) (Z :. x :. y)
-    andGrid   = Repa.zipWith (&&) grassGrid topGrid
-    imtr :: Array V DIM2 (V2 Int, Bool)
-    imtr = Repa.computeS $ addOffset andGrid
-
-placeStatic :: StaticEntityType -> V2 Int -> V2 Int -> Entity
-placeStatic se pp p = toEntity $ makeStaticEntity se
+placeStatic :: StaticEntityType -> V2 Float -> Entity
+placeStatic se (V2 x y) = toEntity $ makeStaticEntity se
     & location .~ locM x y
-    where
-    V2 x y = fmap fromIntegral (pp + p)
 
-makeRoleGrid :: Source x Bool
-    => Array x DIM2 Bool -> Array D DIM2 (V2 Int, [TileRole])
-makeRoleGrid = addOffset . boolToRole
+addOffset :: Source x a => V2 Int -> Array x DIM2 a -> Array D DIM2 (V2 Int, a)
+addOffset off s = Repa.traverse s id f
+    where f g c@(Z :. x :. y) = (off + V2 x y, g c)
 
-addOffset :: Source x a => Array x DIM2 a -> Array D DIM2 (V2 Int, a)
-addOffset s = Repa.traverse s id f
-    where f g c@(Z :. x :. y) = (V2 x y, g c)
-
-boolToRole :: Source x Bool => Array x DIM2 Bool -> Array D DIM2 [TileRole]
+boolToRole :: Source x Bool => Array x DIM2 Bool -> Array D DIM2 (Maybe TileRole)
 boolToRole s = Repa.traverse s id f
     where
     es = Repa.extent s
@@ -126,18 +190,6 @@ clamp2 :: DIM2 -> (Int, Int) -> DIM2
 clamp2 es (a, b) = Repa.clampToBorder2 es $ Repa.ix2 a b
 
 --------------------------------------------------------------------------------
-
-mkRoleL :: TileSet -> TileSet -> V2 Int -> (V2 Int, [TileRole]) -> [Entity]
-mkRoleL dts gts pp (pos, mr) = condAddDirt $ map (mkLocRole gts $ pp+pos) mr
-    where
-    isFull = any (== TileRole_Full) mr
-    condAddDirt = if isFull then id
-        else (fullTile dts (pp+pos):)
-
-fullTile :: TileSet -> V2 Int -> Entity
-fullTile ts p = toEntity . set location loc $ makeTile TileRole_Full ts
-    where
-    loc = Location $ fmap fromIntegral p
 
 mkLocRole :: TileSet -> V2 Int -> TileRole -> Entity
 mkLocRole ts pos r = toEntity . set location loc $ makeTile r ts

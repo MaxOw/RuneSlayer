@@ -11,7 +11,6 @@ import Engine (RenderAction, Img, userState, texture)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import qualified Diagrams.TwoD.Transform as T
 import Engine.Types (Engine)
-import Engine.Common.Types
 import Engine.Graphics.Scroller (newScroller)
 import Types.Config
 import Types.St
@@ -37,7 +36,6 @@ initSt = do
     conf   <- loadDhall "" "Config.dhall"
     wgconf <- loadDhall "data/desc" "WorldGen.dhall"
 
-    let worldSize = Size 200 200
     scro <- newScroller $ def
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
     st <- defaultSt eix scro
@@ -47,7 +45,7 @@ initSt = do
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
 
-    world <- generateWorld rs $ wgconf -- def & size .~ worldSize
+    let world = generateWorld rs wgconf
     rnd <- makeRenderOverview world
     whenNothing_ (conf^.debugMode) $
         forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
@@ -76,7 +74,12 @@ makeRenderOverview out = case out^.overviewImage of
 
 loadResources :: Config -> Engine us Resources
 loadResources conf = case conf^.debugMode of
-    Just _m -> return def
+    Just _m -> do
+        se <- loadDhallList "StaticTypes.dhall"
+        ts <- loadDhallList "TileSets.dhall"
+        return $ def
+               & staticMap     .~ buildMap se
+               & tileSetMap    .~ buildMap ts
     Nothing -> do
         rs <- loadAllPaths
         ss <- loadDhallMap  "Sprites.dhall"

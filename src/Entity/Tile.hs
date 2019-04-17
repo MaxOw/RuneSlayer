@@ -5,6 +5,7 @@ module Entity.Tile
     ) where
 
 import Delude
+import Data.Hashable (hash)
 
 import Types.Entity.Tile
 import Entity.Utils
@@ -27,8 +28,7 @@ render x ctx
     $ renderSprite rs $ selectTile rndSeed (x^.role) (x^.tileSet)
     where
     rs = ctx^.resources
-    loc = x^.location._Wrapped
-    rndSeed = (floor $ loc^._x+10000) + (floor $ loc^._y+10000) * 1234
+    rndSeed = hash $ x^.location._Wrapped
 
 oracle :: Tile -> EntityOracle
 oracle x = def

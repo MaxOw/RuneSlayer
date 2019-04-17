@@ -1,7 +1,7 @@
 module Entity.TileSet
     ( module Types.Entity.TileSet
 
-    , selectTile, toRole
+    , selectTile, toRole, complem
     ) where
 
 import Delude
@@ -53,10 +53,28 @@ selectPart rndSeed s = \case
         $ runRandom rndSeed $ randomListSelect
         $ replicate 12 (1,3) <> replicate 2 (2,5) <> [(0,5), (1,5)]
 
-toRole :: ((Int, Int) -> Bool) -> [TileRole]
-toRole atI = maybeToList . quadToRole $ V2
+toRole :: ((Int, Int) -> Bool) -> Maybe TileRole
+toRole atI = quadToRole $ V2
     (V2 (atI (0, 1)) (atI (1, 1)))
     (V2 (atI (0, 0)) (atI (1, 0)))
+
+complem :: TileRole -> TileRole
+complem = \case
+    TileRole_Full           -> TileRole_Full
+    TileRole_Edge        e  -> TileRole_Edge $ compE e
+    TileRole_OuterCorner oc -> TileRole_InnerCorner oc
+    TileRole_InnerCorner ic -> TileRole_OuterCorner ic
+    TileRole_Cross       cr -> TileRole_Cross $ compX cr
+    where
+    compE = \case
+        Edge_Bottom -> Edge_Top
+        Edge_Left   -> Edge_Right
+        Edge_Top    -> Edge_Bottom
+        Edge_Right  -> Edge_Left
+
+    compX = \case
+        Cross_TopLeftBottomRight -> Cross_BottomLeftTopRight
+        Cross_BottomLeftTopRight -> Cross_TopLeftBottomRight
 
 quadToRole :: M22 Bool -> Maybe TileRole
 quadToRole

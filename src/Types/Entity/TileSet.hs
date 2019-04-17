@@ -2,6 +2,7 @@ module Types.Entity.TileSet where
 
 import Delude
 import Types.Sprite (SpriteDesc)
+import Color (ColorDesc)
 
 data Edge
    = Edge_Bottom
@@ -44,36 +45,27 @@ data TileSetDesc
     deriving (Show, Generic)
 
 newtype TileSetName = TileSetName { unTileSetName :: Text }
-    deriving (Show, Generic, Eq, Hashable, ToJSON, FromJSON)
+    deriving (Show, Generic, Eq, Hashable, FromJSON)
 data TileSet = TileSet
    { field_name     :: TileSetName
+   , field_color    :: Maybe ColorDesc -- Pixel color on map overview miniature.
    , field_desc     :: TileSetDesc
    , field_zindex   :: Word32
-   } deriving (Generic, Show)
-
-namedTileSet :: Text -> TileSet
-namedTileSet n = TileSet
-   { field_name     = TileSetName n
-   , field_desc     = TileSetDesc_Standard def
-   , field_zindex   = 1
-   }
+   } deriving (Generic)
 
 --------------------------------------------------------------------------------
 
 instance Default TileSet where
     def = TileSet
         { field_name   = TileSetName ""
+        , field_color  = def
         , field_desc   = TileSetDesc_Custom ()
         , field_zindex = 0
         }
 
-instance ToJSON TileSetDesc where
-    toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON TileSetDesc where
     parseJSON = genericParseJSON customOptionsJSON
 
-instance ToJSON TileSet where
-    toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON TileSet where
     parseJSON = genericParseJSON customOptionsJSON
 

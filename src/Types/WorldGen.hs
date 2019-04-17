@@ -4,15 +4,21 @@ import Delude
 import Engine.Common.Types (Size)
 import Types.Entity (Entity)
 import Types.Entity.TileSet (TileSetName)
+import Types.Entity.StaticEntity (StaticEntityTypeName)
 import Data.Vector (Vector)
--- import Engine (TextureBuffer)
 import Codec.Picture (DynamicImage)
+
+data CoveringLayer = CoveringLayer
+   { field_tileset :: TileSetName
+   , field_statics :: [ StaticEntityTypeName ]
+   } deriving (Generic)
 
 data WorldGenConfig = WorldGenConfig
    { field_size            :: Size Float
    , field_seed            :: Int
    , field_baseTileSet     :: Maybe TileSetName
    , field_baseLandTileSet :: Maybe TileSetName
+   , field_coveringLayers  :: [CoveringLayer]
    } deriving (Generic)
 
 data WorldGenOutput = WorldGenOutput
@@ -31,7 +37,11 @@ instance Default WorldGenConfig where
         , field_seed            = 29
         , field_baseTileSet     = def
         , field_baseLandTileSet = def
+        , field_coveringLayers  = []
         }
+
+instance FromJSON CoveringLayer where
+    parseJSON = genericParseJSON  customOptionsJSON
 instance FromJSON WorldGenConfig where
     parseJSON = genericParseJSON  customOptionsJSON
 

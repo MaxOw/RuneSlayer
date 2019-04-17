@@ -110,7 +110,7 @@ renderWorldGen _delta st = do
     renderSetup
 
     projM <- orthoProjection $ def
-    Engine.draw projM $ st^.ff#overview
+    Engine.draw projM $ T.rotate (1/4 @@ turn) $ st^.ff#overview
 
     Engine.swapBuffers
 

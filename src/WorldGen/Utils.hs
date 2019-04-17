@@ -16,6 +16,7 @@ import Codec.Picture (DynamicImage(..), Image(..))
 
 import qualified Math.Noise as Noise
 import Math.Noise (NoiseClass)
+import qualified Color
 
 --------------------------------------------------------------------------------
 
@@ -24,16 +25,35 @@ type RepaImg   = Array D DIM3 Word8
 type RepaBool  = Array D DIM2 Bool
 -- type RepaFun a = DIM2 -> a
 
-boolToImg :: RepaBool -> RepaImg
-boolToImg s = Repa.traverse s e f
+boolToImg :: Color -> Color -> RepaBool -> RepaImg
+boolToImg trueColor falseColor s = Repa.traverse s e f
     where
     e (Z :. w :. h) = (Z :. w :. h :. 4)
     f atI (Z :. w :. h :. c)
-        | c == 3            = maxBound
-        | atI (Z :. w :. h) = maxBound
-        | otherwise         = minBound
+        | atI (Z :. w :. h) = toC c (Color.toSRGB24 trueColor)
+        | otherwise         = toC c (Color.toSRGB24 falseColor)
 
--- imgToImage :: MonadIO m => RepaImg -> m DynamicImage
+    toC c (Color.RGB r g b) = case c of
+        0 -> r
+        1 -> g
+        2 -> b
+        _ -> maxBound
+
+colorImg :: Color -> RepaBool -> RepaImg -> RepaImg
+colorImg trueColor bm im = Repa.traverse2 bm im e f
+    where
+    e _ bs = bs
+
+    Color.RGB r g b = Color.toSRGB24 trueColor
+    toC c = case c of
+        0 -> r
+        1 -> g
+        2 -> b
+        _ -> maxBound
+    f atB atI i@(Z :. x :. y :. c)
+        | atB (Z :. x :. y) = toC c
+        | otherwise         = atI i
+
 imgToImage :: RepaImg -> DynamicImage
 imgToImage r = di
     where
@@ -41,6 +61,14 @@ imgToImage r = di
        $ Image w h (F.unsafeFromForeignPtr0 (Repa.toForeignPtr rr) (h*w*z))
     (Z :. w :. h :. z) = Repa.extent r
     rr = Repa.computeS r
+
+shrinkBool :: RepaBool -> RepaBool
+shrinkBool s = Repa.traverse s id f
+    where
+    (Z :. w :. h) = Repa.extent s
+    f atI (Z :. x :. y) = and (atIC <$> [-1..1] <*> [-1..1])
+        where
+        atIC a b = atI (Z :. max 0 (min w $ x+a) :. max 0 (min h $ y+b))
 
 --------------------------------------------------------------------------------
 
@@ -68,7 +96,7 @@ rndBoolCircle
     -> V2 Float -- Position
     -> DIM2     -- Array size
     -> RepaBool
-rndBoolCircle seed probDen r offV sh
+rndBoolCircle _seed _probDen r offV sh
     = Repa.zipWith (&&)
     (boolCircle r offV sh)
     -- (rndBool seed probDen sh)

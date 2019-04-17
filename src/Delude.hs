@@ -3,7 +3,7 @@ module Delude
     ( module All
 
     , Transformable2D
-    , Mat4, AlphaColor
+    , Mat4
     , unwrap
     , isPrism
     , makeFieldsCustom
@@ -24,13 +24,14 @@ import Control.Lens   as All hiding (uncons, (??))
 import Data.Default   as All
 import Linear         as All hiding (trace, transpose, identity, rotate)
 import Linear.Affine  as All (Point (..))
-import Diagrams.Angle as All ((@@))
+import Diagrams.Angle as All ((@@), turn)
 import Data.Bimap     as All (Bimap)
 import Data.Aeson     as All
     (ToJSON(..), FromJSON(..), genericToEncoding, genericParseJSON)
 
 import qualified Data.Aeson as Aeson
 import Engine.Common.Types
+import Engine.Graphics.Types as All (Color, AlphaColor)
 
 import qualified Data.Bimap as Bimap
 import qualified Data.HashMap.Strict as HashMap
@@ -39,7 +40,7 @@ import qualified Data.Vector as Vector
 import qualified Data.Set    as Set
 
 import Diagrams.Core (InSpace, Transformable)
-import Engine (Mat4, AlphaColor)
+import Engine (Mat4)
 import Engine.TH
 
 import HasField as All

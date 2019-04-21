@@ -11,8 +11,11 @@ import View       (renderView)
 import Game       (initSt, endSt)
 import Reload.Utils (reacquire)
 
+import qualified Version
+
 main :: IO ()
 main = do
+    putTextLn Version.infoFull
     win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (400, 400)
 
     Engine.igniteEngine win $ Ignition

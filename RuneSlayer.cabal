@@ -1,6 +1,7 @@
 Name          : RuneSlayer
 Version       : 0.1.0
 Build-Type    : Simple
+Author        : Maksymilian Owsianny
 Cabal-Version : >= 1.18
 
 Executable RuneSlayer
@@ -57,6 +58,7 @@ Executable RuneSlayer
                 , generic-lens
                 , transformers
                 , text
+                , bytestring
                 , containers
                 , unordered-containers
                 , hashable
@@ -88,5 +90,10 @@ Executable RuneSlayer
                 , ixset
                 -- , ixset-typed
 
+                , cabal-file-th
+                , git-embed
+                , executable-hash
+
+                -- , plugins
 
                 , reload-utils

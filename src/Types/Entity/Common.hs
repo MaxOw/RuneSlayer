@@ -15,6 +15,10 @@ import Text.Printf
 
 --------------------------------------------------------------------------------
 
+data EntityStatus
+   = EntityStatus_HostilesInRange
+   deriving (Eq, Ord)
+
 data EntityKind
    = EntityKind_Tile
    | EntityKind_Static

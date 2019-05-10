@@ -4,16 +4,21 @@ module Entity.Player
     ) where
 
 import Delude
+import Data.Generics.Product.Subtype (upcast)
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Diagrams.TwoD.Transform as T
 
+import Entity
 import Types.Debug
-import Types.Entity
+import Types.Entity.Reactivity
 import Types.Entity.Player
 import Entity.Utils
 import Entity.Actions
+import Types.Entity.Timer
 import ResourceManager (Resources, lookupAnimation)
 import qualified Equipment
+import Skills.Runes
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
@@ -33,6 +38,7 @@ actOn x a = x & case a of
     EntityAction_OwnerDropItem     _ -> handleOnUpdate   a
     EntityAction_ExecuteAttack       -> handleOnUpdate   a
     EntityAction_SelfAttacked      _ -> handleOnUpdate   a
+    EntityAction_LoadOffensiveSlot   -> loadOffensiveSlot
     _ -> id
     where
     setAnimationKind k _ = x
@@ -40,10 +46,14 @@ actOn x a = x & case a of
         & animationState.current.era  .~ 0
         & animationState.progression  .~ Animation.defaultTransition
 
+    loadOffensiveSlot _ = x & ff#offensiveSlots %~ fillRunicSlot
+
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
-    whenMatch _EntityAction_ExecuteAttack executeAttack
+    executeAttack
+    -- whenMatch _EntityAction_ExecuteAttack executeAttack
     updateAnimationState
+    updateTimer
     updateEffects defaultDelta
     playerIntegrateLocation
     separateCollision
@@ -53,7 +63,30 @@ update x ctx = runUpdate x ctx $ do
     anyMatch  _EntityAction_SelfAttacked procAttacked
     mapM_ processUpdateOnce =<< use (self.ff#updateOnce)
     mapM_ processAction =<< use (self.processOnUpdate)
+    runicActions
     self.processOnUpdate .= mempty
+
+runicActions :: Update Player ()
+runicActions = do
+    -- Detect hostiles
+    ds <- queryInRadius EntityKind_Dynamic hostileDetectionRange
+    if any isHostile ds
+    then runicMode
+    else endRunicMode
+    where
+    hostileDetectionRange = disM 8
+    isHostile e
+        = not (Set.null rset || rset == Set.singleton ReactivCategory_Life)
+        where
+        rset = Map.keysSet $ fromMaybe mempty $ e^.entity.oracleReactivity
+
+    runicMode = do
+        self.status %= Set.insert EntityStatus_HostilesInRange
+        return ()
+
+    endRunicMode = do
+        self.status %= Set.delete EntityStatus_HostilesInRange
+        return ()
 
 processUpdateOnce :: UpdateOnce -> Update Player ()
 processUpdateOnce = \case
@@ -62,7 +95,7 @@ processUpdateOnce = \case
     updateEquipment = do
         eis <- uses (self.equipment) Equipment.contentList
         es <- catMaybes <$> mapM queryById eis
-        let as = mapMaybe (view (entity.oracle.itemAnimation)) es
+        let as = mapMaybe (view (entity.oracleItemAnimation)) es
         rs <- use $ context.resources
         let eqAnim = mconcat $ mapMaybe (flip lookupAnimation rs) as
         self.ff#equipmentAnimation .= eqAnim
@@ -75,28 +108,57 @@ procAttacked as = do
     applyDefence     x = return x
 
 executeAttack :: Update Player ()
-executeAttack = do
+executeAttack = whenM canExecuteAttack $ do
     mt <- fmap join . mapM queryById =<< use (self.target)
     whenJust mt $ \te -> do
-        let mloc = te^.entity.oracle.location
+        let mloc = te^.entity.oracleLocation
         whenJust mloc $ \loc -> do
             sloc <- use $ self.location
             executeAttackAt te $ loc^._Wrapped - sloc^._Wrapped
 
+canExecuteAttack :: Update Player Bool
+canExecuteAttack = (&&)
+    <$> checkTimeUp Timer_Attack
+    <*> anyOffensiveRuneLoaded
+    where
+    anyOffensiveRuneLoaded
+        = uses (self.ff#offensiveSlots) (any (>0) . listRunicSlots)
+
 executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
 executeAttackAt targetEntity vectorToTarget = do
-    -- attackRange <- use $ self.ff#attackRange
-    let attackRange = Distance 2
-    dist <- distanceToEntity attackRange targetEntity
-    when (dist < attackRange) $ do
-        -- TODO: Choose attack animation based on weapon
-        self.animationState.current.direction %= Animation.vecToDir vectorToTarget
-        self.animationState.current.kind .= Animation.Slash
-        self.animationState.current.era  .= 0
-        self.animationState.progression  .= Animation.defaultTransition
-
-        let attackPower = AttackPower 1 -- TODO: Calculate attack power
+    whenInAttackRange targetEntity $ do
+        startAttackAnimation vectorToTarget
+        attackPower <- getAttackPower
         addAction targetEntity $ EntityAction_SelfAttacked attackPower
+        startTimer Timer_Attack =<< getAttackCooldown
+        self.ff#offensiveSlots %= dischargeRunicSlot
+
+startAttackAnimation :: V2 Float -> Update Player ()
+startAttackAnimation vectorToTarget = do
+    -- TODO: Choose attack animation based on weapon
+    self.animationState.current.direction %= Animation.vecToDir vectorToTarget
+    self.animationState.current.kind .= Animation.Slash
+    self.animationState.current.era  .= 0
+    self.animationState.progression  .= Animation.defaultTransition
+
+whenInAttackRange
+    :: HasLocation s Location
+    => HasEntity e Entity
+    => e -> Update s () -> Update s ()
+whenInAttackRange targetEntity act = do
+    attackRange <- getAttackRange
+    dist <- distanceToEntity attackRange targetEntity
+    when (dist < attackRange) act
+
+getAttackRange :: Update x Distance
+getAttackRange = return $ Distance 2
+
+getAttackPower :: Update x AttackPower
+getAttackPower = return $ AttackPower 1
+    -- TODO: Calculate attack power
+
+getAttackCooldown :: Update x Duration
+getAttackCooldown = return $ timeInSeconds 1.2
 
 playerIntegrateLocation :: Update Player ()
 playerIntegrateLocation = do
@@ -108,6 +170,7 @@ autoTarget = do
     ds <- queryInRadius EntityKind_Dynamic (disM 8)
     sid <- use $ context.selfId
     loc <- use $ self.location
+    -- TODO: fix auto targeting to only target hostiles
     let hs = sortWith (distanceTo loc) $ filter ((/=sid) . view entityId) ds
     let newTarget = viaNonEmpty head (map (view entityId) hs)
     currentTarget <- use $ self.target
@@ -118,7 +181,7 @@ autoTarget = do
 
     where
     distanceTo loc e = fromMaybe 10000 $
-        (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracle.location)
+        (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
 
 processAction :: EntityAction -> Update Player ()
 processAction = \case
@@ -160,12 +223,15 @@ render x ctx = withZIndex x $ locate x $ renderComposition
         & shapeType   .~ SimpleCircle
         & color       .~ Color.withOpacity Color.red 0.3
 
-thisOracle :: Player -> EntityOracle
-thisOracle x = def
-   & location       .~ Just (x^.location)
-   & equipment      .~ Just (x^.equipment)
-   & collisionShape .~ (locate x <$> x^.collisionShape)
-   & reactivity     .~ (x^.reactivity)
+oracle :: Player -> EntityQuery a -> Maybe a
+oracle x = \case
+    EntityQuery_Location       -> Just $ x^.location
+    EntityQuery_Equipment      -> Just $ x^.equipment
+    EntityQuery_CollisionShape -> locate x <$> x^.collisionShape
+    EntityQuery_Reactivity     -> Just $ x^.reactivity
+    EntityQuery_Status         -> Just $ x^.status
+    EntityQuery_PlayerStatus   -> Just $ upcast x
+    _                          -> Nothing
 
 --------------------------------------------------------------------------------
 
@@ -174,18 +240,19 @@ playerToEntity = makeEntity $ EntityParts
    { makeActOn  = actOn
    , makeUpdate = update
    , makeRender = render
-   , makeOracle = thisOracle
+   , makeOracle = oracle
    , makeSave   = EntitySum_Player
    , makeKind   = EntityKind_Dynamic
    }
 
 makePlayer :: Resources -> PlayerInit -> Player
 makePlayer rs p = def
-    & ff#bodyAnimation .~ as
-    & reactivity       .~ (p^.reactivity)
-    & maxSpeed         .~ (p^.maxSpeed)
-    & equipment        .~ Equipment.create playerSlots
-    & ff#attackRange   .~ disM 2
+    & ff#bodyAnimation  .~ as
+    & reactivity        .~ (p^.reactivity)
+    & maxSpeed          .~ (p^.maxSpeed)
+    & equipment         .~ Equipment.create playerSlots
+    & ff#attackRange    .~ disM 2
+    & ff#offensiveSlots .~ initRunicSlots 4
     where
     as = mconcat $ mapMaybe (flip lookupAnimation rs) (p^.body)
 

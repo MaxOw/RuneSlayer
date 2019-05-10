@@ -20,6 +20,7 @@ data WorldGenConfig = WorldGenConfig
    , field_baseLandTileSet :: Maybe TileSetName
    , field_coveringLayers  :: [CoveringLayer]
    } deriving (Generic)
+instance HasSize WorldGenConfig (Size Float)
 
 data WorldGenOutput = WorldGenOutput
    { field_entities      :: Vector Entity

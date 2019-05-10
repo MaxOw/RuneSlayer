@@ -143,8 +143,8 @@ testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
     , SpawnEntity_Item potionItem
     , SpawnEntity_Item bagItem
 
-    , SpawnEntity_Unit (batUnit $ locM 3 6)
-    , SpawnEntity_Unit (batUnit $ locM 2 6.3)
+    , SpawnEntity_Unit (batUnit $ locM 10 6)
+    , SpawnEntity_Unit (batUnit $ locM  9 6.3)
     ]
     where
     helmetItem = def

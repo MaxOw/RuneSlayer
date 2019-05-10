@@ -17,6 +17,10 @@ baseFontSize = 10
 baseFontHierarchy :: [FontFamilyName]
 baseFontHierarchy = ["Arial"]
 
+baseFontStyle :: FontStyle
+baseFontStyle = makeFontStyle baseFontHierarchy baseFontSize
+    & color .~ textPrimaryColor
+
 baseBorderWidth :: AbsoluteSize
 baseBorderWidth = 1
 
@@ -48,6 +52,9 @@ textHintColor = Color.opaque $ Solarized.yellow
 
 textHintHighlightColor :: AlphaColor
 textHintHighlightColor = Color.opaque $ Solarized.red
+
+textWarningColor :: AlphaColor
+textWarningColor = Color.opaque $ Solarized.red
 
 textFocusColor :: AlphaColor
 textFocusColor = Color.opaque $ Solarized.yellow

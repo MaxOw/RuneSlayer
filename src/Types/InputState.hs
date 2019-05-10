@@ -4,6 +4,7 @@ module Types.InputState where
 import Delude
 import qualified Prelude (Show(..))
 import Data.Char (isUpper, toLower)
+import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
 import qualified Types.Entity.Animation as Animation
@@ -61,9 +62,8 @@ data SelectKind
 
 data InputMode
    = NormalMode
-   | FightMode
-   | DefendMode
    | StatusMode StatusMenu
+   | OffensiveMode
    | SpaceMode
    deriving (Show, Eq, Ord, Generic)
 instance Default InputMode where def = NormalMode
@@ -89,6 +89,8 @@ data MoveDirection
 
 data PanelName
    = GroundPreviewPanel
+   | HostilityWarningPanel
+   | OffensiveSlotsPanel
    deriving (Eq, Ord, Show)
 
 --------------------------------------------------------------------------------
@@ -122,10 +124,11 @@ data SelectState = SelectState
    , field_currentPrefix :: Seq Char
    } deriving (Generic)
 
-
 data InventoryState = InventoryState
    { field_focusedItem :: Maybe EntityId
    } deriving (Generic)
+
+-- data RunicState = RunicState
 
 instance Default InventoryState
 
@@ -133,10 +136,12 @@ data InputState = InputState
    { field_mode           :: InputMode
    , field_hist           :: Seq Keypress
    , field_active         :: Map ActiveAction Int
+   , field_inputString    :: Seq Char
    , field_commonKeymap   :: Keymap
    , field_inputKeymap    :: InputKeymap
    , field_deactivators   :: Map Keypress [InputAction]
    , field_selectState    :: Maybe SelectState
+   -- , field_offensiveState :: Maybe RunicState
    , field_visiblePanels  :: Set PanelName
    , field_inventoryState :: InventoryState
    } deriving (Generic)
@@ -144,16 +149,23 @@ data InputState = InputState
 instance Default InputState where
     def = InputState
         { field_mode           = def
-     -- { field_mode           = StatusMode StatusMenu_Inventory
         , field_hist           = def
         , field_active         = def
+        , field_inputString    = def
         , field_commonKeymap   = defaultCommonKeymap
         , field_inputKeymap    = defaultInputKeymap
         , field_deactivators   = def
-        , field_selectState    = Nothing
-        , field_visiblePanels  = def
+        , field_selectState    = def
+        -- , field_offensiveState = def
+        , field_visiblePanels  = defaultVisiblePanels
         , field_inventoryState = def
         }
+
+defaultVisiblePanels :: Set PanelName
+defaultVisiblePanels = Set.fromList
+    [ HostilityWarningPanel
+    , OffensiveSlotsPanel
+    ]
 
 type InputStateM = Lazy.StateT InputState IO
 
@@ -240,7 +252,6 @@ defaultCommonKeymap = buildKeymap
 defaultInputKeymap :: InputKeymap
 defaultInputKeymap = buildInputKeymap
     [ InputGroup NormalMode
-        -- [ InputKey Key'F      (SetMode FightMode)
         [ InputKey Key'Space  (SetMode SpaceMode)
 
         , InputStr "i" (SetMode $ StatusMode Inventory)
@@ -272,14 +283,9 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "pp" DropAllItems
 
         , InputStr "gf" ExecuteAttack
-        ]
 
-    , InputGroup FightMode
-        [ -- InputKey Key'Escape (SetMode NormalMode)
-        ]
-
-    , InputGroup SpaceMode
-        [ -- InputKey Key'Escape (SetMode NormalMode)
+        , InputStr "ff" (SetMode OffensiveMode)
+     -- , InputStr "fd" (SetMode DefensiveMode)
         ]
 
     , InputGroup (StatusMode Inventory)

@@ -53,7 +53,7 @@ import Data.Hashable (hash)
 import Engine.Common.Types (BBox, bboxToRect, mkBBoxCenter)
 import Engine.Layout.Render (renderSimpleBox)
 
-import Types.Entity
+import Entity
 import Types.Entity.Timer
 import Types.Entity.Item
 import Types.Entity.Appearance
@@ -92,7 +92,7 @@ distanceToEntity
     => Distance -> e -> Update s Distance
 distanceToEntity defr (view entity -> e) = do
     loc <- use $ self.location._Wrapped
-    let tmloc = e^.oracle.location
+    let tmloc = e^.oracleLocation
     return $ fromMaybe defr $
         (Distance . distance loc . view _Wrapped <$> tmloc)
 
@@ -127,7 +127,7 @@ moveTowards
     => e -> Update s ()
 moveTowards (view entity -> e) = do
     loc <- use $ self.location
-    let mtloc = e^.oracle.location
+    let mtloc = e^.oracleLocation
     whenJust mtloc $ \tloc -> do
         let dir = directionToTarget loc tloc
         self %= setMoveVector dir
@@ -196,7 +196,7 @@ separateCollision = do
     mc <- use $ self.collisionShape
     x <- use self
     let mlc = locate x <$> mc
-    let ms = ss^..traverse.entity.oracle.collisionShape
+    let ms = ss^..traverse.entity.oracleCollisionShape
     let svs = mapMaybe (mCol mlc) ms
     whenJust (viaNonEmpty head svs) $ \v -> self.location._Wrapped -= v
     where
@@ -298,7 +298,7 @@ equippedBackpack = do
 splitItemKind :: ItemKind -> [EntityWithId] -> ([EntityWithId], [EntityWithId])
 splitItemKind k = List.partition properKind
     where
-    properKind x = x^.entity.oracle.itemKind == Just k
+    properKind x = x^.entity.oracleItemKind == Just k
 
 equipItems
     :: HasEquipment x Equipment
@@ -325,7 +325,7 @@ equipItems eis = do
     emptySlots :: HasEquipment x Equipment => x -> Set EquipmentSlot
     emptySlots = Equipment.emptySlots . view equipment
 
-    fitEntity e = find $ flip Set.member (e^.oracle.fittingSlots)
+    fitEntity e = find $ flip Set.member (fromMaybe mempty $ e^.oracleFittingSlots)
 
     equipItem :: HasEquipment x Equipment
         => EntityId -> EquipmentSlot -> (x -> x)

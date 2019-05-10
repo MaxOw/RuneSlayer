@@ -4,11 +4,23 @@ import Delude hiding (direction)
 import Engine
 import Engine.Layout.Types
 
-import Types.GUI
+import Types.GUI.Common
 import GUI.Style
 
 simpleBox :: BoxDesc -> Layout -> Layout
 simpleBox d = layoutBox d . (:[])
+
+progressBarV :: Size Sizing -> AlphaColor -> Float -> Layout
+progressBarV ss col pct = layoutBox bdesc [ layoutBox pdesc [] ]
+    where
+    pdesc = def
+        & boxAlign    .~ BottomCenter
+        & size.height .~ pct @@ cpct
+        & color       .~ col
+    bdesc = def
+        & size              .~ ss
+        & border.each.width .~ baseBorderWidth
+        & border.each.color .~ col
 
 menuBox :: MenuBoxOpts -> Layout -> Layout
 menuBox opts cont = layoutBox desc [ simpleLineupV ins ]
@@ -52,14 +64,21 @@ simpleLineupH = layoutLineup (set direction Horizontal def)
 simpleText :: Text -> Layout
 simpleText = colorText textPrimaryColor
 
+styleText :: FontStyle -> Text -> Layout
+styleText fs txt = styleTextList [(fs, txt)]
+
 colorText :: AlphaColor -> Text -> Layout
 colorText col txt = colorTextList [(col, txt)]
 
 colorTextList :: [(AlphaColor, Text)] -> Layout
-colorTextList cs = layoutBox bd [layoutText td $ map f cs]
+colorTextList = styleTextList . map (over _1 f)
     where
-    f (c, t) = RichText_Span (fnt c) t
-    fnt c = makeFontStyle baseFontHierarchy baseFontSize & color .~ c
+    f c = baseFontStyle & color .~ c
+
+styleTextList :: [(FontStyle, Text)] -> Layout
+styleTextList cs = layoutBox bd [layoutText td $ map f cs]
+    where
+    f (fs, t) = RichText_Span fs t
     td = def & boxAlign .~ TopLeft
     bd = def
         & boxAlign      .~ TopLeft

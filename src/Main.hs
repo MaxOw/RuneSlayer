@@ -12,6 +12,7 @@ import Game       (initSt, endSt)
 import Reload.Utils (reacquire)
 
 import qualified Version
+import Dev.AltLayout (layoutDev)
 
 main :: IO ()
 main = do

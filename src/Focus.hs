@@ -3,8 +3,8 @@ module Focus where
 import Delude
 import Engine (userState)
 import Engine.Common.Types (mkBBoxCenter)
+import Entity
 import Types
-import Types.Entity
 import Types.Entity.Common
 import Equipment (EquipmentSlot(..), contentList)
 import qualified Equipment
@@ -22,7 +22,7 @@ focusEntity = do
 
 -- Get location of a focused entity (if any)
 focusLocation :: Game (Maybe Location)
-focusLocation = (view (oracle.location) =<<) <$> focusEntity
+focusLocation = (view (oracleLocation) =<<) <$> focusEntity
 
 focusEntityId :: Game (Maybe EntityId)
 focusEntityId = use (userState.gameState.focusId)
@@ -37,26 +37,27 @@ focusItemsInRange = focusLocation >>= \case
     Just lc -> do
         eix <- use $ userState.gameState.entities
         es <- lookupInRange EntityKind_Item (queryRange lc) eix
-        return $ filter (isItemInRange lc . view (entity.oracle)) es
+        return $ filter (isItemInRange lc . view entity) es
     where
     queryRange loc = mkBBoxCenter (loc^._Wrapped)
         (pure . (*2) $ defaultPickupRange^._Wrapped)
 
-    isItemInRange loc x = withinRange loc (x^.location) && isJust (x^.itemKind)
+    isItemInRange loc x
+        = withinRange loc (x^.oracleLocation) && isJust (x^.oracleItemKind)
     withinRange l xl = nothingFalse xl $ isWithinDistance defaultPickupRange l
 
 focusItemsInInventory :: Game [EntityWithId]
 focusItemsInInventory = do
     mbp <- focusEquipmentSlot EquipmentSlot_Backpack
     mf <- focusEntity
-    let es = mf^.traverse.oracle.equipment.traverse.to contentList
-    let bs = mbp^..traverse.entity.oracle.content.traverse.traverse
+    let es = mf^.traverse.oracleEquipment.traverse.to contentList
+    let bs = mbp^..traverse.entity.oracleContent.traverse.traverse
     lookupEntities (es <> bs)
 
 focusEquipmentSlot :: EquipmentSlot -> Game (Maybe EntityWithId)
 focusEquipmentSlot es = do
     mf <- focusEntity
-    let meq = mf^?traverse.oracle.equipment.traverse
+    let meq = mf^?traverse.oracleEquipment.traverse
     case Equipment.lookupSlot es =<< meq of
         Nothing -> return Nothing
         Just  i -> lookupEntity i

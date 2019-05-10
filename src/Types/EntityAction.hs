@@ -38,6 +38,8 @@ data EntityAction
    | EntityAction_ExecuteAttack
    -- tell entity it was attacked
    | EntityAction_SelfAttacked AttackPower
+   --
+   | EntityAction_LoadOffensiveSlot
    deriving (Show)
 makePrisms ''EntityAction
 

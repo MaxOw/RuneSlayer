@@ -59,28 +59,18 @@ data Entity = Entity
    { entityActOn  :: EntityAction -> Entity
    , entityUpdate :: EntityContext -> Q (Maybe Entity, [DirectedAction])
    , entityRender :: RenderContext -> RenderAction
-   , entityOracle :: EntityOracle
+   , entityOracle :: forall a. EntityQuery a -> Maybe a
    , entitySave   :: EntitySum
    , entityKind   :: EntityKind
    }
 
 instance HasEntity Entity Entity where entity = id
 
-
-
-
-
-
-oracle :: Getter Entity EntityOracle
-oracle = to entityOracle
-
-
-
 data EntityParts p = EntityParts
    { makeActOn  :: p -> EntityAction -> p
    , makeUpdate :: p -> EntityContext -> Q (Maybe p, [DirectedAction])
    , makeRender :: p -> RenderContext -> RenderAction
-   , makeOracle :: p -> EntityOracle
+   , makeOracle :: p -> forall a. EntityQuery a -> Maybe a
    , makeSave   :: p -> EntitySum
    , makeKind   :: EntityKind
    }

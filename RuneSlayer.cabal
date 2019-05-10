@@ -79,7 +79,7 @@ Executable RuneSlayer
                 , dhall-json
 
                 , linear
-                , Carnot == 0.1.15.3
+                , Carnot == 0.1.16.1
                 , gl
                 , colour
                 , palette
@@ -93,7 +93,5 @@ Executable RuneSlayer
                 , cabal-file-th
                 , git-embed
                 , executable-hash
-
-                -- , plugins
 
                 , reload-utils

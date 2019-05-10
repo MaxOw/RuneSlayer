@@ -30,9 +30,10 @@ render x ctx
     rs = ctx^.resources
     rndSeed = hash $ x^.location._Wrapped
 
-oracle :: Tile -> EntityOracle
-oracle x = def
-   & location .~ Just (x^.location)
+oracle :: Tile -> EntityQuery a -> Maybe a
+oracle x = \case
+    EntityQuery_Location -> Just $ x^.location
+    _                    -> Nothing
 
 --------------------------------------------------------------------------------
 

@@ -8,6 +8,7 @@ module InputState
     , getSelectState
     , matchKeymap
     , appendHist
+    , getInputString, appendInputString, backspaceInputString, clearInputString
     , startSelect, appendSelect, backspaceSelect, endSelect
     , unfocusItem
     , handleSelectKind
@@ -87,7 +88,7 @@ getModeKeymap = do
         Just km -> PrefixMap.union common km -- left biased union
 
 -- Mach keymap for current input mode and keypress hist
--- Clear hist on success or total failure, but leave it be on partial mach
+-- Clear hist on success or total failure but leave it be on partial match
 matchKeymap :: Seq Keypress -> Game (Maybe InputAction)
 matchKeymap keyseq = do
     km <- getModeKeymap
@@ -105,6 +106,21 @@ appendHist kp = userState.inputState.hist <%= (|> kp)
 
 clearHist :: Game ()
 clearHist = userState.inputState.hist .= empty
+
+--------------------------------------------------------------------------------
+
+getInputString :: Game Text
+getInputString = uses (userState.inputState.ff#inputString)
+    (fromList @Text . toList)
+
+appendInputString :: Char -> Game ()
+appendInputString x = userState.inputState.ff#inputString %= (|> x)
+
+backspaceInputString :: Game ()
+backspaceInputString = userState.inputState.ff#inputString %= dropR1
+
+clearInputString :: Game ()
+clearInputString = userState.inputState.ff#inputString .= mempty
 
 --------------------------------------------------------------------------------
 
@@ -172,9 +188,10 @@ appendSelect ch = zoomInputState $ selectState._Just.currentPrefix <%= (|> ch)
 
 backspaceSelect :: Game ()
 backspaceSelect = zoomInputState $ selectState._Just.currentPrefix %= dropR1
-    where
-    dropR1 (l:>_) = l
-    dropR1 x = x
+
+dropR1 :: Snoc (t x) (t x) x x => t x -> t x
+dropR1 (l:>_) = l
+dropR1 x = x
 
 endSelect :: Game ()
 endSelect = zoomInputState $ selectState .= Nothing

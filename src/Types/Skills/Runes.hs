@@ -3,6 +3,15 @@ module Types.Skills.Runes where
 import Delude
 -- import Data.Time.Clock (UTCTime)
 
+
+--------------------------------------------------------------------------------
+
+data RunicSlots = RunicSlots
+   { field_slotsCount :: Int
+   , field_slots      :: IntMap Float
+   } deriving (Generic)
+instance Default RunicSlots
+
 --------------------------------------------------------------------------------
 
 newtype RunePowerLevel = RunePowerLevel Int deriving (Num)

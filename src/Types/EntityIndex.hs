@@ -13,6 +13,7 @@ import Data.FullMap (FullMap)
 data EntityIndexConfig = EntityIndexConfig
    { field_size :: Size Float
    } deriving (Generic)
+instance HasSize EntityIndexConfig (Size Float)
 
 data EntityIndexT a = EntityIndex
    { field_lastId              :: IORef (Maybe EntityId)

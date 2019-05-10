@@ -1,6 +1,8 @@
+{-# Language GADTs #-}
 module Types.EntityOracle where
 
 import Delude
+import Types.Entity.Player
 import Types.Entity.Reactivity
 import Types.Equipment
 import Types.Entity.Common
@@ -8,20 +10,18 @@ import Types.Entity.Item
 import Types.Entity.ZIndex
 import Types.Entity.Animation
 
-data EntityOracle = EntityOracle
-   { field_name           :: Maybe Text
-   , field_location       :: Maybe Location
-   , field_equipment      :: Maybe Equipment
-   , field_itemKind       :: Maybe ItemKind
-   , field_content        :: Maybe [EntityId]
-   , field_volume         :: Maybe Volume
-   , field_maxVolume      :: Maybe Volume
-   , field_fittingSlots   :: Set EquipmentSlot
-   , field_zindex         :: Maybe EntityZIndex
-   , field_collisionShape :: Maybe CollisionShape
-   , field_reactivity     :: Map ReactivCategory ReactivValue
-   , field_itemAnimation  :: Maybe AnimationName
-   } deriving (Generic)
-
-
-instance Default EntityOracle
+data EntityQuery a where
+     EntityQuery_Name           :: EntityQuery Text
+     EntityQuery_Location       :: EntityQuery Location
+     EntityQuery_Equipment      :: EntityQuery Equipment
+     EntityQuery_ItemKind       :: EntityQuery ItemKind
+     EntityQuery_Content        :: EntityQuery [EntityId]
+     EntityQuery_Volume         :: EntityQuery Volume
+     EntityQuery_MaxVolume      :: EntityQuery Volume
+     EntityQuery_FittingSlots   :: EntityQuery (Set EquipmentSlot)
+     EntityQuery_Zindex         :: EntityQuery EntityZIndex
+     EntityQuery_CollisionShape :: EntityQuery CollisionShape
+     EntityQuery_Reactivity     :: EntityQuery (Map ReactivCategory ReactivValue)
+     EntityQuery_ItemAnimation  :: EntityQuery AnimationName
+     EntityQuery_Status         :: EntityQuery (Set EntityStatus)
+     EntityQuery_PlayerStatus   :: EntityQuery PlayerStatus

@@ -7,8 +7,9 @@ import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ZIndex
 import Types.Entity.Animation
+import Types.Entity.Timer
 import Types.Equipment
-import Types.Skills.Runes (RunicLevel)
+import Types.Skills.Runes (RunicLevel, RunicSlots)
 import Types.Entity.Reactivity
 
 --------------------------------------------------------------------------------
@@ -16,6 +17,12 @@ import Types.Entity.Reactivity
 data UpdateOnce
    = UpdateOnce_Equipment
    deriving (Eq, Ord)
+
+data AttackMode
+   = AttackMode_Manual
+   | AttackMode_Auto
+   deriving (Eq)
+instance Default AttackMode where def = AttackMode_Manual
 
 data PlayerInit = PlayerInit
    { field_body        :: [AnimationName] -- BodyDesc
@@ -40,12 +47,22 @@ data Player = Player
    , field_equipmentAnimation :: Animation
    , field_effects            :: [EffectState]
    , field_runicLevel         :: RunicLevel
+   , field_offensiveSlots     :: RunicSlots
    , field_target             :: Maybe EntityId
    , field_reactivity         :: Map ReactivCategory ReactivValue
    , field_attackRange        :: Distance
+   , field_status             :: Set EntityStatus
+   , field_timer              :: Timer
+   , field_attackMode         :: AttackMode
    } deriving (Generic)
 instance HasAnimateWhenStopped Player Bool
 instance HasMaxSpeed Player Speed
+
+-- Player fields needed when displaying UI
+data PlayerStatus = PlayerStatus
+   { field_offensiveSlots     :: RunicSlots
+   , field_status             :: Set EntityStatus
+   } deriving (Generic)
 
 playerSlots :: Set EquipmentSlot
 playerSlots = Set.fromList

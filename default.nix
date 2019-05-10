@@ -12,7 +12,6 @@ let ghc = nixpkgs.haskell.packages.${compiler}.override {
         # concat-graphics       = loadLocal self "concat/graphics";
         # concat-examples       = loadLocal self "concat/examples";
 
-        # halive          = loadDirec self "${~/Projects/Gridlock/halive}";
         reload-utils    = loadDirec self "${./../reload-utils}";
         Carnot          = loadDirec self "${./../Carnot}";
       };

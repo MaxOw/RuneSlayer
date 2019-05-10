@@ -8,6 +8,7 @@ module HasField (module HasField) where
 import Control.Lens
 import Engine.HasField as HasField
 import Data.Generics.Product as HasField (HasField'(field'))
+import Data.Generics.Sum.Constructors
 import GHC.TypeLits
 import GHC.OverloadedLabels
 
@@ -23,6 +24,10 @@ type HasF f = HasField' (AppendSymbol "field_" f)
 ff :: forall f ff s a. (ff ~ AppendSymbol "field_" f, HasField' ff s a)
     => SymbolProxy f -> Lens' s a
 ff SProxy = field' @ff
+
+cc :: forall f ff s a. (ff ~ AppendSymbol "_" f, AsConstructor' f s a)
+    => SymbolProxy ff -> Prism' s a
+cc SProxy = _Ctor' @f
 
 --------------------------------------------------------------------------------
 
@@ -168,3 +173,4 @@ MakeFieldLens(reactivity)
 MakeFieldLens(timer)
 MakeFieldLens(config)
 MakeFieldLens(debugMode)
+MakeFieldLens(status)

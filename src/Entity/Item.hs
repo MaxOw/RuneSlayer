@@ -7,7 +7,7 @@ import Delude
 import qualified Data.Set as Set
 import qualified Data.List as List
 
-import Types.Entity (oracle)
+import Entity
 import Types.Entity.Item
 import Types.Debug
 import Engine.Common.Types (BBox(..))
@@ -89,7 +89,7 @@ fitIntoContainer ees = do
         else do
             let eid = e^.entityId
             self.content       %= (eid:)
-            self.contentVolume += fromMaybe 0 (e^.entity.oracle.volume)
+            self.contentVolume += fromMaybe 0 (e^.entity.oracleVolume)
             addAction eid . EntityAction_SelfPassedTo =<< useSelfId
             go es
 
@@ -112,16 +112,17 @@ render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
 
     itemBBox = BBox (-0.5) (0.5)
 
-thisOracle :: Item -> EntityOracle
-thisOracle x = def
-   & location      .~ (x^.location)
-   & name          .~ Just (x^.itemType.name._Wrapped)
-   & volume        .~ Just (x^.itemType.volume)
-   & itemKind      .~ Just (x^.itemType.itemKind)
-   & fittingSlots  .~ (x^.itemType.fittingSlots)
-   & content       .~ Just (x^.content)
-   & maxVolume     .~ (x^?itemType.containerType.traverse.maxVolume)
-   & itemAnimation .~ (x^.itemType.animation)
+oracle :: Item -> EntityQuery a -> Maybe a
+oracle x = \case
+    EntityQuery_Location      -> x^.location
+    EntityQuery_Name          -> Just $ x^.itemType.name._Wrapped
+    EntityQuery_Volume        -> Just $ x^.itemType.volume
+    EntityQuery_ItemKind      -> Just $ x^.itemType.itemKind
+    EntityQuery_FittingSlots  -> Just $ x^.itemType.fittingSlots
+    EntityQuery_Content       -> Just $ x^.content
+    EntityQuery_MaxVolume     -> x^?itemType.containerType.traverse.maxVolume
+    EntityQuery_ItemAnimation -> x^.itemType.animation
+    _                         -> Nothing
 
 --------------------------------------------------------------------------------
 
@@ -130,7 +131,7 @@ itemToEntity = makeEntity $ EntityParts
    { makeActOn  = actOn
    , makeUpdate = update
    , makeRender = render
-   , makeOracle = thisOracle
+   , makeOracle = oracle
    , makeSave   = EntitySum_Item
    , makeKind   = EntityKind_Item
    }

@@ -11,8 +11,8 @@ import Engine hiding (slots)
 import Engine.Layout.Types
 
 import Types
-import Types.Entity
 import Types.InputState
+import Entity
 import Focus
 
 import Types.Equipment
@@ -85,8 +85,8 @@ equipmentList :: Game [(EquipmentSlot, Maybe EntityWithId)]
 equipmentList = focusEntity >>= \case
     Nothing -> return []
     Just  e -> do
-        let sls = e^..oracle.equipment.traverse.slots.folded
-        let meq = e^.oracle.equipment
+        let sls = e^..oracleEquipment.traverse.slots.folded
+        let meq = e^.oracleEquipment
         let lookupSlot s = Equipment.lookupSlot s =<< meq
         forM sls $ \s -> do
             let me = lookupSlot s
@@ -129,7 +129,7 @@ backpackContainerLayout = focusEquipmentSlot EquipmentSlot_Backpack >>= \case
     Nothing -> return layoutEmpty
     Just e  -> do
         let tit = "Content of the "<> showEntityName (e^.entity) <>":"
-        let cs = e^..entity.oracle.content.traverse.traverse
+        let cs = e^..entity.oracleContent.traverse.traverse
         st <- use userState
         es <- catMaybes <$> mapM lookupEntity cs
         return $ withTitle tit $ withPadding $ selectEntitiesLayout st es
@@ -211,5 +211,5 @@ groundPreviewPanelLayout = do
 --------------------------------------------------------------------------------
 
 showEntityName :: Entity -> Text
-showEntityName e = fromMaybe "???" (e^.oracle.name)
+showEntityName e = fromMaybe "???" (e^.oracleName)
 

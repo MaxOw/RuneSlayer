@@ -36,8 +36,11 @@ Requirements for first release: v0.1
 * World actions.                                                             [X]
 * Named entity types                                                         [X]
 * Render equipped items.                                                     [X]
-* Enemy unit spawn corpse on death.                                          [X]
-* Enemy unit go towards & attack player.                                     [X]
+
+* Enemy actions.                                                             [ ]
+  - Spawn corpse on death.                                                   (#)
+  - Go towards & attack hostile reactivities.                                (#)
+  - Spread out.                                                              ( )
 
 * Proper world generator.                                                    [ ]
   - Add WorldGen debug mode.                                                 (#)

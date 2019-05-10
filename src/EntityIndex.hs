@@ -15,7 +15,7 @@ import qualified Data.HashMap.Strict as HashMap
 import Text.Printf
 
 import Engine.Common.Types (minPoint, maxPoint)
-import Types.Entity
+import Entity
 import Types.Entity.Common (EntityId (..), EntityKind (..))
 import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
@@ -171,11 +171,11 @@ update res handleWorldAction globalActions fct eix = do
                 i <- insert en eix
                 return $ Just $ EntityWithId i en
 
-    action = field' @"field_action"
+    action = ff#action
 
     ----------------------------------------------------------------------------
     debugPrintActions = mapM_ prt . filter (noSetMoveVector . view action)
-    prt x = putStrLn ((printf "%d: %s" fct (show x :: String)) :: String)
+    prt x = putStrLn $ printf "%d: %s" fct (show @String x)
 
 reindex :: MonadIO m
     => EntityIndex
@@ -212,7 +212,7 @@ reindex eix (i, mo, mn) = case (mo, mn) of
                 (Just _P, Nothing) -> deleteFromIndex ov
                 (Just oP, Just nP) -> SpatialIndex.move oP nP i ki
 
-    getPosM x = x^?oracle.location.traverse._Wrapped
+    getPosM x = x^?oracleLocation.traverse._Wrapped
 
 insert :: MonadIO m => Entity -> EntityIndex -> m EntityId
 insert e eix = do

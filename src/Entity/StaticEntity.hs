@@ -40,11 +40,11 @@ render x ctx = withZIndex x $ locate x $ renderComposition
 
     -- cs = x^.entityType.collisionShape
 
-oracle :: StaticEntity -> EntityOracle
-oracle x = def
-   & location       .~ Just (x^.location)
-   & zindex         .~ Just EntityZIndex_Vertical
-   -- & collisionShape .~ (locate x <$> x^.entityType.collisionShape)
+oracle :: StaticEntity -> EntityQuery a -> Maybe a
+oracle x = \case
+    EntityQuery_Location -> Just $ x^.location
+    EntityQuery_Zindex   -> Just EntityZIndex_Vertical
+    _                    -> Nothing
 
 --------------------------------------------------------------------------------
 

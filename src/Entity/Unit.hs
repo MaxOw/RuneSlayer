@@ -8,7 +8,7 @@ import Delude
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Types.Entity
+import Entity
 import Types.Entity.Unit
 import Types.Entity.Timer
 import Types.ResourceManager (Resources)
@@ -62,7 +62,7 @@ decideAction = do
             Just ti -> queryById ti
 
     isHostileTo hostileSet e = not $ Set.disjoint hostileSet
-        (Map.keysSet $ e^.entity.oracle.reactivity)
+        (Map.keysSet $ fromMaybe mempty $ e^.entity.oracleReactivity)
 
 attackTarget :: EntityWithId -> Update Unit ()
 attackTarget targetEntity = do
@@ -99,9 +99,11 @@ render x _ctx = withZIndex x $ locate x $ renderComposition
         , renderEffects x ]
     ]
 
-thisOracle :: Unit -> EntityOracle
-thisOracle x = def
-   & location       .~ Just (x^.location)
+oracle :: Unit -> EntityQuery a -> Maybe a
+oracle x = \case
+    EntityQuery_Location   -> Just $ x^.location
+    EntityQuery_Reactivity -> Just $ x^.unitType.reactivity
+    _                      -> Nothing
 
 --------------------------------------------------------------------------------
 
@@ -110,7 +112,7 @@ unitToEntity = makeEntity $ EntityParts
    { makeActOn  = actOn
    , makeUpdate = update
    , makeRender = render
-   , makeOracle = thisOracle
+   , makeOracle = oracle
    , makeSave   = EntitySum_Unit
    , makeKind   = EntityKind_Dynamic
    }

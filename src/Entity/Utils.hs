@@ -5,7 +5,7 @@ module Entity.Utils
 
 import Delude
 import Types.Entity.Common     as Utils
-import Types.Entity            as Utils hiding (oracle)
+import Types.Entity            as Utils
 import Entity                  as Utils (makeEntity)
 import Entity.Update           as Utils
 import Engine.Graphics         as Utils hiding (context)

@@ -12,11 +12,11 @@ import Graphics.GL
 
 import Types (Graphics, Renderer)
 import Types.Entity.Common
-import Types.Entity
 import Types.Config
 import Types.St
 import Types.MenuState
 import Types.Debug
+import Entity
 import EntityIndex (lookupInRange)
 import GameState (isDebugFlagOn)
 
@@ -30,6 +30,7 @@ import Engine.Graphics.Utils (mkMatHomo2)
 import Engine.Graphics
 import Engine.Common.Types
 import Engine.Graphics.Scroller (updateScroller, makeRenderScroller)
+import qualified Engine.Layout.Alt as Engine (drawLayout)
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
@@ -93,6 +94,7 @@ renderGame _delta st = do
     whenJustM focusEntity $ \_ -> do
         menuProjM <- orthoProjection $ def
             & set scale (st^.gameState.menuScale)
+        Engine.drawLayout =<< statusPanesLayout
         Engine.draw menuProjM =<< makeRenderLayout =<< gameMenuLayout
 
     Engine.swapBuffers
@@ -170,7 +172,7 @@ renderEntities es st = Engine.renderComposition rs
     where
     rs = map (flip entityRender ctx . view entity) ese
     ese = sortWith f es
-    f x = Down $ fromMaybe 0 $ x^?entity.oracle.location.traverse._Wrapped._y
+    f x = Down $ fromMaybe 0 $ x^?entity.oracleLocation.traverse._Wrapped._y
     ctx = RenderContext
         { field_resources  = st^.resources
         , field_debugFlags = st^.debugFlags
@@ -217,9 +219,4 @@ renderSetup = do
     fitViewport
     glClearColor 0 0 0 1
     glClear GL_COLOR_BUFFER_BIT
-
-fitViewport :: Graphics ()
-fitViewport = do
-    (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
-    glViewport 0 0 (fromIntegral w) (fromIntegral h)
 

@@ -10,9 +10,13 @@ import Engine.Events.Types hiding (Event)
 
 import Types (Game, Event)
 import Types.MenuState
+import Types.Entity.Animation (AnimationKind)
+import Types.Debug (DebugFlag(..))
+import Types.EntityAction
 import InputState
 import GameState
 import Focus
+
 
 --------------------------------------------------------------------------------
 
@@ -54,24 +58,47 @@ handleSelectMode s kp = case keypressKey kp of
 
 handleOtherModes :: Keypress -> Game ()
 handleOtherModes kp = do
-    -- putStrLn $ show (keypressKey kp) ++ " pressed"
-    -- print =<< use (userState.inputState)
     -- Add keypress to history
     keyseq <- appendHist kp
     -- Mach sequence against keymap
-    -- print $ fmap keypressKey keyseq
     print $ toList keyseq
     mAction <- matchKeymap keyseq
     print $ mAction
-    whenJust mAction $ \act -> do
-        handleActionFinalizers act
-        handleActivation act
-        registerDeactivation kp act
+    case mAction of
+        Just act -> do
+            handleActionFinalizers act
+            handleActivation act
+            registerDeactivation kp act
+        Nothing -> customModeHandler kp =<< getMode
 
 -- TODO: Remember to clear all keypress deactivators on focus lost
 
 handleKeyReleased :: Keypress -> Game ()
 handleKeyReleased = mapM_ handleDeactivation <=< popDeactivators
+
+customModeHandler :: Keypress -> InputMode -> Game ()
+customModeHandler kp = \case
+    OffensiveMode -> customModeHandler_offensiveMode kp
+    _ -> return ()
+
+customModeHandler_offensiveMode :: Keypress -> Game ()
+customModeHandler_offensiveMode kp = case keypressKey kp of
+    k | Just ch <- keyToChar k -> appendInputString ch
+    Key'Backspace -> backspaceInputString
+    Key'Enter     -> acceptAnswer
+    _             -> return ()
+    where
+    acceptAnswer = do
+        ver <- verifyAnswer
+        if ver then correctAnswer else wrongAnswer
+
+    verifyAnswer = return True
+
+    correctAnswer = do
+        actOnFocusedEntity EntityAction_LoadOffensiveSlot
+        inputActionEscape
+
+    wrongAnswer   = return ()
 
 --------------------------------------------------------------------------------
 
@@ -101,6 +128,7 @@ handleDeactivation = \case
 handleActionFinalizers :: InputAction -> Game ()
 handleActionFinalizers act = sequence_ $ map ($ act)
     [ finalize_selectItemToFocus
+    , finalize_clearInputString
     ]
 
 finalize_selectItemToFocus :: InputAction -> Game ()
@@ -109,6 +137,9 @@ finalize_selectItemToFocus = \case
     SelectItemToDrop   -> return ()
     SelectItemToFocus  -> return ()
     _ -> unfocusItem
+
+finalize_clearInputString :: InputAction -> Game ()
+finalize_clearInputString _ = clearInputString
 
 --------------------------------------------------------------------------------
 
@@ -134,4 +165,29 @@ selectItemToFocus = do
     res <- fmap (view entityId) <$> focusItemsInRange
     ies <- fmap (view entityId) <$> focusItemsInInventory
     startSelect SelectFocus $ res <> ies
+
+--------------------------------------------------------------------------------
+
+toggleDebug :: DebugFlag -> Game ()
+toggleDebug x = do
+    userState.debugFlags %= toggleSet x
+    case x of
+      DebugFlag_DrawPickupRange -> debugFocus EntityDebugFlag_DrawPickupRange
+      _ -> return ()
+    where
+    debugFocus = actOnFocusedEntity . EntityAction_ToggleDebug
+
+debugRunAnimation :: AnimationKind -> Game ()
+debugRunAnimation = actOnFocusedEntity . EntityAction_DebugRunAnimation
+
+pickupAllItems :: Game ()
+pickupAllItems = withFocusId $ \fi -> do
+    es <- fmap (view entityId) <$> focusItemsInRange
+    mapM_ (flip actOnEntity $ EntityAction_SelfAddedBy fi) es
+
+dropAllItems :: Game ()
+dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
+
+executeAttack :: Game ()
+executeAttack = actOnFocusedEntity EntityAction_ExecuteAttack
 

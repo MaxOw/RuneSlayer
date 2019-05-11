@@ -10,6 +10,7 @@ import qualified Data.Map as PrefixMap
 import qualified Types.Entity.Animation as Animation
 import Types.Entity.Animation (AnimationKind)
 import Types.Entity.Common (EntityId)
+import Types.EntityAction (AttackMode(..))
 import Types.Debug (DebugFlag(..))
 import Engine.Events.Types
 import qualified Control.Monad.Trans.State.Lazy as Lazy
@@ -28,6 +29,7 @@ data InputAction
    | PickupAllItems
    | DropAllItems
    | ExecuteAttack
+   | SetAttackMode AttackMode
    | SelectItemToPickUp
    | SelectItemToDrop
    | SelectItemToFocus
@@ -89,7 +91,7 @@ data MoveDirection
 
 data PanelName
    = GroundPreviewPanel
-   | HostilityWarningPanel
+   | StatusPanel
    | OffensiveSlotsPanel
    deriving (Eq, Ord, Show)
 
@@ -163,7 +165,7 @@ instance Default InputState where
 
 defaultVisiblePanels :: Set PanelName
 defaultVisiblePanels = Set.fromList
-    [ HostilityWarningPanel
+    [ StatusPanel
     , OffensiveSlotsPanel
     ]
 
@@ -268,7 +270,6 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "td" (ToggleDebug DebugFlag_ShowDynamicBoundingBoxes)
         , InputStr "tc" (ToggleDebug DebugFlag_ShowCollisionShapes)
 
-
         , InputStr "ac" (DebugRunAnimation Animation.Cast)
         , InputStr "at" (DebugRunAnimation Animation.Thrust)
         , InputStr "aw" (DebugRunAnimation Animation.Walk)
@@ -283,6 +284,9 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "pp" DropAllItems
 
         , InputStr "gf" ExecuteAttack
+
+        , InputStr "mm" (SetAttackMode AttackMode_Manual)
+        , InputStr "ma" (SetAttackMode AttackMode_Auto)
 
         , InputStr "ff" (SetMode OffensiveMode)
      -- , InputStr "fd" (SetMode DefensiveMode)

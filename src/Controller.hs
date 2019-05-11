@@ -95,7 +95,7 @@ customModeHandler_offensiveMode kp = case keypressKey kp of
     verifyAnswer = return True
 
     correctAnswer = do
-        actOnFocusedEntity EntityAction_LoadOffensiveSlot
+        actOnPlayer PlayerAction_LoadOffensiveSlot
         inputActionEscape
 
     wrongAnswer   = return ()
@@ -112,6 +112,7 @@ handleActivation = \case
     PickupAllItems      -> pickupAllItems
     DropAllItems        -> dropAllItems
     ExecuteAttack       -> executeAttack
+    SetAttackMode     m -> setAttackMode m
     SelectItemToPickUp  -> selectItemToPickUp
     SelectItemToDrop    -> selectItemToDrop
     SelectItemToFocus   -> selectItemToFocus
@@ -191,3 +192,5 @@ dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
 executeAttack :: Game ()
 executeAttack = actOnFocusedEntity EntityAction_ExecuteAttack
 
+setAttackMode :: AttackMode -> Game ()
+setAttackMode = actOnPlayer . PlayerAction_SetAttackMode

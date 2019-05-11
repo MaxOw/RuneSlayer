@@ -4,20 +4,26 @@ import Delude
 import Engine.Layout.Alt hiding (left)
 import Engine.FontsManager.Types (FontStyle)
 import Types.GUI
+import Types.EntityAction (AttackMode(..))
 
 import qualified Color
 
 --------------------------------------------------------------------------------
 
-layout_hostilityWarning :: Bool -> Layout
-layout_hostilityWarning False = def
-layout_hostilityWarning True
+layout_statusPanel :: StatusDesc -> Layout
+layout_statusPanel s
     = container txt
     & padding.each   .~ 10 @@ px
     & padding.right  .~ 14 @@ px
     where
-    txt = textline fs "!" & align .~ BottomRight
-    fs = makeFs 20 warningColor
+    txt = textline fs msg & align .~ BottomRight
+    fs = makeFs 14 warningColor
+
+    msg = hr <> am
+    hr = bool "" "!" $ s^.ff#hostilesInRange
+    am = case s^.ff#attackMode of
+        AttackMode_Manual -> "M"
+        AttackMode_Auto   -> "A"
 
 --------------------------------------------------------------------------------
 

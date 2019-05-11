@@ -38,9 +38,9 @@ gameMenuLayout = overlayLayouts <$> sequence
 
 statusPanesLayout :: Game Alt.Layout
 statusPanesLayout = Alt.composition . catMaybes <$> sequence
-    -- [ rIf GroundPreviewPanel    groundPreviewPanelLayout
+ -- [ rIf GroundPreviewPanel    groundPreviewPanelLayout
     [ pure Nothing
-    , rIf HostilityWarningPanel hostilityWarningPanelLayout
+    , rIf StatusPanel           statusPanelLayout
     , rIf OffensiveSlotsPanel   offensiveSlotsPanelLayout
     ]
     where
@@ -49,12 +49,16 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
             True  -> Just <$> renderFunc
             False -> pure Nothing
 
-hostilityWarningPanelLayout :: Game Alt.Layout
-hostilityWarningPanelLayout = do
+statusPanelLayout :: Game Alt.Layout
+statusPanelLayout = do
     mfo <- focusEntity
-    let sts = fromMaybe mempty $ view oracleStatus =<< mfo
-    let hir = Set.member EntityStatus_HostilesInRange sts
-    return $ layout_hostilityWarning hir
+    case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
+        Nothing -> return def
+        Just ps -> do
+            let hir = Set.member EntityStatus_HostilesInRange (ps^.status)
+            return $ layout_statusPanel $ def
+                & ff#hostilesInRange .~ hir
+                & ff#attackMode      .~ ps^.ff#attackMode
 
 offensiveSlotsPanelLayout :: Game Alt.Layout
 offensiveSlotsPanelLayout = do

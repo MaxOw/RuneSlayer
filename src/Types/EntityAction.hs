@@ -12,6 +12,17 @@ data EntityDebugFlag
    = EntityDebugFlag_DrawPickupRange
    deriving (Show)
 
+data AttackMode
+   = AttackMode_Manual
+   | AttackMode_Auto
+   deriving (Eq, Show, Enum, Bounded)
+instance Default AttackMode where def = AttackMode_Manual
+
+data PlayerAction
+   = PlayerAction_LoadOffensiveSlot
+   | PlayerAction_SetAttackMode AttackMode
+   deriving (Show)
+
 data EntityAction
    = EntityAction_SetMoveVector V2D
    | EntityAction_ToggleDebug EntityDebugFlag
@@ -38,8 +49,8 @@ data EntityAction
    | EntityAction_ExecuteAttack
    -- tell entity it was attacked
    | EntityAction_SelfAttacked AttackPower
-   --
-   | EntityAction_LoadOffensiveSlot
+   -- send player specific actions
+   | EntityAction_PlayerAction PlayerAction
    deriving (Show)
 makePrisms ''EntityAction
 
@@ -48,7 +59,6 @@ data DirectedEntityAction = DirectedEntityAction
    , field_action   :: EntityAction
    } deriving (Generic)
 instance HasEntityId DirectedEntityAction EntityId
-
 
 instance Show DirectedEntityAction where
     show (DirectedEntityAction i a) =

@@ -45,7 +45,9 @@ layouts = fromList
     [ layout_offensiveSlotsPanel off0
     , layout_offensiveSlotsPanel off1
     -- , layout_hostilityWarning False
-    , layout_hostilityWarning True
+    , layout_statusPanel $ def
+        & ff#hostilesInRange .~ True
+        & ff#attackMode      %~ next
     ]
     where
     off0 = def

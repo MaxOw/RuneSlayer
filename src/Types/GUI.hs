@@ -3,6 +3,15 @@ module Types.GUI (module Types.GUI) where
 import Delude
 
 import Types.GUI.Common as Types.GUI
+import Types.EntityAction (AttackMode)
+
+--------------------------------------------------------------------------------
+
+data StatusDesc = StatusDesc
+   { field_hostilesInRange :: Bool
+   , field_attackMode      :: AttackMode
+   } deriving (Generic)
+instance Default StatusDesc
 
 --------------------------------------------------------------------------------
 

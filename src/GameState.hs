@@ -4,6 +4,7 @@ module GameState
     , updateGameState
     , actOnEntity
     , actOnFocusedEntity
+    , actOnPlayer
 
     , isDebugFlagOn
     , pickupItem, dropItem
@@ -91,6 +92,9 @@ actOnEntity eid = addDirectedAction . directAtEntity eid
 
 actOnFocusedEntity :: EntityAction -> Game ()
 actOnFocusedEntity act = withFocusId $ \fi -> actOnEntity fi act
+
+actOnPlayer :: PlayerAction -> Game ()
+actOnPlayer = actOnFocusedEntity . EntityAction_PlayerAction
 
 --------------------------------------------------------------------------------
 

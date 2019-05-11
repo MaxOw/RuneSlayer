@@ -29,16 +29,16 @@ import qualified Entity.Animation as Animation
 
 actOn :: Player -> EntityAction -> Player
 actOn x a = x & case a of
-    EntityAction_ToggleDebug       f -> toggleDebugFlag  f
+    EntityAction_ToggleDebug       f -> toggleDebugFlag f
     EntityAction_DebugRunAnimation k -> setAnimationKind k
-    EntityAction_SetMoveVector     v -> setMoveVector    v
-    EntityAction_DropAllItems        -> handleOnUpdate   a
-    EntityAction_AddItem           _ -> handleOnUpdate   a
-    EntityAction_DropItem          _ -> handleOnUpdate   a
-    EntityAction_OwnerDropItem     _ -> handleOnUpdate   a
-    EntityAction_ExecuteAttack       -> handleOnUpdate   a
-    EntityAction_SelfAttacked      _ -> handleOnUpdate   a
-    EntityAction_LoadOffensiveSlot   -> loadOffensiveSlot
+    EntityAction_SetMoveVector     v -> setMoveVector v
+    EntityAction_DropAllItems        -> handleOnUpdate a
+    EntityAction_AddItem           _ -> handleOnUpdate a
+    EntityAction_DropItem          _ -> handleOnUpdate a
+    EntityAction_OwnerDropItem     _ -> handleOnUpdate a
+    EntityAction_ExecuteAttack       -> handleOnUpdate a
+    EntityAction_SelfAttacked      _ -> handleOnUpdate a
+    EntityAction_PlayerAction      p -> handlePlayerAction p
     _ -> id
     where
     setAnimationKind k _ = x
@@ -46,12 +46,16 @@ actOn x a = x & case a of
         & animationState.current.era  .~ 0
         & animationState.progression  .~ Animation.defaultTransition
 
-    loadOffensiveSlot _ = x & ff#offensiveSlots %~ fillRunicSlot
+    handlePlayerAction = \case
+        PlayerAction_LoadOffensiveSlot -> loadOffensiveSlot
+        PlayerAction_SetAttackMode  am -> setAttackMode am
+
+    loadOffensiveSlot = ff#offensiveSlots %~ fillRunicSlot
+    setAttackMode     = set (ff#attackMode)
 
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
-    executeAttack
-    -- whenMatch _EntityAction_ExecuteAttack executeAttack
+    runAttackMode
     updateAnimationState
     updateTimer
     updateEffects defaultDelta
@@ -106,6 +110,11 @@ procAttacked as = do
     mapM_ (addEffect . Animation.HitEffect) ds
     where
     applyDefence     x = return x
+
+runAttackMode :: Update Player ()
+runAttackMode = use (self.ff#attackMode) >>= \case
+    AttackMode_Manual -> whenMatch _EntityAction_ExecuteAttack executeAttack
+    AttackMode_Auto   -> executeAttack
 
 executeAttack :: Update Player ()
 executeAttack = whenM canExecuteAttack $ do

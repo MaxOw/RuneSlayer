@@ -29,6 +29,8 @@ import Data.Bimap     as All (Bimap)
 import Data.Aeson     as All
     (ToJSON(..), FromJSON(..), genericToEncoding, genericParseJSON)
 
+import Relude.Extra.Enum as All (next, prec)
+
 import qualified Data.Aeson as Aeson
 import Engine.Common.Types
 import Engine.Graphics.Types as All (Color, AlphaColor)

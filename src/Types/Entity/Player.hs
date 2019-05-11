@@ -18,12 +18,6 @@ data UpdateOnce
    = UpdateOnce_Equipment
    deriving (Eq, Ord)
 
-data AttackMode
-   = AttackMode_Manual
-   | AttackMode_Auto
-   deriving (Eq)
-instance Default AttackMode where def = AttackMode_Manual
-
 data PlayerInit = PlayerInit
    { field_body        :: [AnimationName] -- BodyDesc
    , field_reactivity  :: Map ReactivCategory ReactivValue
@@ -62,6 +56,7 @@ instance HasMaxSpeed Player Speed
 data PlayerStatus = PlayerStatus
    { field_offensiveSlots     :: RunicSlots
    , field_status             :: Set EntityStatus
+   , field_attackMode         :: AttackMode
    } deriving (Generic)
 
 playerSlots :: Set EquipmentSlot

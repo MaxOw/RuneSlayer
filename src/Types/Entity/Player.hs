@@ -9,7 +9,7 @@ import Types.Entity.ZIndex
 import Types.Entity.Animation
 import Types.Entity.Timer
 import Types.Equipment
-import Types.Skills.Runes (RunicLevel, RunicSlots)
+import Types.Skills.Runes (RunicLevel, RunicSlots, RuneName)
 import Types.Entity.Reactivity
 
 --------------------------------------------------------------------------------
@@ -48,13 +48,16 @@ data Player = Player
    , field_status             :: Set EntityStatus
    , field_timer              :: Timer
    , field_attackMode         :: AttackMode
+   , field_selectedRune       :: Maybe RuneName
    } deriving (Generic)
 instance HasAnimateWhenStopped Player Bool
 instance HasMaxSpeed Player Speed
 
 -- Player fields needed when displaying UI
 data PlayerStatus = PlayerStatus
-   { field_offensiveSlots     :: RunicSlots
+   { field_runicLevel         :: RunicLevel
+   , field_offensiveSlots     :: RunicSlots
+   , field_selectedRune       :: Maybe RuneName
    , field_status             :: Set EntityStatus
    , field_attackMode         :: AttackMode
    } deriving (Generic)

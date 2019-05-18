@@ -18,8 +18,14 @@ data AttackMode
    deriving (Eq, Show, Enum, Bounded)
 instance Default AttackMode where def = AttackMode_Manual
 
+data RuneType
+   = RuneType_Offensive
+   | RuneType_Defensive
+   deriving (Show)
+
 data PlayerAction
-   = PlayerAction_LoadOffensiveSlot
+   = PlayerAction_SelectRune
+   | PlayerAction_UpdateRune RuneType Bool
    | PlayerAction_SetAttackMode AttackMode
    deriving (Show)
 

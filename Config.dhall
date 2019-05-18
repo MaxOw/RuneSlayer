@@ -1,5 +1,4 @@
 
-
-{ debugMode = None Text
--- { debugMode = Some "WorldGen"
+{ runeSet = "japanese"
+-- , debugMode = Some "WorldGen"
 }

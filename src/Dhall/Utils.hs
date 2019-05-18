@@ -25,17 +25,17 @@ dhallToMap :: FromJSON x => FilePath -> FilePath -> IO (HashMap Text x)
 dhallToMap rdir fpath = do
     expr <- inputExprFromFile rdir fpath
     case dhallToJSON expr of
-        Left err -> print err >> return mempty
+        Left err -> error (show err)
         Right vl -> case fromJSON vl of
-            Error err -> putStrLn (fpath <> ": " <> err) >> return mempty
+            Error err -> error $ toText (fpath <> ": " <> err)
             Success v -> return v
 
 loadDhall :: (MonadIO m, FromJSON x, Default x) => FilePath -> FilePath -> m x
 loadDhall rdir fpath = liftIO $ do
     expr <- inputExprFromFile rdir fpath
     case dhallToJSON expr of
-        Left err -> print err >> return def
+        Left err -> error (show err)
         Right vl -> case fromJSON vl of
-            Error err -> print err >> return def
+            Error err -> error (toText err)
             Success v -> return v
 

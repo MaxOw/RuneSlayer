@@ -68,8 +68,8 @@ layout_offensiveSlotsPanel desc = vseprel (8 @@ px)
           | pct <  1  = Color.red
           | otherwise = Color.green
 
-    fs = makeFs 10 Color.gray
-    bg = Color.withOpacity Color.lightgray 0.4
+    fs = makeFs 10 Color.black
+    bg = Color.withOpacity Color.lightgray 0.6
 
 --------------------------------------------------------------------------------
 

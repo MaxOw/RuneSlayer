@@ -11,6 +11,7 @@ data DebugMode
 
 data Config = Config
    { field_debugMode :: Maybe DebugMode
+   , field_runeSet   :: Text
    } deriving (Generic)
 
 --------------------------------------------------------------------------------

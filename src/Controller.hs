@@ -17,6 +17,8 @@ import InputState
 import GameState
 import Focus
 
+import Skills.Runes (getRuneByName, isCorrectAnswer)
+import Entity
 
 --------------------------------------------------------------------------------
 
@@ -86,19 +88,30 @@ customModeHandler_offensiveMode kp = case keypressKey kp of
     k | Just ch <- keyToChar k -> appendInputString ch
     Key'Backspace -> backspaceInputString
     Key'Enter     -> acceptAnswer
+    Key'Space     -> acceptAnswer
     _             -> return ()
     where
     acceptAnswer = do
         ver <- verifyAnswer
         if ver then correctAnswer else wrongAnswer
 
-    verifyAnswer = return True
+    verifyAnswer = do
+        ans <- getInputString
+        mfo <- focusEntity
+        case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
+            Nothing -> return False
+            Just ps -> do
+                let mr = flip getRuneByName (ps^.ff#runicLevel)
+                        =<< ps^.ff#selectedRune
+                return $ fromMaybe False $ isCorrectAnswer ans <$> mr
 
     correctAnswer = do
-        actOnPlayer PlayerAction_LoadOffensiveSlot
+        actOnPlayer $ PlayerAction_UpdateRune RuneType_Offensive True
         inputActionEscape
 
-    wrongAnswer   = return ()
+    wrongAnswer   = do
+        actOnPlayer $ PlayerAction_UpdateRune RuneType_Offensive False
+        inputActionEscape
 
 --------------------------------------------------------------------------------
 
@@ -113,6 +126,7 @@ handleActivation = \case
     DropAllItems        -> dropAllItems
     ExecuteAttack       -> executeAttack
     SetAttackMode     m -> setAttackMode m
+    StartOffensiveMode  -> startOffensiveMode
     SelectItemToPickUp  -> selectItemToPickUp
     SelectItemToDrop    -> selectItemToDrop
     SelectItemToFocus   -> selectItemToFocus
@@ -150,6 +164,11 @@ defaultExit = \case
     _                    -> return ()
 
 --------------------------------------------------------------------------------
+
+startOffensiveMode :: Game ()
+startOffensiveMode = do
+    actOnPlayer PlayerAction_SelectRune
+    setMode OffensiveMode
 
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do

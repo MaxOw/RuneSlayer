@@ -41,6 +41,8 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Vector as Vector
 import qualified Data.Set    as Set
 
+import qualified Data.IxSet.Typed as IxSet
+
 import Diagrams.Core (InSpace, Transformable)
 import Engine (Mat4)
 import Engine.TH
@@ -75,6 +77,8 @@ instance ToJSON a => ToJSON (Rect a) where
     toEncoding = Aeson.genericToEncoding customOptionsJSON
 instance FromJSON a => FromJSON (Rect a) where
     parseJSON = Aeson.genericParseJSON customOptionsJSON
+
+instance IxSet.Indexable a b => Default (IxSet.IxSet a b) where def = mempty
 
 --------------------------------------------------------------------------------
 

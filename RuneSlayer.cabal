@@ -87,8 +87,7 @@ Executable RuneSlayer
                 , diagrams-lib
                 -- , bytestring-trie
 
-                , ixset
-                -- , ixset-typed
+                , ixset-typed
 
                 , cabal-file-th
                 , git-embed

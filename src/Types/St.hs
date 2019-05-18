@@ -29,7 +29,6 @@ data St = St
    } deriving (Generic)
 instance HasResources St Resources
 
-
 defaultSt :: MonadIO m => EntityIndex -> Scroller -> m St
 defaultSt eix scro = do
     gs <- defaultGameState eix

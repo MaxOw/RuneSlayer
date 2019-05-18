@@ -51,13 +51,13 @@ Requirements for first release: v0.1
   - Perlin noise based landmass generator.                                   (#)
   - Add random tile variants.                                                (#)
 
-* Initial vilige.                                                            [ ]
+* Initial village.                                                           [ ]
 * Initial island.                                                            [ ]
 
 * Learning mechanics                                                         [ ]
-  - Offensive skill.                                                         ( )
-  - Defensive skill.                                                         ( )
-  - Runic levels.                                                            ( )
+  - Offensive runes.                                                         (#)
+  - Defensive runes.                                                         ( )
+  - Runic levels.                                                            (#)
 
 * Add hint/help/tutorial windows.                                            [ ]
 * NPCs.                                                                      [ ]

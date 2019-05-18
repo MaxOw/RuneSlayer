@@ -47,10 +47,27 @@ actOn x a = x & case a of
         & animationState.progression  .~ Animation.defaultTransition
 
     handlePlayerAction = \case
-        PlayerAction_LoadOffensiveSlot -> loadOffensiveSlot
+        PlayerAction_SelectRune        -> selectCurrentRune
+        PlayerAction_UpdateRune   rt r -> updateCurrentRune rt r
         PlayerAction_SetAttackMode  am -> setAttackMode am
 
-    loadOffensiveSlot = ff#offensiveSlots %~ fillRunicSlot
+    currentTime = undefined
+    selectCurrentRune = case x^.ff#selectedRune of
+        Nothing -> ff#selectedRune .~ selectRune currentTime (x^.ff#runicLevel)
+        Just  _ -> id
+
+    updateCurrentRune rt r _ = x
+        & ff#selectedRune .~ Nothing
+        & loadSlot rt r
+        & updateRuneUsage r
+    loadSlot RuneType_Offensive True = ff#offensiveSlots %~ fillRunicSlot
+ -- loadSlot RuneType_Defensive True = ff#defensiveSlots %~ fillRunicSlot
+    loadSlot _ _ = id
+
+    updateRuneUsage r = case x^.ff#selectedRune of
+        Nothing -> id
+        Just sn -> over (ff#runicLevel) $ updateUsage sn (RuneUsage r)
+
     setAttackMode     = set (ff#attackMode)
 
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
@@ -262,6 +279,9 @@ makePlayer rs p = def
     & equipment         .~ Equipment.create playerSlots
     & ff#attackRange    .~ disM 2
     & ff#offensiveSlots .~ initRunicSlots 4
+    & ff#runicLevel     .~ initKnownRunes
     where
     as = mconcat $ mapMaybe (flip lookupAnimation rs) (p^.body)
+    initRunes = getRunesByLevel 1 (rs^.runeSet)
+    initKnownRunes = addKnownRunes initRunes def
 

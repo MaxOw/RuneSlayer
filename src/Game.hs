@@ -3,6 +3,7 @@ module Game
     ) where
 
 import Delude
+import qualified Data.Map.Strict as Map
 import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
 import Engine.Graphics.Utils (delObject)
@@ -22,6 +23,7 @@ import Types.Entity.Item
 import Types.Entity.Unit
 import EntityLike
 import WorldGen
+import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
 
@@ -40,7 +42,7 @@ initSt = do
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
     st <- defaultSt eix scro
 
-    loadFontFamily "Arial"
+    loadFonts
     rs <- loadResources conf
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
@@ -55,15 +57,23 @@ initSt = do
     return $ st
         & gameState.focusId .~ Just pid
         & gameState.actions .~ testInitialActions
-        & resources .~ rs
-        & overview  .~ rnd
-        & config    .~ conf
+        & resources  .~ rs
+        & overview   .~ rnd
+        & config     .~ conf
     where
     playerEntity rs pli = toEntity $ makePlayer rs pli
         & location .~ locM 0 0
         & collisionShape .~ Just (Collider.circle 0 0.3)
 
     overview = ff#overview
+
+loadRuneSet :: Config -> Engine us RuneSet
+loadRuneSet conf = do
+    let rsname = conf^.ff#runeSet
+    rus <- loadDhall "data/desc" "RuneSets.dhall"
+    case Map.lookup rsname rus of
+        Nothing -> error $ "Unable to load RuneSet: " <> rsname
+        Just rp -> buildRuneSet <$> loadDhall "data/desc" rp
 
 makeRenderOverview :: WorldGenOutput -> Engine us RenderAction
 makeRenderOverview out = case out^.overviewImage of
@@ -88,6 +98,9 @@ loadResources conf = case conf^.debugMode of
         is <- loadDhallList "ItemTypes.dhall"
         us <- loadDhallList "UnitTypes.dhall"
         as <- loadDhallMap  "Animations.dhall"
+
+        rust <- loadRuneSet conf
+
         let res = def
                 & imgMap        .~ HashMap.fromList rs
                 & spriteMap     .~ ss
@@ -95,6 +108,7 @@ loadResources conf = case conf^.debugMode of
                 & tileSetMap    .~ buildMap ts
                 & itemsMap      .~ buildMap is
                 & unitsMap      .~ buildMap us
+                & runeSet       .~ rust
         let pr = fmap (Animation.makeAnimation res)
                $ HashMap.fromList
                $ map (over _1 AnimationName)
@@ -128,14 +142,25 @@ loadResource r = do
     -- putStrLn $ if isJust mi then " [Success]" else " [Failure]" :: Text
     return $ (r,) <$> mi
 
-loadFontFamily :: FontName -> Engine us ()
-loadFontFamily fname = void $ Engine.loadFontFamily fname $ def
+loadFonts :: Engine us ()
+loadFonts = do
+    loadFontFamily "Arial" ".ttf"
+    loadFontBase "SourceHanSerif" "-Regular.otf"
+
+loadFontBase :: FontName -> Text -> Engine us ()
+loadFontBase fname ext = void $ Engine.loadFontFamily fname $ def
+    & fontBase .~ mkFontPath fname ""
+    where
+    mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
+
+loadFontFamily :: FontName -> Text -> Engine us ()
+loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
     & fontBase              .~ mkFontPath fname ""
     & fontBold              .~ Just (mkFontPath fname "-Bold")
     & fontBoldItalic        .~ Just (mkFontPath fname "-Bold-Italic")
     & fontItalic            .~ Just (mkFontPath fname "-Italic")
     where
-    mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ".ttf"
+    mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
 
 testInitialActions :: [DirectedAction]
 testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)

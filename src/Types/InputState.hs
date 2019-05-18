@@ -30,6 +30,7 @@ data InputAction
    | DropAllItems
    | ExecuteAttack
    | SetAttackMode AttackMode
+   | StartOffensiveMode
    | SelectItemToPickUp
    | SelectItemToDrop
    | SelectItemToFocus
@@ -288,8 +289,8 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "mm" (SetAttackMode AttackMode_Manual)
         , InputStr "ma" (SetAttackMode AttackMode_Auto)
 
-        , InputStr "ff" (SetMode OffensiveMode)
-     -- , InputStr "fd" (SetMode DefensiveMode)
+        , InputStr "f" StartOffensiveMode
+     -- , InputStr "d" StartDefensiveMode
         ]
 
     , InputGroup (StatusMode Inventory)

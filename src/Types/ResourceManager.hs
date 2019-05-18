@@ -8,6 +8,7 @@ import Types.Entity.TileSet
 import Types.Entity.Animation
 import Types.Entity.Item
 import Types.Entity.Unit
+import Types.Skills.Runes
 
 data Resources = Resources
    { field_imgMap        :: HashMap Text Img
@@ -17,6 +18,7 @@ data Resources = Resources
    , field_itemsMap      :: HashMap ItemTypeName ItemType
    , field_unitsMap      :: HashMap UnitTypeName UnitType
    , field_animationsMap :: HashMap AnimationName Animation
+   , field_runeSet       :: RuneSet
    } deriving (Generic)
 instance Default Resources
 instance HasResources Resources Resources where resources = id

@@ -10,7 +10,7 @@ import qualified Engine.Layout.Alt as Alt
 import Types
 import Types.InputState
 import InputState (getMode, isPanelVisible, getInputString)
-import Skills.Runes (listRunicSlots)
+import Skills.Runes (listRunicSlots, getRuneByName)
 import Focus (focusEntity)
 import Entity
 import Types.Entity.Common (EntityStatus(..))
@@ -71,10 +71,12 @@ offensiveSlotsPanelLayout = do
     where
     makeDesc iom ps ans = def
         & ff#slots      .~ ss
-        & ff#showQuery  .~ iom
+        & ff#showQuery  .~ (isJust qt && iom)
+        & ff#queryText  .~ fromMaybe "" (view (ff#query) <$> qt)
         & ff#answerText .~ ans
         where
         ss = map SlotDesc $ listRunicSlots $ ps^.ff#offensiveSlots
+        qt = flip getRuneByName (ps^.ff#runicLevel) =<< ps^.ff#selectedRune
         -- ss = map (SlotDesc . fromMaybe 0 . flip IntMap.lookup m) $ take n [0..]
         -- m = ps^.ff#offensiveSlots.ff#slots
         -- n = ps^.ff#offensiveSlots.ff#slotsCount

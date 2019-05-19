@@ -80,17 +80,20 @@ handleKeyReleased = mapM_ handleDeactivation <=< popDeactivators
 
 customModeHandler :: Keypress -> InputMode -> Game ()
 customModeHandler kp = \case
-    OffensiveMode -> customModeHandler_offensiveMode kp
+    OffensiveMode -> customModeHandler_runicMode RuneType_Offensive kp
+    DefensiveMode -> customModeHandler_runicMode RuneType_Defensive kp
     _ -> return ()
 
-customModeHandler_offensiveMode :: Keypress -> Game ()
-customModeHandler_offensiveMode kp = case keypressKey kp of
-    k | Just ch <- keyToChar k -> appendInputString ch
+customModeHandler_runicMode :: RuneType -> Keypress -> Game ()
+customModeHandler_runicMode rt kp = case keypressKey kp of
+    k | Just ch <- keyToChar k -> appendInputString ch >> autoAccept
     Key'Backspace -> backspaceInputString
     Key'Enter     -> acceptAnswer
     Key'Space     -> acceptAnswer
     _             -> return ()
     where
+    autoAccept = whenM verifyAnswer correctAnswer
+
     acceptAnswer = do
         ver <- verifyAnswer
         if ver then correctAnswer else wrongAnswer
@@ -106,11 +109,11 @@ customModeHandler_offensiveMode kp = case keypressKey kp of
                 return $ fromMaybe False $ isCorrectAnswer ans <$> mr
 
     correctAnswer = do
-        actOnPlayer $ PlayerAction_UpdateRune RuneType_Offensive True
+        actOnPlayer $ PlayerAction_UpdateRune rt True
         inputActionEscape
 
     wrongAnswer   = do
-        actOnPlayer $ PlayerAction_UpdateRune RuneType_Offensive False
+        actOnPlayer $ PlayerAction_UpdateRune rt False
         inputActionEscape
 
 --------------------------------------------------------------------------------
@@ -127,6 +130,7 @@ handleActivation = \case
     ExecuteAttack       -> executeAttack
     SetAttackMode     m -> setAttackMode m
     StartOffensiveMode  -> startOffensiveMode
+    StartDefensiveMode  -> startDefensiveMode
     SelectItemToPickUp  -> selectItemToPickUp
     SelectItemToDrop    -> selectItemToDrop
     SelectItemToFocus   -> selectItemToFocus
@@ -169,6 +173,11 @@ startOffensiveMode :: Game ()
 startOffensiveMode = do
     actOnPlayer PlayerAction_SelectRune
     setMode OffensiveMode
+
+startDefensiveMode :: Game ()
+startDefensiveMode = do
+    actOnPlayer PlayerAction_SelectRune
+    setMode DefensiveMode
 
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do

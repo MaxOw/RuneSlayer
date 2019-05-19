@@ -28,7 +28,13 @@ layout_statusPanel s
 --------------------------------------------------------------------------------
 
 layout_offensiveSlotsPanel :: SlotsPanelDesc -> Layout
-layout_offensiveSlotsPanel desc = vseprel (8 @@ px)
+layout_offensiveSlotsPanel = layout_slotsPanel BottomLeft  Color.green
+
+layout_defensiveSlotsPanel :: SlotsPanelDesc -> Layout
+layout_defensiveSlotsPanel = layout_slotsPanel BottomRight Color.darkgray
+
+layout_slotsPanel :: BoxAlign -> Color -> SlotsPanelDesc -> Layout
+layout_slotsPanel agn fcol desc = vseprel (8 @@ px)
     [ (1 @@ fill, question)
     , (30 @@ px, answer)
     , (30 @@ px, runeload)
@@ -36,7 +42,7 @@ layout_offensiveSlotsPanel desc = vseprel (8 @@ px)
     & padding.each .~ basePadding
     & size.width   .~ (350 @@ px)
     & size.height  .~ (200 @@ px)
-    & align        .~ BottomLeft
+    & align        .~ agn
     where
     showIf x = if desc^.ff#showQuery then x else def
     question = showIf $ composition
@@ -66,7 +72,7 @@ layout_offensiveSlotsPanel desc = vseprel (8 @@ px)
         pct = r^.ff#percent
         c | pct <= 0  = Color.gray
           | pct <  1  = Color.red
-          | otherwise = Color.green
+          | otherwise = fcol
 
     fs = makeFs 10 Color.black
     bg = Color.withOpacity Color.lightgray 0.6

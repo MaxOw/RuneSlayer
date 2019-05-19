@@ -42,6 +42,7 @@ data Player = Player
    , field_effects            :: [EffectState]
    , field_runicLevel         :: RunicLevel
    , field_offensiveSlots     :: RunicSlots
+   , field_defensiveSlots     :: RunicSlots
    , field_target             :: Maybe EntityId
    , field_reactivity         :: Map ReactivCategory ReactivValue
    , field_attackRange        :: Distance
@@ -57,6 +58,7 @@ instance HasMaxSpeed Player Speed
 data PlayerStatus = PlayerStatus
    { field_runicLevel         :: RunicLevel
    , field_offensiveSlots     :: RunicSlots
+   , field_defensiveSlots     :: RunicSlots
    , field_selectedRune       :: Maybe RuneName
    , field_status             :: Set EntityStatus
    , field_attackMode         :: AttackMode

@@ -14,7 +14,11 @@ Requirements for first release: v0.1
   - Debug modes.                                                             (#)
   - Keymaps.                                                                 ( )
 
-* Improve text and layout rendering.                                         [ ]
+* Improve text rendering.                                                    [ ]
+* Improve layout rendering.                                                  [ ]
+  - Rewrite all gui with alt layout                                          [ ]
+  - Add layout caching                                                       [ ]
+
 * Remove template haskell for record fields generation.                      [X]
 
 ## Game/Gameplay
@@ -37,6 +41,9 @@ Requirements for first release: v0.1
 * Named entity types                                                         [X]
 * Render equipped items.                                                     [X]
 
+* Make effects an entity.                                                    [ ]
+* Add action delays.                                                         [ ]
+
 * Enemy actions.                                                             [ ]
   - Spawn corpse on death.                                                   (#)
   - Go towards & attack hostile reactivities.                                (#)
@@ -56,8 +63,9 @@ Requirements for first release: v0.1
 
 * Learning mechanics                                                         [ ]
   - Offensive runes.                                                         (#)
-  - Defensive runes.                                                         ( )
+  - Defensive runes.                                                         (#)
   - Runic levels.                                                            (#)
+  - Display runes status.                                                    ( )
 
 * Add hint/help/tutorial windows.                                            [ ]
 * NPCs.                                                                      [ ]

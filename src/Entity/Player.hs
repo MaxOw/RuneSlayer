@@ -61,7 +61,7 @@ actOn x a = x & case a of
         & loadSlot rt r
         & updateRuneUsage r
     loadSlot RuneType_Offensive True = ff#offensiveSlots %~ fillRunicSlot
- -- loadSlot RuneType_Defensive True = ff#defensiveSlots %~ fillRunicSlot
+    loadSlot RuneType_Defensive True = ff#defensiveSlots %~ fillRunicSlot
     loadSlot _ _ = id
 
     updateRuneUsage r = case x^.ff#selectedRune of
@@ -122,11 +122,13 @@ processUpdateOnce = \case
         self.ff#equipmentAnimation .= eqAnim
 
 procAttacked :: NonEmpty AttackPower -> Update Player ()
-procAttacked as = do
-    ds <- mapM applyDefence as
-    mapM_ (addEffect . Animation.HitEffect) ds
+procAttacked = mapM_ (addEffect . Animation.HitEffect) <=< mapM applyDefence
     where
-    applyDefence     x = return x
+    applyDefence x = do
+        ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
+        let runicDefence = 1
+        self.ff#defensiveSlots %= dischargeRunicSlot
+        return $ max 0 $ if ad then x-runicDefence else x
 
 runAttackMode :: Update Player ()
 runAttackMode = use (self.ff#attackMode) >>= \case
@@ -279,6 +281,7 @@ makePlayer rs p = def
     & equipment         .~ Equipment.create playerSlots
     & ff#attackRange    .~ disM 2
     & ff#offensiveSlots .~ initRunicSlots 4
+    & ff#defensiveSlots .~ initRunicSlots 3
     & ff#runicLevel     .~ initKnownRunes
     where
     as = mconcat $ mapMaybe (flip lookupAnimation rs) (p^.body)

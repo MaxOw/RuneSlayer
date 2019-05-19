@@ -9,8 +9,9 @@ import qualified Engine.Layout.Alt as Alt
 
 import Types
 import Types.InputState
+import Types.Entity.Player (PlayerStatus)
 import InputState (getMode, isPanelVisible, getInputString)
-import Skills.Runes (listRunicSlots, getRuneByName)
+import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
 import Focus (focusEntity)
 import Entity
 import Types.Entity.Common (EntityStatus(..))
@@ -42,6 +43,7 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
     [ pure Nothing
     , rIf StatusPanel           statusPanelLayout
     , rIf OffensiveSlotsPanel   offensiveSlotsPanelLayout
+    , rIf DefensiveSlotsPanel   defensiveSlotsPanelLayout
     ]
     where
     rIf panel renderFunc =
@@ -61,13 +63,29 @@ statusPanelLayout = do
                 & ff#attackMode      .~ ps^.ff#attackMode
 
 offensiveSlotsPanelLayout :: Game Alt.Layout
-offensiveSlotsPanelLayout = do
+offensiveSlotsPanelLayout = slotsPanelLayout
+    (OffensiveMode ==)
+    (view $ ff#offensiveSlots)
+    layout_offensiveSlotsPanel
+
+defensiveSlotsPanelLayout :: Game Alt.Layout
+defensiveSlotsPanelLayout = slotsPanelLayout
+    (DefensiveMode ==)
+    (view $ ff#defensiveSlots)
+    layout_defensiveSlotsPanel
+
+slotsPanelLayout
+    :: (InputMode -> Bool)
+    -> (PlayerStatus -> RunicSlots)
+    -> (SlotsPanelDesc -> Alt.Layout)
+    -> Game Alt.Layout
+slotsPanelLayout cndMode viewSlots layoutF = do
     ans <- getInputString
-    iom <- fmap (OffensiveMode ==) getMode
+    iom <- fmap cndMode getMode
     mfo <- focusEntity
     case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
         Nothing -> return def
-        Just ps -> return $ layout_offensiveSlotsPanel $ makeDesc iom ps ans
+        Just ps -> return $ layoutF $ makeDesc iom ps ans
     where
     makeDesc iom ps ans = def
         & ff#slots      .~ ss
@@ -75,11 +93,8 @@ offensiveSlotsPanelLayout = do
         & ff#queryText  .~ fromMaybe "" (view (ff#query) <$> qt)
         & ff#answerText .~ ans
         where
-        ss = map SlotDesc $ listRunicSlots $ ps^.ff#offensiveSlots
+        ss = map SlotDesc $ listRunicSlots $ viewSlots ps
         qt = flip getRuneByName (ps^.ff#runicLevel) =<< ps^.ff#selectedRune
-        -- ss = map (SlotDesc . fromMaybe 0 . flip IntMap.lookup m) $ take n [0..]
-        -- m = ps^.ff#offensiveSlots.ff#slots
-        -- n = ps^.ff#offensiveSlots.ff#slotsCount
 
 --------------------------------------------------------------------------------
 

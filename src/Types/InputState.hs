@@ -31,6 +31,7 @@ data InputAction
    | ExecuteAttack
    | SetAttackMode AttackMode
    | StartOffensiveMode
+   | StartDefensiveMode
    | SelectItemToPickUp
    | SelectItemToDrop
    | SelectItemToFocus
@@ -67,6 +68,7 @@ data InputMode
    = NormalMode
    | StatusMode StatusMenu
    | OffensiveMode
+   | DefensiveMode
    | SpaceMode
    deriving (Show, Eq, Ord, Generic)
 instance Default InputMode where def = NormalMode
@@ -94,6 +96,7 @@ data PanelName
    = GroundPreviewPanel
    | StatusPanel
    | OffensiveSlotsPanel
+   | DefensiveSlotsPanel
    deriving (Eq, Ord, Show)
 
 --------------------------------------------------------------------------------
@@ -168,6 +171,7 @@ defaultVisiblePanels :: Set PanelName
 defaultVisiblePanels = Set.fromList
     [ StatusPanel
     , OffensiveSlotsPanel
+    , DefensiveSlotsPanel
     ]
 
 type InputStateM = Lazy.StateT InputState IO
@@ -290,7 +294,7 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "ma" (SetAttackMode AttackMode_Auto)
 
         , InputStr "f" StartOffensiveMode
-     -- , InputStr "d" StartDefensiveMode
+        , InputStr "d" StartDefensiveMode
         ]
 
     , InputGroup (StatusMode Inventory)

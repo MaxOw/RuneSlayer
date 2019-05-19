@@ -1,5 +1,5 @@
 module Skills.Runes
-    ( RuneSet, RunicLevel, RuneUsage(..)
+    ( RuneSet, RunicLevel, RunicSlots, RuneUsage(..)
 
     , updateUsage
     , selectRune

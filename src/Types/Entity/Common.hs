@@ -70,7 +70,7 @@ newtype Health   = Health   { unHealth   :: Int    }
 makeWrapped ''Health
 
 newtype AttackPower = AttackPower { unAttackPower :: Int    }
-    deriving (Generic, Default, Show, ToJSON, FromJSON)
+    deriving (Generic, Default, Show, ToJSON, FromJSON, Eq, Ord, Num)
 makeWrapped ''AttackPower
 
 newtype Speed    = Speed    { unSpeed    :: Float }

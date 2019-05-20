@@ -39,7 +39,6 @@ data Player = Player
    , field_animateWhenStopped :: Bool
    , field_bodyAnimation      :: Animation
    , field_equipmentAnimation :: Animation
-   , field_effects            :: [EffectState]
    , field_runicLevel         :: RunicLevel
    , field_offensiveSlots     :: RunicSlots
    , field_defensiveSlots     :: RunicSlots

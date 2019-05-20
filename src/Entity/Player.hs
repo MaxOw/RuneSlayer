@@ -13,6 +13,7 @@ import Entity
 import Types.Debug
 import Types.Entity.Reactivity
 import Types.Entity.Player
+import Types.Entity.Effect
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Timer
@@ -75,7 +76,6 @@ update x ctx = runUpdate x ctx $ do
     runAttackMode
     updateAnimationState
     updateTimer
-    updateEffects defaultDelta
     playerIntegrateLocation
     separateCollision
     autoTarget
@@ -122,7 +122,7 @@ processUpdateOnce = \case
         self.ff#equipmentAnimation .= eqAnim
 
 procAttacked :: NonEmpty AttackPower -> Update Player ()
-procAttacked = mapM_ (addEffect . Animation.HitEffect) <=< mapM applyDefence
+procAttacked = mapM_ (addEffect . HitEffect) <=< mapM applyDefence
     where
     applyDefence x = do
         ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
@@ -198,8 +198,9 @@ autoTarget = do
     ds <- queryInRadius EntityKind_Dynamic (disM 8)
     sid <- use $ context.selfId
     loc <- use $ self.location
-    -- TODO: fix auto targeting to only target hostiles
-    let hs = sortWith (distanceTo loc) $ filter ((/=sid) . view entityId) ds
+    -- TODO: fix auto targeting reactivity list
+    let ht = Set.fromList [ReactivCategory_Shadow]
+    let hs = sortWith (distanceTo loc) $ filter (shouldTarget sid ht) ds
     let newTarget = viaNonEmpty head (map (view entityId) hs)
     currentTarget <- use $ self.target
     self.target .= viaNonEmpty head (map (view entityId) hs)
@@ -208,6 +209,7 @@ autoTarget = do
         mapM_ (flip addAction EntityAction_SelfMarkAsTarget) newTarget
 
     where
+    shouldTarget sid ht x = x^.entityId /= sid && isHostileTo ht x
     distanceTo loc e = fromMaybe 10000 $
         (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
 
@@ -225,7 +227,7 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     , translateY 0.8 $ renderComposition
         [ renderBody
         , renderEquipment
-        , renderEffects x ]
+        ]
     ]
     where
     renderDebug     = renderComposition $ localDebug <> globalDebug
@@ -269,7 +271,7 @@ playerToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntitySum_Player
+   , makeSave   = Just . EntitySum_Player
    , makeKind   = EntityKind_Dynamic
    }
 

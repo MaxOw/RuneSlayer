@@ -29,6 +29,7 @@ import Focus
 import EntityLike (toEntity)
 import Entity.Item (makeItem)
 import Entity.Unit (makeUnit)
+import Entity.Effect (makeEffect)
 
 import qualified EntityIndex
 
@@ -56,8 +57,9 @@ handleWorldAction = \case
     WorldAction_SpawnEntity s -> spawnEntity s
     where
     spawnEntity = \case
-        SpawnEntity_Item s -> spawnItem s
-        SpawnEntity_Unit s -> spawnUnit s
+        SpawnEntity_Item     s -> spawnItem s
+        SpawnEntity_Unit     s -> spawnUnit s
+        SpawnEntity_Effect l s -> spawnEffect l s
 
     spawnItem s = do
         mit <- lookupItemType $ s^.name
@@ -73,6 +75,9 @@ handleWorldAction = \case
             let e = toEntity $ makeUnit rs it
                   & location .~ (s^.location)
             return $ Just e
+
+    spawnEffect l s = do
+        return $ Just $ toEntity $ makeEffect s & location .~ l
 
 lookupItemType :: ItemTypeName -> Game (Maybe ItemType)
 lookupItemType n = do

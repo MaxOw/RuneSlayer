@@ -137,3 +137,6 @@ isWithinDistance d a b = distance (a^._Wrapped) (b^._Wrapped) <= (d^._Wrapped)
 defaultPickupRange :: Distance
 defaultPickupRange = disM 1.5
 
+maxEffectSpawnDistance :: Distance
+maxEffectSpawnDistance = disM 20
+

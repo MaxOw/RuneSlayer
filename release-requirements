@@ -41,7 +41,7 @@ Requirements for first release: v0.1
 * Named entity types                                                         [X]
 * Render equipped items.                                                     [X]
 
-* Make effects an entity.                                                    [ ]
+* Make effects an entity.                                                    [X]
 * Add action delays.                                                         [ ]
 
 * Enemy actions.                                                             [ ]

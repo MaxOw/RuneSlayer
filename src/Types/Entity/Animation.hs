@@ -69,16 +69,6 @@ data AnimationProgression
    | TransitionInto AnimationKind AnimationProgression
    deriving (Eq)
 
-data EffectKind
-   = HitEffect AttackPower
-
-data EffectState = EffectState
-   { field_effectUpdate :: Duration -> EffectState -> Maybe EffectState
-   , field_kind         :: EffectKind
-   , field_duration     :: Duration
-   , field_era          :: Float
-   } deriving (Generic)
-
 --------------------------------------------------------------------------------
 
 instance ToJSON Direction where
@@ -113,4 +103,3 @@ instance Default AnimationFrameState where
 
 instance Default Animation where
     def = Animation $ const mempty
-

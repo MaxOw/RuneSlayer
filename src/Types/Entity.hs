@@ -60,7 +60,7 @@ data Entity = Entity
    , entityUpdate :: EntityContext -> Q (Maybe Entity, [DirectedAction])
    , entityRender :: RenderContext -> RenderAction
    , entityOracle :: forall a. EntityQuery a -> Maybe a
-   , entitySave   :: EntitySum
+   , entitySave   :: Maybe EntitySum
    , entityKind   :: EntityKind
    }
 
@@ -71,7 +71,7 @@ data EntityParts p = EntityParts
    , makeUpdate :: p -> EntityContext -> Q (Maybe p, [DirectedAction])
    , makeRender :: p -> RenderContext -> RenderAction
    , makeOracle :: p -> forall a. EntityQuery a -> Maybe a
-   , makeSave   :: p -> EntitySum
+   , makeSave   :: p -> Maybe EntitySum
    , makeKind   :: EntityKind
    }
 

@@ -43,7 +43,7 @@ tileToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntitySum_Tile
+   , makeSave   = Just . EntitySum_Tile
    , makeKind   = EntityKind_Tile
    }
 

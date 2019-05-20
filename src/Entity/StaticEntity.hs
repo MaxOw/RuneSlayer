@@ -54,7 +54,7 @@ staticEntityToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntitySum_StaticEntity
+   , makeSave   = Just . EntitySum_StaticEntity
    , makeKind   = EntityKind_Static
    }
 

@@ -1,17 +1,20 @@
 module EntityIndex
-    ( EntityIndex
+    ( EntityIndex, EntityIndexTag (..)
 
     , new
     , update
     , insert
+    , addTag
     , lookupInRange
     , lookupById
+    , lookupByTag
     , lookupManyById
     ) where
 
 import Delude
 import qualified Data.HashSet as HashSet
 import qualified Data.HashMap.Strict as HashMap
+import qualified Data.Map.Strict     as Map
 import Text.Printf
 
 import Engine.Common.Types (minPoint, maxPoint)
@@ -48,6 +51,7 @@ new conf = do
     lRef <- newIORef Nothing
     dRef <- newIORef mempty
     aRef <- newIORef mempty
+    tRef <- newIORef mempty
     return $ EntityIndex
         { field_lastId              = lRef
         , field_entities            = v
@@ -55,6 +59,7 @@ new conf = do
         , field_dynamicIndex        = dRef
         , field_activatedList       = aRef
         , field_spatialIndex        = FullMap.build f
+        , field_tags                = tRef
         }
 
 noSetMoveVector :: EntityAction -> Bool
@@ -227,8 +232,16 @@ insert e eix = do
     writeIORef (eix^.lastId) (Just newId)
     return newId
 
+addTag :: MonadIO m => EntityIndexTag -> EntityId -> EntityIndex -> m ()
+addTag t eid eix = modifyIORef (eix^.ff#tags) $ Map.insert t eid
+
 lookupById :: MonadQ m => EntityId -> EntityIndex -> m (Maybe EntityWithId)
 lookupById eid = liftQ . lookupVector eid . view entities
+
+lookupByTag :: MonadQ m => EntityIndexTag -> EntityIndex -> m (Maybe EntityWithId)
+lookupByTag t eix = liftQ $ do
+    mi <- Map.lookup t <$> Q (readIORef $ eix^.ff#tags)
+    maybe (return Nothing) (flip lookupById eix) mi
 
 lookupVector :: EntityId -> VectorIndex EntityWithId -> Q (Maybe EntityWithId)
 lookupVector eid v = Q (VectorIndex.lookup (eid^.offset) v) >>= \case

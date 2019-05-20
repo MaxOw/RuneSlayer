@@ -10,7 +10,7 @@ module Entity.Actions
     , integrateLocation
     , moveTowards
     , updateAnimationState
-    , updateEffects, addEffect
+    , addEffect
     , updateTimer, startTimer, checkTimeUp
     , separateCollision
     , addItems
@@ -30,7 +30,6 @@ module Entity.Actions
     , renderBBox
     , renderCollisionShape
     , renderTargetMark
-    , renderEffects
 
     -- Queries
     -- , queryStaticInRange
@@ -43,9 +42,11 @@ module Entity.Actions
     , addAction, addWorldAction
     , anyMatch, whenMatch
     , ifJustLocation
+    , isHostileTo
     ) where
 
 import Delude
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.List as List
 import Random.Utils
@@ -58,9 +59,12 @@ import Types.Entity.Timer
 import Types.Entity.Item
 import Types.Entity.Appearance
 import Types.Entity.Player
-import Types.Entity.Animation (AnimationState, EffectState, EffectKind)
+import Types.Entity.Animation (AnimationState)
+import Types.Entity.Reactivity (ReactivCategory)
+import Types.Entity.Effect (EffectKind)
 import qualified Entity.Animation as Animation
 import Entity.Utils
+import Types.EntityIndex (EntityIndexTag(..))
 import qualified Diagrams.TwoD.Transform as T
 import qualified EntityIndex
 import qualified Equipment
@@ -151,22 +155,15 @@ updateAnimationState = do
             self.animationState.current.direction %= Animation.vecToDir vel
     self.animationState %= Animation.update defaultDelta
 
-updateEffects
-    :: HasEffects s [EffectState]
-    => Duration -> Update s ()
-updateEffects delta = self.effects %= mapMaybe (\x -> (x^.effectUpdate) delta x)
-
 addEffect
-    :: HasEffects s [EffectState]
+    :: HasLocation s Location
     => EffectKind -> Update s ()
-addEffect k = case k of
-    Animation.HitEffect _ -> self.effects %= ((Animation.makeEffect k hitUpdate):)
-    where
-    hitUpdate dt s = endByEra dt $ s
-    endByEra dt s
-        | ss^.era >= s^.duration._Wrapped = Nothing
-        | otherwise                       = Just ss
-        where ss = s & era +~ (dt^._Wrapped)
+addEffect k = do
+    cei <- queryByTag EntityIndexTag_Camera
+    whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
+        loc <- use $ self.location
+        when (isWithinDistance maxEffectSpawnDistance loc cloc) $
+            addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Effect loc k
 
 updateTimer
     :: HasTimer s Timer
@@ -427,9 +424,6 @@ renderTargetMark = renderShape $ def
     & T.scale  0.4
     & T.scaleY 0.7
 
-renderEffects :: HasEffects x [EffectState] => x -> RenderAction
-renderEffects = renderComposition . map Animation.renderEffect . view effects
-
 --------------------------------------------------------------------------------
 -- Queries
 
@@ -447,6 +441,9 @@ queryInRadius k (Distance d) = do
 
 queryById :: EntityId -> Update s (Maybe EntityWithId)
 queryById eid = EntityIndex.lookupById eid =<< use (context.entities)
+
+queryByTag :: EntityIndexTag -> Update s (Maybe EntityWithId)
+queryByTag t = EntityIndex.lookupByTag t =<< use (context.entities)
 
 shouldDie :: HasHealth x Health => Update x Bool
 shouldDie = uses (self.health._Wrapped) (<=0)
@@ -485,4 +482,8 @@ genDropOffset s = randomFromSeed s $ do
     r <- uniformRange (0.5, 1.5) -- make this into global constants
     d <- randomDirection
     return (r*^d)
+
+isHostileTo :: HasEntity e Entity => Set ReactivCategory -> e -> Bool
+isHostileTo hostileSet e = not $ Set.disjoint hostileSet
+    (Map.keysSet $ fromMaybe mempty $ e^.entity.oracleReactivity)
 

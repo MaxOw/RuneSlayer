@@ -7,8 +7,7 @@ import Types.Entity.Reactivity
 import Types.Entity.Common
 import Types.Entity.ZIndex
 import Types.Entity.Item (ItemTypeName)
-import Types.Entity.Animation
-    (Animation, AnimationState, AnimationDesc, EffectState)
+import Types.Entity.Animation (Animation, AnimationState, AnimationDesc)
 
 --------------------------------------------------------------------------------
 
@@ -35,7 +34,6 @@ data Unit = Unit
    , field_velocity        :: Velocity
    , field_animationState  :: AnimationState
    , field_animation       :: Animation
-   , field_effects         :: [EffectState]
    , field_health          :: Health
    , field_unitType        :: UnitType
    , field_isMarked        :: Bool

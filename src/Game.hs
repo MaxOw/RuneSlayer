@@ -29,6 +29,7 @@ import qualified Entity.Animation as Animation
 
 -- import qualified Resource
 import qualified EntityIndex
+import EntityIndex (EntityIndexTag(..))
 
 import qualified Data.Collider as Collider
 import Dhall.Utils (dhallToMap, loadDhall)
@@ -54,6 +55,7 @@ initSt = do
 
     pli <- loadDhall "data/desc" "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
+    EntityIndex.addTag EntityIndexTag_Camera pid eix
     return $ st
         & gameState.focusId .~ Just pid
         & gameState.actions .~ testInitialActions

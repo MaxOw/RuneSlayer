@@ -10,6 +10,10 @@ import Data.FullMap (FullMap)
 
 --------------------------------------------------------------------------------
 
+data EntityIndexTag
+   = EntityIndexTag_Camera
+   deriving (Eq, Ord)
+
 data EntityIndexConfig = EntityIndexConfig
    { field_size :: Size Float
    } deriving (Generic)
@@ -22,6 +26,7 @@ data EntityIndexT a = EntityIndex
    , field_dynamicIndex        :: IORef (HashSet EntityId)
    , field_activatedList       :: IORef [EntityId]
    , field_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
+   , field_tags                :: IORef (Map EntityIndexTag EntityId)
    } deriving (Generic)
 
 --------------------------------------------------------------------------------

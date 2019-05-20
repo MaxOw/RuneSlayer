@@ -2,8 +2,6 @@ module Entity.Animation
     ( Direction (..)
     , AnimationKind (..)
     , AnimationProgression (..)
-    , EffectKind (..)
-    , EffectState
     , direction, kind, era
 
     , makeAnimation
@@ -12,22 +10,17 @@ module Entity.Animation
     , vecToDir
     , defaultTransition
     , update
-    , makeEffect
-    , renderEffect
     ) where
 
 import Delude
 import qualified Data.Map as Map
 import Engine.Common.Types (Rect (..))
 import Diagrams.Angle
-import qualified Diagrams.TwoD.Transform as T
 import Entity.Utils
 import Types.Sprite
 import Types.Entity.Animation
 
 import ResourceManager (Resources, renderSprite)
-
-import qualified Color
 
 --------------------------------------------------------------------------------
 
@@ -120,18 +113,3 @@ update (Duration delta) a
         Cycle   -> id
         TransitionInto k p -> set (current.kind) k . set progression p
 
-type EffectUpdate = Duration -> EffectState -> Maybe EffectState
-makeEffect :: EffectKind -> EffectUpdate -> EffectState
-makeEffect k f = EffectState
-   { field_effectUpdate = f
-   , field_kind         = k
-   , field_duration     = 1
-   , field_era          = 0
-   }
-
-renderEffect :: EffectState -> RenderAction
-renderEffect e = case e^.kind of
-    HitEffect x -> translateY (e^.era) $ renderHit x
-    where
-    renderHit (AttackPower x) = T.scale (1/64) $ renderSimpleText d $ show (-x)
-    d = def & color .~ Color.opaque Color.red

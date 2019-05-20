@@ -5,12 +5,11 @@ module Entity.Unit
     ) where
 
 import Delude
-import qualified Data.Map as Map
-import qualified Data.Set as Set
 
 import Entity
 import Types.Entity.Unit
 import Types.Entity.Timer
+import Types.Entity.Effect
 import Types.ResourceManager (Resources)
 
 import Entity.Utils
@@ -32,7 +31,6 @@ update x ctx = runUpdate x ctx $ do
     updateAnimationState
     updateTimer
     integrateLocation
-    updateEffects defaultDelta
     anyMatch _EntityAction_SelfAttacked procAttacked
     self.processOnUpdate .= mempty
 
@@ -61,9 +59,6 @@ decideAction = do
             Nothing -> return Nothing
             Just ti -> queryById ti
 
-    isHostileTo hostileSet e = not $ Set.disjoint hostileSet
-        (Map.keysSet $ fromMaybe mempty $ e^.entity.oracleReactivity)
-
 attackTarget :: EntityWithId -> Update Unit ()
 attackTarget targetEntity = do
     whenM (checkTimeUp Timer_Attack) $ do
@@ -75,7 +70,7 @@ attackTarget targetEntity = do
 procAttacked :: NonEmpty AttackPower -> Update Unit ()
 procAttacked as = do
     ds <- mapM applyDefence as
-    mapM_ (addEffect . Animation.HitEffect) ds
+    mapM_ (addEffect . HitEffect) ds
     let p = sumOf (traverse._Wrapped) ds
     self.health._Wrapped -= p
     whenM shouldDie $ do
@@ -96,7 +91,7 @@ render x _ctx = withZIndex x $ locate x $ renderComposition
     [ renderIf (x^.isMarked) renderTargetMark
     , translateY 0.8 $ renderComposition
         [ Animation.renderAnimation (x^.animationState) (x^.animation)
-        , renderEffects x ]
+        ]
     ]
 
 oracle :: Unit -> EntityQuery a -> Maybe a
@@ -113,7 +108,7 @@ unitToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntitySum_Unit
+   , makeSave   = Just . EntitySum_Unit
    , makeKind   = EntityKind_Dynamic
    }
 
@@ -126,9 +121,3 @@ makeUnit rs t = def
     & animation .~ Animation.makeAnimation rs (t^.animation)
     & animationState.progression .~ Animation.Cycle
 
-{-
-    batMap s = \r -> Resource.mkAtlasPart r fr dk
-        where
-        fr = max 1 $ min 3 $ floor $ 3 * (s^.era) + 1
-        dk = fromEnum (s^.direction)
--}

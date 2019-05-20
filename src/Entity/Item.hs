@@ -132,7 +132,7 @@ itemToEntity = makeEntity $ EntityParts
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = EntitySum_Item
+   , makeSave   = Just . EntitySum_Item
    , makeKind   = EntityKind_Item
    }
 

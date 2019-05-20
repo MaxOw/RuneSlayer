@@ -6,6 +6,7 @@ import Types.EntityAction
 import Types.Entity.Item
 import Types.Entity.Unit
 import Types.Entity.Animation (Direction)
+import Types.Entity.Effect (EffectKind)
 -- import Types.Entity.EntityType
 
 --------------------------------------------------------------------------------
@@ -18,8 +19,9 @@ data Spawn a = Spawn
 instance Default a => Default (Spawn a)
 
 data SpawnEntity
-   = SpawnEntity_Item (Spawn ItemTypeName)
-   | SpawnEntity_Unit (Spawn UnitTypeName)
+   = SpawnEntity_Item   (Spawn ItemTypeName)
+   | SpawnEntity_Unit   (Spawn UnitTypeName)
+   | SpawnEntity_Effect Location EffectKind
 
 data WorldAction
    = WorldAction_SpawnEntity SpawnEntity

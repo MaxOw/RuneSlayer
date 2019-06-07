@@ -26,6 +26,14 @@ data PlayerInit = PlayerInit
    } deriving (Generic)
 instance HasMaxSpeed PlayerInit Speed
 
+data DelayedActionType
+   = DelayedActionType_Attack EntityId AttackPower
+
+data DelayedAction = DelayedAction
+   { field_timeLeft :: Duration
+   , field_action   :: DelayedActionType
+   } deriving (Generic)
+
 data Player = Player
    { field_location           :: Location
    , field_velocity           :: Velocity
@@ -49,6 +57,7 @@ data Player = Player
    , field_timer              :: Timer
    , field_attackMode         :: AttackMode
    , field_selectedRune       :: Maybe RuneName
+   , field_delayedActions     :: [DelayedAction]
    } deriving (Generic)
 instance HasAnimateWhenStopped Player Bool
 instance HasMaxSpeed Player Speed

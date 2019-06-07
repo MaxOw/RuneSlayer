@@ -76,6 +76,7 @@ update x ctx = runUpdate x ctx $ do
     runAttackMode
     updateAnimationState
     updateTimer
+    updateDelayedActions
     playerIntegrateLocation
     separateCollision
     autoTarget
@@ -121,6 +122,23 @@ processUpdateOnce = \case
         let eqAnim = mconcat $ mapMaybe (flip lookupAnimation rs) as
         self.ff#equipmentAnimation .= eqAnim
 
+updateDelayedActions :: Update Player ()
+updateDelayedActions = do
+    as <- use $ self.ff#delayedActions
+    us <- catMaybes <$> mapM upd as
+    self.ff#delayedActions .= us
+    where
+    upd a = let nt = a^.ff#timeLeft - defaultDelta in if
+      | nt <= 0   -> performDelayedAction (a^.ff#action) >> return Nothing
+      | otherwise -> return $ Just $ a & ff#timeLeft .~ nt
+
+performDelayedAction :: DelayedActionType -> Update Player ()
+performDelayedAction = \case
+   DelayedActionType_Attack eid p -> addAction eid $ EntityAction_SelfAttacked p
+
+addDelayedAction :: Duration -> DelayedActionType -> Update Player ()
+addDelayedAction d t = self.ff#delayedActions %= (DelayedAction d t:)
+
 procAttacked :: NonEmpty AttackPower -> Update Player ()
 procAttacked = mapM_ (addEffect . HitEffect) <=< mapM applyDefence
     where
@@ -157,7 +175,9 @@ executeAttackAt targetEntity vectorToTarget = do
     whenInAttackRange targetEntity $ do
         startAttackAnimation vectorToTarget
         attackPower <- getAttackPower
-        addAction targetEntity $ EntityAction_SelfAttacked attackPower
+        attackDelay <- getAttackDelay
+        addDelayedAction attackDelay $
+            DelayedActionType_Attack (targetEntity^.entityId) attackPower
         startTimer Timer_Attack =<< getAttackCooldown
         self.ff#offensiveSlots %= dischargeRunicSlot
 
@@ -184,6 +204,9 @@ getAttackRange = return $ Distance 2
 getAttackPower :: Update x AttackPower
 getAttackPower = return $ AttackPower 1
     -- TODO: Calculate attack power
+
+getAttackDelay :: Update x Duration
+getAttackDelay = return $ timeInSeconds 0.7
 
 getAttackCooldown :: Update x Duration
 getAttackCooldown = return $ timeInSeconds 1.2

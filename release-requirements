@@ -8,7 +8,7 @@ Requirements for first release: v0.1
 * Auto updates. [v0.2?]                                                      [ ]
 * Sqlite powered, nix-like immutable data storage. [v0.2?]                   [ ]
 * Fix scroller lag.                                                          [ ]
-* Benchmark and speedup rendering pipeline. [v0.2?]                          [ ]
+* Benchmark and speedup rendering pipeline.                                  [X]
 
 * Declarative config via Dhall.                                              [ ]
   - Debug modes.                                                             (#)
@@ -38,11 +38,12 @@ Requirements for first release: v0.1
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]
-* Named entity types                                                         [X]
+* Named entity types.                                                        [X]
 * Render equipped items.                                                     [X]
+* Make attack match equipped weapon.                                         [ ]
 
 * Make effects an entity.                                                    [X]
-* Add action delays.                                                         [ ]
+* Add action delays.                                                         [X]
 
 * Enemy actions.                                                             [ ]
   - Spawn corpse on death.                                                   (#)

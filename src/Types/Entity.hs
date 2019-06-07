@@ -9,7 +9,6 @@ module Types.Entity
     ) where
 
 import Delude
-import qualified Control.Monad.Trans.State.Lazy as Lazy
 
 import Types.Debug (DebugFlag)
 import Types.DirectedAction as All
@@ -36,7 +35,7 @@ runQ = liftIO . unQ
 class Monad m => MonadQ m where liftQ :: Q a -> m a
 instance MonadQ IO where liftQ = runQ
 instance MonadQ Q  where liftQ = id
-instance MonadQ (Lazy.StateT us IO) where liftQ = runQ
+instance MonadQ (StateT us IO) where liftQ = runQ
 instance MonadQ (StateT us Q) where liftQ = lift
 
 type RangeBBox = BBox Float

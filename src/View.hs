@@ -1,5 +1,6 @@
 module View
     ( renderView
+    , prerenderUpdate
     ) where
 
 import Delude hiding (context)
@@ -8,7 +9,11 @@ import qualified Linear.Matrix as Matrix
 import qualified Engine
 import Engine (graphics, context, RenderAction)
 import Engine.Layout.Render (makeRenderLayout)
+import Engine.Debug (logOnce)
 import Graphics.GL
+
+-- import Data.Vector (Vector)
+-- import qualified Data.Vector.Generic as Vector
 
 import Types (Graphics, Renderer)
 import Types.Entity.Common
@@ -29,7 +34,7 @@ import qualified Diagrams.TwoD.Transform as T
 import Engine.Graphics.Utils (mkMatHomo2)
 import Engine.Graphics
 import Engine.Common.Types
-import Engine.Graphics.Scroller (updateScroller, makeRenderScroller)
+import Engine.Graphics.Scroller (updateScroller', makeRenderScroller)
 import qualified Engine.Layout.Alt as Engine (drawLayout)
 
 import qualified Data.Colour       as Color
@@ -52,7 +57,7 @@ renderMainMenu delta st = do
 
 renderGame :: Renderer
 renderGame _delta st = do
-    renderScroller <- prerenderUpdate st
+    renderScroller <- prerenderUpdate False st
     renderSetup
 
     (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
@@ -201,18 +206,39 @@ focusPos = do
     mloc <- focusLocation
     return $ fromMaybe 0 $ view _Wrapped <$> mloc
 
-prerenderUpdate :: St -> Graphics RenderAction
-prerenderUpdate st = do
+prerenderUpdate :: Bool -> St -> Graphics RenderAction
+prerenderUpdate forceRedraw st = do
     let s = st^.scroller
     let vscale = st^.gameState.gameScale
     vpos <- focusPos
-    (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
-    let vsize = Size (fromIntegral w) (fromIntegral h)
-    updateScroller s vscale vpos vsize $ \bb -> do
+    -- (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
+    -- let vtrigsize = Size (fromIntegral w) (fromIntegral h)
+    let vtrigsize = Size 2 2
+    updateScroller' s forceRedraw vscale vpos vtrigsize $ \bb -> do
         es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
-        return $ renderEntities es st
-        -- randomTilesGen st bb
+        logOnce (show $ length es)
+        return $ renderEntitiesRaw es st
+        -- Engine.drawAtlasBatch projM $ renderEntitiesRaw es st
+        -- return $ renderEntities (take 500 es) st
     makeRenderScroller s
+
+-- renderEntitiesRaw :: HasEntity e Entity => [e] -> St -> Vector AtlasDesc
+renderEntitiesRaw :: HasEntity e Entity => [e] -> St -> RenderAction
+-- renderEntitiesRaw es st = Vector.mapMaybe f $ Vector.take 1000 $ Vector.fromList es
+renderEntitiesRaw es st = renderComposition rs
+    where
+    rs = map (flip entityRender ctx . view entity) es
+    -- f = unR . flip entityRender ctx . view entity
+    ctx = RenderContext
+        { field_resources  = st^.resources
+        , field_debugFlags = st^.debugFlags
+        }
+    {-
+    unR = \case
+        RenderFromAtlas d -> Just d
+        _ -> Nothing
+    -}
+
 
 renderSetup :: Graphics ()
 renderSetup = do

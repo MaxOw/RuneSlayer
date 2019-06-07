@@ -2,16 +2,16 @@ module Game
     ( initSt, endSt
     ) where
 
-import Delude
+import Delude hiding (context)
 import qualified Data.Map.Strict as Map
 import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
 import Engine.Graphics.Utils (delObject)
 import Graphics.GL (glDeleteTextures)
-import Engine (RenderAction, Img, userState, texture)
+import Engine (RenderAction, Img, userState, texture, context)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import qualified Diagrams.TwoD.Transform as T
-import Engine.Types (Engine)
+import Engine.Types (Engine, graphics)
 import Engine.Graphics.Scroller (newScroller)
 import Types.Config
 import Types.St
@@ -30,6 +30,7 @@ import qualified Entity.Animation as Animation
 -- import qualified Resource
 import qualified EntityIndex
 import EntityIndex (EntityIndexTag(..))
+import qualified Graphics.UI.GLFW as GLFW
 
 import qualified Data.Collider as Collider
 import Dhall.Utils (dhallToMap, loadDhall)
@@ -40,6 +41,7 @@ initSt = do
     wgconf <- loadDhall "data/desc" "WorldGen.dhall"
 
     scro <- newScroller $ def
+        & bufferMargin .~ Engine.ScrollerMargin_Pixels (64 + 8)
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
     st <- defaultSt eix scro
 
@@ -56,6 +58,7 @@ initSt = do
     pli <- loadDhall "data/desc" "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
+    liftIO . GLFW.showWindow =<< use (graphics.context)
     return $ st
         & gameState.focusId .~ Just pid
         & gameState.actions .~ testInitialActions

@@ -1,7 +1,6 @@
 module Types.GameState where
 
 import Delude
-import qualified Control.Monad.Trans.State.Lazy as Lazy
 import Types.Entity.Common (EntityId)
 import Types.Entity (EntityIndex)
 import Types.DirectedAction (DirectedAction)
@@ -17,7 +16,7 @@ data GameState = GameState
    } deriving (Generic)
 
 
-type GameStateM = Lazy.StateT GameState IO
+type GameStateM = StateT GameState IO
 
 defaultGameState :: MonadIO m => EntityIndex -> m GameState
 defaultGameState eix = do

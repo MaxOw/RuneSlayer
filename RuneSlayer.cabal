@@ -10,6 +10,10 @@ Executable RuneSlayer
   main-is          : Main.hs
   ghc-options      :
     -O2
+    -rtsopts
+    -with-rtsopts=-G3
+    -- -threaded
+    -- -with-rtsopts=-N4
     -Wall
     -fdiagnostics-color=always
     -fno-warn-missing-home-modules
@@ -79,7 +83,7 @@ Executable RuneSlayer
                 , dhall-json
 
                 , linear
-                , Carnot == 0.1.16.1
+                , Carnot == 0.1.18.9
                 , gl
                 , colour
                 , palette
@@ -94,3 +98,4 @@ Executable RuneSlayer
                 , executable-hash
 
                 , reload-utils
+                , criterion

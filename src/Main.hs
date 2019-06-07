@@ -13,10 +13,12 @@ import Reload.Utils (reacquire)
 
 import qualified Version
 import Dev.AltLayout (layoutDev)
+import Benchmarks (runBenchmarks)
 
 main :: IO ()
 main = do
     putTextLn Version.infoFull
+    -- runBenchmarks
     win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (400, 400)
 
     Engine.igniteEngine win $ Ignition
@@ -26,4 +28,3 @@ main = do
         , integrator       = integrate
         , finalizer        = endSt
         }
-

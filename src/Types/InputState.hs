@@ -13,7 +13,6 @@ import Types.Entity.Common (EntityId)
 import Types.EntityAction (AttackMode(..))
 import Types.Debug (DebugFlag(..))
 import Engine.Events.Types
-import qualified Control.Monad.Trans.State.Lazy as Lazy
 -- import Engine (defaultModifierKeys)
 
 import Data.Vector (Vector)
@@ -174,7 +173,7 @@ defaultVisiblePanels = Set.fromList
     , DefensiveSlotsPanel
     ]
 
-type InputStateM = Lazy.StateT InputState IO
+type InputStateM = StateT InputState IO
 
 --------------------------------------------------------------------------------
 

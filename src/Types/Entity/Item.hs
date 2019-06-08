@@ -13,6 +13,12 @@ import Types.Entity.Animation (Direction)
 
 --------------------------------------------------------------------------------
 
+data WeaponKind
+   = WeaponKind_Slashing
+   | WeaponKind_Thrusting
+   | WeaponKind_Projecting
+   deriving (Eq, Generic)
+
 data ItemKind
    = ItemKind_Container
    | ItemKind_SmallItem
@@ -26,6 +32,7 @@ data ItemType = ItemType
    { field_name          :: ItemTypeName
    , field_volume        :: Volume
    , field_itemKind      :: ItemKind
+   , field_weaponKind    :: Maybe WeaponKind
    , field_appearance    :: Appearance
    , field_animation     :: Maybe AnimationName
    , field_fittingSlots  :: Set EquipmentSlot
@@ -56,6 +63,9 @@ instance GetZIndex Item Word32 where get_zindex _ = toZIndex EntityZIndex_Item
 instance Default ItemKind where def = ItemKind_SmallItem
 instance ToJSON ItemKind where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON ItemKind where parseJSON = genericParseJSON customOptionsJSON
+
+instance ToJSON WeaponKind where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSON
 
 makeWrapped ''ItemTypeName
 instance Default ItemTypeName

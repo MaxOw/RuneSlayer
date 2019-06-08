@@ -13,6 +13,7 @@ data EquipmentSlot
    | EquipmentSlot_Hands
    | EquipmentSlot_Legs
    | EquipmentSlot_Feet
+   | EquipmentSlot_Weapon
    deriving (Show, Eq, Ord, Generic)
 instance ToJSON EquipmentSlot where
     toEncoding = genericToEncoding customOptionsJSON
@@ -24,5 +25,15 @@ data Equipment = Equipment
    , field_content :: Bimap EquipmentSlot EntityId
    } deriving (Generic)
 
+equipmentRenderOrder :: [EquipmentSlot]
+equipmentRenderOrder =
+    [ EquipmentSlot_Backpack
+    , EquipmentSlot_Feet
+    , EquipmentSlot_Legs
+    , EquipmentSlot_Torso
+    , EquipmentSlot_Belt
+    , EquipmentSlot_Head
+    , EquipmentSlot_Hands
+    , EquipmentSlot_Weapon ]
 
 instance Default Equipment

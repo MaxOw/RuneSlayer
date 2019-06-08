@@ -9,7 +9,7 @@ module Equipment
     , deleteAll
     , deleteId
     , emptySlots
-    , contentList
+    , contentList, slotsList
     ) where
 
 import Delude
@@ -52,4 +52,6 @@ emptySlots e = Set.difference ss ks
 contentList :: Equipment -> [EntityId]
 contentList = Bimap.elems . view content
 
+slotsList :: Equipment -> [(EquipmentSlot, EntityId)]
+slotsList = Bimap.assocs . view content
 

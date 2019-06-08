@@ -119,6 +119,7 @@ oracle x = \case
     EntityQuery_Volume        -> Just $ x^.itemType.volume
     EntityQuery_ItemKind      -> Just $ x^.itemType.itemKind
     EntityQuery_FittingSlots  -> Just $ x^.itemType.fittingSlots
+    EntityQuery_ItemType      -> Just $ x^.itemType
     EntityQuery_Content       -> Just $ x^.content
     EntityQuery_MaxVolume     -> x^?itemType.containerType.traverse.maxVolume
     EntityQuery_ItemAnimation -> x^.itemType.animation

@@ -81,7 +81,8 @@ playerSlots = Set.fromList
     , EquipmentSlot_Torso
     , EquipmentSlot_Hands
     , EquipmentSlot_Legs
-    , EquipmentSlot_Feet ]
+    , EquipmentSlot_Feet
+    , EquipmentSlot_Weapon ]
 
 --------------------------------------------------------------------------------
 

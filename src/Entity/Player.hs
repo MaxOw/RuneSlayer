@@ -14,10 +14,12 @@ import Types.Debug
 import Types.Entity.Reactivity
 import Types.Entity.Player
 import Types.Entity.Effect
+import Types.Entity.Item (WeaponKind(..))
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Timer
 import ResourceManager (Resources, lookupAnimation)
+import Types.Equipment
 import qualified Equipment
 import Skills.Runes
 
@@ -115,8 +117,9 @@ processUpdateOnce = \case
     UpdateOnce_Equipment -> updateEquipment
     where
     updateEquipment = do
-        eis <- uses (self.equipment) Equipment.contentList
-        es <- catMaybes <$> mapM queryById eis
+        eis <- uses (self.equipment) Equipment.slotsList
+        let seis = map snd $ sortVia fst equipmentRenderOrder eis
+        es <- catMaybes <$> mapM queryById seis
         let as = mapMaybe (view (entity.oracleItemAnimation)) es
         rs <- use $ context.resources
         let eqAnim = mconcat $ mapMaybe (flip lookupAnimation rs) as
@@ -170,36 +173,53 @@ canExecuteAttack = (&&)
     anyOffensiveRuneLoaded
         = uses (self.ff#offensiveSlots) (any (>0) . listRunicSlots)
 
+getWeaponKind :: Update Player WeaponKind
+getWeaponKind = do
+    mei <- getEquippedItem EquipmentSlot_Weapon
+    let mwk = mei^?traverse.entity.oracleItemType.traverse.weaponKind.traverse
+    return $ fromMaybe WeaponKind_Slashing mwk
+
 executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
 executeAttackAt targetEntity vectorToTarget = do
-    whenInAttackRange targetEntity $ do
-        startAttackAnimation vectorToTarget
-        attackPower <- getAttackPower
-        attackDelay <- getAttackDelay
-        addDelayedAction attackDelay $
-            DelayedActionType_Attack (targetEntity^.entityId) attackPower
+    wkind <- getWeaponKind
+    whenInAttackRange wkind targetEntity $ do
+        startAttackAnimation wkind vectorToTarget
+        unless (wkind == WeaponKind_Projecting) $ do
+            attackPower <- getAttackPower
+            attackDelay <- getAttackDelay
+            addDelayedAction attackDelay $
+                DelayedActionType_Attack (targetEntity^.entityId) attackPower
         startTimer Timer_Attack =<< getAttackCooldown
         self.ff#offensiveSlots %= dischargeRunicSlot
 
-startAttackAnimation :: V2 Float -> Update Player ()
-startAttackAnimation vectorToTarget = do
+startAttackAnimation :: WeaponKind -> V2 Float -> Update Player ()
+startAttackAnimation wkind vectorToTarget = do
     -- TODO: Choose attack animation based on weapon
     self.animationState.current.direction %= Animation.vecToDir vectorToTarget
-    self.animationState.current.kind .= Animation.Slash
+    self.animationState.current.kind .= animkind
     self.animationState.current.era  .= 0
     self.animationState.progression  .= Animation.defaultTransition
+    where
+    animkind = case wkind of
+        WeaponKind_Slashing   -> Animation.Slash
+        WeaponKind_Thrusting  -> Animation.Thrust
+        WeaponKind_Projecting -> Animation.Fire
 
 whenInAttackRange
     :: HasLocation s Location
     => HasEntity e Entity
-    => e -> Update s () -> Update s ()
-whenInAttackRange targetEntity act = do
-    attackRange <- getAttackRange
+    => WeaponKind
+    -> e -> Update s () -> Update s ()
+whenInAttackRange wkind targetEntity act = do
+    attackRange <- getAttackRange wkind
     dist <- distanceToEntity attackRange targetEntity
     when (dist < attackRange) act
 
-getAttackRange :: Update x Distance
-getAttackRange = return $ Distance 2
+getAttackRange :: WeaponKind -> Update x Distance
+getAttackRange = \case
+    WeaponKind_Slashing   -> return $ Distance 2
+    WeaponKind_Thrusting  -> return $ Distance 3
+    WeaponKind_Projecting -> return $ Distance 8
 
 getAttackPower :: Update x AttackPower
 getAttackPower = return $ AttackPower 1

@@ -1,6 +1,12 @@
 let Prelude = ./Prelude.dhall
 let map = Prelude.`List`.map
 
+let WeaponKind =
+  { Slashing   = "Slashing"
+  , Thrusting  = "Thrusting"
+  , Projecting = "Projecting"
+  }
+
 let ItemKind =
   { Container = "Container"
   , SmallItem = "SmallItem"
@@ -15,6 +21,7 @@ let EquipmentSlot =
    , Hands    = "Hands"
    , Legs     = "Legs"
    , Feet     = "Feet"
+   , Weapon   = "Weapon"
    }
 
 let Direction =
@@ -55,6 +62,7 @@ let Reactivity =
 
 in
 { ItemKind      = ItemKind
+, WeaponKind    = WeaponKind
 , EquipmentSlot = EquipmentSlot
 , Direction     = Direction
 , AnimationKind = AnimationKind

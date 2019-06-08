@@ -6,7 +6,7 @@ module Entity
 
 import Delude
 import Types.Equipment (EquipmentSlot, Equipment)
-import Types.Entity.Item (ItemKind)
+import Types.Entity.Item (ItemKind, ItemType)
 import Types.Entity.ZIndex (EntityZIndex)
 import Types.Entity.Reactivity (ReactivCategory, ReactivValue)
 import Types.Entity.Animation (AnimationName)
@@ -38,6 +38,7 @@ MakeOracleGetter(Name           , Text)
 MakeOracleGetter(Location       , Location)
 MakeOracleGetter(Equipment      , Equipment)
 MakeOracleGetter(ItemKind       , ItemKind)
+MakeOracleGetter(ItemType       , ItemType)
 MakeOracleGetter(Content        , [EntityId])
 MakeOracleGetter(Volume         , Volume)
 MakeOracleGetter(MaxVolume      , Volume)

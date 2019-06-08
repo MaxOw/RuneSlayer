@@ -15,6 +15,7 @@ data EntityQuery a where
      EntityQuery_Location       :: EntityQuery Location
      EntityQuery_Equipment      :: EntityQuery Equipment
      EntityQuery_ItemKind       :: EntityQuery ItemKind
+     EntityQuery_ItemType       :: EntityQuery ItemType
      EntityQuery_Content        :: EntityQuery [EntityId]
      EntityQuery_Volume         :: EntityQuery Volume
      EntityQuery_MaxVolume      :: EntityQuery Volume

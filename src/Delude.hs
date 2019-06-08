@@ -17,6 +17,8 @@ module Delude
 
     , toggleSet
     , require
+
+    , sortVia
     ) where
 
 import Relude         as All
@@ -35,6 +37,7 @@ import qualified Data.Aeson as Aeson
 import Engine.Common.Types
 import Engine.Graphics.Types as All (Color, AlphaColor)
 
+import qualified Data.Map   as Map
 import qualified Data.Bimap as Bimap
 import qualified Data.HashMap.Strict as HashMap
 
@@ -119,4 +122,11 @@ toggleSet a s
 require :: HasCallStack => Text -> Maybe a -> a
 require _   (Just a) = a
 require msg Nothing  = error msg
+
+--------------------------------------------------------------------------------
+
+sortVia :: Ord e => (a -> e) -> [e] -> [a] -> [a]
+sortVia f ms = sortOn (fromMaybe 0 . flip Map.lookup emap . f)
+    where
+    emap = Map.fromList $ zip ms [1 :: Int ..]
 

@@ -42,6 +42,9 @@ in
 , maleShirtWhite     = makeCharAnimation paths.maleShirtWhite
 
 , helmet = makeCharAnimation paths.helmetAnimation
+, dagger = makeCharAnimation paths.daggerAnimation
+, spear  = makeCharAnimation paths.spearAnimation
+, bow    = makeCharAnimation paths.bowAnimation
 
 , bat = simpleCustomAnimation (map Natural Frame makeBatFrame [1, 2, 3])
 }

@@ -12,8 +12,8 @@ import Game       (initSt, endSt)
 import Reload.Utils (reacquire)
 
 import qualified Version
-import Dev.AltLayout (layoutDev)
-import Benchmarks (runBenchmarks)
+-- import Dev.AltLayout (layoutDev)
+-- import Benchmarks (runBenchmarks)
 
 main :: IO ()
 main = do

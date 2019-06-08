@@ -18,6 +18,9 @@ in
 , maleShirtWhite     = makeCharPath "torso/shirts/longsleeve/male/white_longsleeve"
 
 , helmetAnimation = makeCharPath "head/helms/male/metal_helm_male"
+, daggerAnimation = makeCharPath "weapons/right hand/male/dagger_male"
+, spearAnimation  = makeCharPath "weapons/right hand/male/spear_male"
+, bowAnimation    = makeCharPath "weapons/right hand/either/bow"
 
 , bat = makeUnitPath "bat"
 

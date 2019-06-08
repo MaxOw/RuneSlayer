@@ -8,8 +8,11 @@ let makeEnv    = utils.makeEnv
 in
 { healthPotion = makeSprite paths.healthPotion
 
-, bag    = makeItem 4 2
-, helmet = makeItem 1 1
+, bag    = makeItem  4  2
+, helmet = makeItem  1  1
+, dagger = makeItem 15  8
+, spear  = makeItem  2  7
+, bow    = makeItem  5  1
 
 , treeTrunk   = makeEnv 50 38 6 6
 , treeFoliage = makeEnv 48 24 6 6

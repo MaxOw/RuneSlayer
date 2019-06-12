@@ -45,6 +45,7 @@ in
 , dagger = makeCharAnimation paths.daggerAnimation
 , spear  = makeCharAnimation paths.spearAnimation
 , bow    = makeCharAnimation paths.bowAnimation
+, arrow  = makeCharAnimation paths.arrowAnimation
 
 , bat = simpleCustomAnimation (map Natural Frame makeBatFrame [1, 2, 3])
 }

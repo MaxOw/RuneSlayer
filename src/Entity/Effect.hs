@@ -21,8 +21,7 @@ update x ctx = runUpdate x ctx $ do
        | otherwise                      -> self.era   += defaultDelta^._Wrapped
 
 render :: Effect -> RenderContext -> RenderAction
-render x _ctx = withZIndex x $ locate x $
-    translateY 0.8 $ renderEffect (x^.kind)
+render x _ctx = withZIndex x $ locate x $ correctHeight $ renderEffect (x^.kind)
     where
     renderEffect = \case
         HitEffect a -> translateY (x^.era) $ renderHit a
@@ -32,8 +31,13 @@ render x _ctx = withZIndex x $ locate x $
 
 oracle :: Effect -> EntityQuery a -> Maybe a
 oracle x = \case
+    EntityQuery_Name     -> Just $ kindToName $ x^.kind
     EntityQuery_Location -> Just $ x^.location
     _                    -> Nothing
+    where
+    kindToName :: EffectKind -> Text
+    kindToName = \case
+        HitEffect {} -> "HitEffect"
 
 --------------------------------------------------------------------------------
 

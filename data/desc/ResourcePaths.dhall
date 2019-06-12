@@ -21,8 +21,10 @@ in
 , daggerAnimation = makeCharPath "weapons/right hand/male/dagger_male"
 , spearAnimation  = makeCharPath "weapons/right hand/male/spear_male"
 , bowAnimation    = makeCharPath "weapons/right hand/either/bow"
+, arrowAnimation  = makeCharPath "weapons/left hand/either/arrow"
 
 , bat = makeUnitPath "bat"
 
 , healthPotion = makeImgsPath "items0/P_Red07"
+, arrow = makeImgsPath "items0/W_Arrow01"
 }

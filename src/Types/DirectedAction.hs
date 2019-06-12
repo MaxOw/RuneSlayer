@@ -5,6 +5,7 @@ import Types.Entity.Common
 import Types.EntityAction
 import Types.Entity.Item
 import Types.Entity.Unit
+import Types.Entity.Projectile (Projectile)
 import Types.Entity.Animation (Direction)
 import Types.Entity.Effect (EffectKind)
 -- import Types.Entity.EntityType
@@ -22,6 +23,7 @@ data SpawnEntity
    = SpawnEntity_Item   (Spawn ItemTypeName)
    | SpawnEntity_Unit   (Spawn UnitTypeName)
    | SpawnEntity_Effect Location EffectKind
+   | SpawnEntity_Projectile Projectile
 
 data WorldAction
    = WorldAction_SpawnEntity SpawnEntity

@@ -57,9 +57,10 @@ handleWorldAction = \case
     WorldAction_SpawnEntity s -> spawnEntity s
     where
     spawnEntity = \case
-        SpawnEntity_Item     s -> spawnItem s
-        SpawnEntity_Unit     s -> spawnUnit s
-        SpawnEntity_Effect l s -> spawnEffect l s
+        SpawnEntity_Item       s -> spawnItem s
+        SpawnEntity_Unit       s -> spawnUnit s
+        SpawnEntity_Effect   l s -> spawnEffect l s
+        SpawnEntity_Projectile p -> spawnProjectile p
 
     spawnItem s = do
         mit <- lookupItemType $ s^.name
@@ -78,6 +79,8 @@ handleWorldAction = \case
 
     spawnEffect l s = do
         return $ Just $ toEntity $ makeEffect s & location .~ l
+
+    spawnProjectile = return . Just . toEntity
 
 lookupItemType :: ItemTypeName -> Game (Maybe ItemType)
 lookupItemType n = do

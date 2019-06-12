@@ -24,7 +24,7 @@ data EntityKind
    | EntityKind_Static
    | EntityKind_Item
    | EntityKind_Dynamic
-   deriving (Eq, Ord, Enum, Bounded, Generic)
+   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 instance Hashable EntityKind
 
 data EntityId = EntityId
@@ -58,7 +58,7 @@ instance Show Location where
     show (Location (V2 x y)) = printf "(Location x=%.2f y=%.2f)" x y
 
 newtype Distance = Distance { unDistance :: Float }
-    deriving (Generic, Default, Show, Eq, Ord, ToJSON, FromJSON)
+    deriving (Generic, Default, Show, Num, Eq, Ord, ToJSON, FromJSON)
 makeWrapped ''Distance
 
 newtype Velocity = Velocity { unVelocity :: V2D    }
@@ -102,6 +102,9 @@ instance Default EntityDebugFlags
 -- make volume in liters. litre = 1000 cm^3
 volumeL :: Float -> Volume
 volumeL = Volume
+
+distanceInMeters :: Float -> Distance
+distanceInMeters = Distance
 
 -- distance in metres
 disM :: Float -> Distance

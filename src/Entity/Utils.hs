@@ -1,6 +1,7 @@
 module Entity.Utils
     ( module Utils
     , renderIf
+    , correctHeight
     ) where
 
 import Delude
@@ -19,3 +20,5 @@ renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  a = a
 renderIf False _ = mempty
 
+correctHeight :: Transformable2D t => t -> t
+correctHeight = translateY 0.8 -- TODO: this souldn't be hardcoded

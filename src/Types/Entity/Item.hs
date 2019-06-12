@@ -23,6 +23,7 @@ data ItemKind
    = ItemKind_Container
    | ItemKind_SmallItem
    | ItemKind_BigItem
+   | ItemKind_Projectile
    deriving (Eq, Generic)
 
 newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }

@@ -13,7 +13,8 @@ data EquipmentSlot
    | EquipmentSlot_Hands
    | EquipmentSlot_Legs
    | EquipmentSlot_Feet
-   | EquipmentSlot_Weapon
+   | EquipmentSlot_PrimaryWeapon
+   | EquipmentSlot_PrimaryOther
    deriving (Show, Eq, Ord, Generic)
 instance ToJSON EquipmentSlot where
     toEncoding = genericToEncoding customOptionsJSON
@@ -34,6 +35,7 @@ equipmentRenderOrder =
     , EquipmentSlot_Belt
     , EquipmentSlot_Head
     , EquipmentSlot_Hands
-    , EquipmentSlot_Weapon ]
+    , EquipmentSlot_PrimaryWeapon
+    , EquipmentSlot_PrimaryOther ]
 
 instance Default Equipment

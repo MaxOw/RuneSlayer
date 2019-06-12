@@ -57,6 +57,8 @@ data EntityAction
    | EntityAction_SelfAttacked AttackPower
    -- send player specific actions
    | EntityAction_PlayerAction PlayerAction
+   -- tell entity to fire self as a projectile at target
+   | EntityAction_SelfFiredAsProjectile Location V2D EntityId AttackPower
    deriving (Show)
 makePrisms ''EntityAction
 

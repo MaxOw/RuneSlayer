@@ -11,6 +11,7 @@ module Entity.Actions
     , moveTowards
     , updateAnimationState
     , addEffect
+    , spawnProjectile
     , updateTimer, startTimer, checkTimeUp
     , separateCollision
     , addItems
@@ -40,9 +41,11 @@ module Entity.Actions
 
     -- Utils
     , addAction, addWorldAction
-    , anyMatch, whenMatch
+    , firstMatch, anyMatch, whenMatch
     , ifJustLocation
     , isHostileTo
+    , distanceBetween
+    , velocityFromSpeed
     ) where
 
 import Delude
@@ -57,6 +60,7 @@ import Engine.Layout.Render (renderSimpleBox)
 import Entity
 import Types.Entity.Timer
 import Types.Entity.Item
+import Types.Entity.Projectile
 import Types.Entity.Appearance
 import Types.Entity.Player
 import Types.Entity.Animation (AnimationState)
@@ -85,20 +89,17 @@ setMoveVector
     :: HasVelocity s Velocity
     => HasMaxSpeed s Speed
     => V2D -> s -> s
-setMoveVector moveVector s = set velocity vel s
-    where
-    Speed sv = view maxSpeed s
-    vel = velocityInMetersPerSecond $ normalize moveVector ^* sv
+setMoveVector moveVector s = s
+    & velocity .~ velocityFromSpeed moveVector (s^.maxSpeed)
 
 distanceToEntity
     :: HasLocation s Location
     => HasEntity e Entity
-    => Distance -> e -> Update s Distance
-distanceToEntity defr (view entity -> e) = do
+    => e -> Update s (Maybe Distance)
+distanceToEntity (view entity -> e) = do
     loc <- use $ self.location._Wrapped
     let tmloc = e^.oracleLocation
-    return $ fromMaybe defr $
-        (Distance . distance loc . view _Wrapped <$> tmloc)
+    return (Distance . distance loc . view _Wrapped <$> tmloc)
 
 toggleDebugFlag :: HasDebugFlags x EntityDebugFlags => EntityDebugFlag -> x -> x
 toggleDebugFlag = \case
@@ -164,6 +165,9 @@ addEffect k = do
         loc <- use $ self.location
         when (isWithinDistance maxEffectSpawnDistance loc cloc) $
             addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Effect loc k
+
+spawnProjectile :: Projectile -> Update s ()
+spawnProjectile = addWorldAction . WorldAction_SpawnEntity . SpawnEntity_Projectile
 
 updateTimer
     :: HasTimer s Timer
@@ -451,6 +455,15 @@ shouldDie = uses (self.health._Wrapped) (<=0)
 --------------------------------------------------------------------------------
 -- Utils
 
+firstMatch
+    :: HasProcessOnUpdate x [EntityAction]
+    => APrism' EntityAction y
+    -> (y -> Update x ())
+    -> Update x ()
+firstMatch p act = do
+    as <- uses (self.processOnUpdate) $ firstOf (traverse.clonePrism p)
+    whenJust as act
+
 anyMatch
     :: HasProcessOnUpdate x [EntityAction]
     => APrism' EntityAction y
@@ -486,4 +499,10 @@ genDropOffset s = randomFromSeed s $ do
 isHostileTo :: HasEntity e Entity => Set ReactivCategory -> e -> Bool
 isHostileTo hostileSet e = not $ Set.disjoint hostileSet
     (Map.keysSet $ fromMaybe mempty $ e^.entity.oracleReactivity)
+
+distanceBetween :: Location -> Location -> Distance
+distanceBetween (Location a) (Location b) = Distance $ distance a b
+
+velocityFromSpeed :: V2D -> Speed -> Velocity
+velocityFromSpeed v (Speed s) = velocityInMetersPerSecond $ normalize v ^* s
 

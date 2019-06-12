@@ -8,6 +8,7 @@ import Types.Entity.ZIndex
 
 data EffectKind
    = HitEffect AttackPower
+   deriving (Show)
 
 data Effect = Effect
    { field_location     :: Location

@@ -13,6 +13,7 @@ import Entity.Item
 import Entity.StaticEntity
 import Entity.Unit
 import Entity.Effect
+import Entity.Projectile
 
 --------------------------------------------------------------------------------
 
@@ -24,6 +25,7 @@ instance EntityLike Item         where toEntity =         itemToEntity
 instance EntityLike StaticEntity where toEntity = staticEntityToEntity
 instance EntityLike Unit         where toEntity =         unitToEntity
 instance EntityLike Effect       where toEntity =       effectToEntity
+instance EntityLike Projectile   where toEntity =    projectileToEntity
 
 instance EntityLike EntitySum where
     toEntity tag = case tag of

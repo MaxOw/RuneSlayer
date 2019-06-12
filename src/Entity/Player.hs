@@ -137,7 +137,27 @@ updateDelayedActions = do
 
 performDelayedAction :: DelayedActionType -> Update Player ()
 performDelayedAction = \case
-   DelayedActionType_Attack eid p -> addAction eid $ EntityAction_SelfAttacked p
+    DelayedActionType_Attack         eid p -> attack eid p
+    DelayedActionType_FireProjectile loc v pid tid p ->
+        fireProjectile loc v pid tid p
+    where
+    attack eid p = addAction eid $ EntityAction_SelfAttacked p
+    fireProjectile loc v pid tid p = do
+        selectNextProjectile pid
+        addAction pid $ EntityAction_SelfFiredAsProjectile loc v tid p
+
+selectNextProjectile :: EntityId -> Update Player ()
+selectNextProjectile pid = uses (self.equipment) lookupPrimaryOther >>= \case
+    Nothing -> selectNextAsPrimaryOther
+    Just xi -> do
+        when (xi == pid) (self.equipment %= Equipment.deleteId pid)
+        selectNextAsPrimaryOther
+    where
+    lookupPrimaryOther = Equipment.lookupSlot EquipmentSlot_PrimaryOther
+    selectNextAsPrimaryOther = do
+        -- Select arrow from a quiver (if equiped)
+        -- if quiver not empty equip an arrow as primary other
+        return ()
 
 addDelayedAction :: Duration -> DelayedActionType -> Update Player ()
 addDelayedAction d t = self.ff#delayedActions %= (DelayedAction d t:)
@@ -175,7 +195,7 @@ canExecuteAttack = (&&)
 
 getWeaponKind :: Update Player WeaponKind
 getWeaponKind = do
-    mei <- getEquippedItem EquipmentSlot_Weapon
+    mei <- getEquippedItem EquipmentSlot_PrimaryWeapon
     let mwk = mei^?traverse.entity.oracleItemType.traverse.weaponKind.traverse
     return $ fromMaybe WeaponKind_Slashing mwk
 
@@ -184,17 +204,41 @@ executeAttackAt targetEntity vectorToTarget = do
     wkind <- getWeaponKind
     whenInAttackRange wkind targetEntity $ do
         startAttackAnimation wkind vectorToTarget
-        unless (wkind == WeaponKind_Projecting) $ do
-            attackPower <- getAttackPower
-            attackDelay <- getAttackDelay
-            addDelayedAction attackDelay $
-                DelayedActionType_Attack (targetEntity^.entityId) attackPower
+        executeAttackByKind wkind
         startTimer Timer_Attack =<< getAttackCooldown
         self.ff#offensiveSlots %= dischargeRunicSlot
+    where
+    executeAttackByKind = \case
+        WeaponKind_Slashing   -> executeMeleAttack
+        WeaponKind_Thrusting  -> executeMeleAttack
+        WeaponKind_Projecting -> executeProjectileAttack
+
+    executeMeleAttack = do
+        attackPower <- getAttackPower
+        attackDelay <- getAttackDelay
+        addDelayedAction attackDelay $
+            DelayedActionType_Attack (targetEntity^.entityId) attackPower
+
+    executeProjectileAttack = whenJustM getProjectile $ \eid -> do
+        loc <- use $ self.location
+        attackPower <- getAttackPower
+        attackDelay <- getAttackDelay
+        addDelayedAction attackDelay $
+            DelayedActionType_FireProjectile
+                loc
+                vectorToTarget
+                (eid^.entityId)          -- Projectile Id
+                (targetEntity^.entityId) -- Target Id
+                attackPower
+
+getProjectile :: Update Player (Maybe EntityWithId)
+getProjectile = getEquippedItem EquipmentSlot_PrimaryOther
+    -- TODO: Test if its a projectile
+    -- let mit = mei^?traverse.entity.oracleItemType.traverse
+    -- return $ (,) <$> mei <*> mit
 
 startAttackAnimation :: WeaponKind -> V2 Float -> Update Player ()
 startAttackAnimation wkind vectorToTarget = do
-    -- TODO: Choose attack animation based on weapon
     self.animationState.current.direction %= Animation.vecToDir vectorToTarget
     self.animationState.current.kind .= animkind
     self.animationState.current.era  .= 0
@@ -212,7 +256,7 @@ whenInAttackRange
     -> e -> Update s () -> Update s ()
 whenInAttackRange wkind targetEntity act = do
     attackRange <- getAttackRange wkind
-    dist <- distanceToEntity attackRange targetEntity
+    dist <- fromMaybe attackRange <$> distanceToEntity targetEntity
     when (dist < attackRange) act
 
 getAttackRange :: WeaponKind -> Update x Distance
@@ -267,7 +311,7 @@ processAction = \case
 render :: Player -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
-    , translateY 0.8 $ renderComposition
+    , correctHeight $ renderComposition
         [ renderBody
         , renderEquipment
         ]

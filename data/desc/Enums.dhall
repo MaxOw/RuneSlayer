@@ -8,20 +8,22 @@ let WeaponKind =
   }
 
 let ItemKind =
-  { Container = "Container"
-  , SmallItem = "SmallItem"
-  , BigItem   = "BigItem"
+  { Container  = "Container"
+  , SmallItem  = "SmallItem"
+  , BigItem    = "BigItem"
+  , Projectile = "Projectile"
   }
 
 let EquipmentSlot =
-   { Backpack = "Backpack"
-   , Belt     = "Belt"
-   , Head     = "Head"
-   , Torso    = "Torso"
-   , Hands    = "Hands"
-   , Legs     = "Legs"
-   , Feet     = "Feet"
-   , Weapon   = "Weapon"
+   { Backpack      = "Backpack"
+   , Belt          = "Belt"
+   , Head          = "Head"
+   , Torso         = "Torso"
+   , Hands         = "Hands"
+   , Legs          = "Legs"
+   , Feet          = "Feet"
+   , PrimaryWeapon = "PrimaryWeapon"
+   , PrimaryOther  = "PrimaryOther"
    }
 
 let Direction =

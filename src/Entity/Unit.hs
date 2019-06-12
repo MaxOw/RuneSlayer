@@ -46,7 +46,7 @@ decideAction = do
     whenJustM getTarget $ \t -> do
         attackRange <- use $ self.unitType.ff#attackRange
         pursueRange <- use $ self.unitType.ff#pursueRange
-        dist <- distanceToEntity pursueRange t
+        dist <- fromMaybe pursueRange <$> distanceToEntity t
         if dist < attackRange
         then attackTarget t
         else if dist < pursueRange
@@ -89,13 +89,14 @@ procAttacked as = do
 render :: Unit -> RenderContext -> RenderAction
 render x _ctx = withZIndex x $ locate x $ renderComposition
     [ renderIf (x^.isMarked) renderTargetMark
-    , translateY 0.8 $ renderComposition
+    , correctHeight $ renderComposition
         [ Animation.renderAnimation (x^.animationState) (x^.animation)
         ]
     ]
 
 oracle :: Unit -> EntityQuery a -> Maybe a
 oracle x = \case
+    EntityQuery_Name       -> Just $ unUnitTypeName $ x^.unitType.name
     EntityQuery_Location   -> Just $ x^.location
     EntityQuery_Reactivity -> Just $ x^.unitType.reactivity
     _                      -> Nothing

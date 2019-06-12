@@ -32,7 +32,7 @@ in
   , itemKind     = ItemKind.SmallItem
   , weaponKind   = Some WeaponKind.Slashing
   , appearance   = appearance.simple sprites.dagger
-  , fittingSlots = [ EquipmentSlot.Weapon ]
+  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = Some "dagger"
   }
 
@@ -42,7 +42,7 @@ in
   , itemKind     = ItemKind.BigItem
   , weaponKind   = Some WeaponKind.Thrusting
   , appearance   = appearance.simple sprites.spear
-  , fittingSlots = [ EquipmentSlot.Weapon ]
+  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = Some "spear"
   }
 
@@ -52,8 +52,17 @@ in
   , itemKind     = ItemKind.BigItem
   , weaponKind   = Some WeaponKind.Projecting
   , appearance   = appearance.simple sprites.bow
-  , fittingSlots = [ EquipmentSlot.Weapon ]
+  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = Some "bow"
+  }
+
+, arrow = defaultItemType //
+  { name         = "Arrow"
+  , volume       = 0.2
+  , itemKind     = ItemKind.Projectile
+  , appearance   = appearance.simple sprites.arrow
+  , fittingSlots = [ EquipmentSlot.PrimaryOther ]
+  , animation    = Some "arrow"
   }
 
 , healthPotion = defaultItemType //

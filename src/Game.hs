@@ -175,6 +175,7 @@ testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
     , mkItem "Bow"            (-3) (-1)
     , mkItem "Spear"          (-5)   1
     , mkItem "Bag"              0    1
+    , mkItem "Arrow"          (-3) (-2)
 
     , SpawnEntity_Unit (batUnit $ locM 10 6)
     , SpawnEntity_Unit (batUnit $ locM  9 6.3)

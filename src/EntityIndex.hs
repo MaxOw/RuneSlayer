@@ -189,13 +189,19 @@ reindex :: MonadIO m
 reindex eix (i, mo, mn) = case (mo, mn) of
     (Nothing, Nothing) -> return ()
     (Nothing, Just nv) -> addOnIndex nv
-    (Just ov, Nothing) -> deleteFromIndex ov
+    (Just ov, Nothing) -> deleteFromIndex ov >> printDebugDelete ov
     (Just ov, Just nv) -> updateInIndex ov nv
     where
     addOnIndex nv = do
         let ki = FullMap.lookup (entityKind nv) (eix^.spatialIndex)
         let pos = getPosM nv
         whenJust pos $ \p -> SpatialIndex.insert p i ki
+
+    printDebugDelete ov = putStrLn
+        $ "Delete Entity: "
+        <> show i <> ", "
+        <> (show $ entityKind ov) <> ", "
+        <> "Name: " <> (fromMaybe "" $ fmap toString $ ov^.oracleName)
 
     deleteFromIndex ov = do
         let ki = FullMap.lookup (entityKind ov) (eix^.spatialIndex)

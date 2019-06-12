@@ -28,6 +28,7 @@ instance HasMaxSpeed PlayerInit Speed
 
 data DelayedActionType
    = DelayedActionType_Attack EntityId AttackPower
+   | DelayedActionType_FireProjectile Location V2D EntityId EntityId AttackPower
 
 data DelayedAction = DelayedAction
    { field_timeLeft :: Duration
@@ -82,7 +83,8 @@ playerSlots = Set.fromList
     , EquipmentSlot_Hands
     , EquipmentSlot_Legs
     , EquipmentSlot_Feet
-    , EquipmentSlot_Weapon ]
+    , EquipmentSlot_PrimaryWeapon
+    , EquipmentSlot_PrimaryOther  ]
 
 --------------------------------------------------------------------------------
 

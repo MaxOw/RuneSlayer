@@ -13,18 +13,20 @@ import Types.Debug
 import Engine.Common.Types (BBox(..))
 import Entity.Utils
 import Entity.Actions
+import Types.Entity.Projectile
 
 --------------------------------------------------------------------------------
 
 actOn :: Item -> EntityAction -> Item
 actOn x a = case a of
     -- For containers
-    EntityAction_AddItem  _ -> handleOnUpdate a x
-    EntityAction_DropItem _ -> handleOnUpdate a x
+    EntityAction_AddItem  {} -> handleOnUpdate a x
+    EntityAction_DropItem {} -> handleOnUpdate a x
     -- For any item
     EntityAction_SelfPassedTo  eid -> selfPassedTo eid
     EntityAction_SelfAddedBy   eid -> selfAddedBy eid
     EntityAction_SelfDroppedAt loc -> slefDroppedAt loc
+    EntityAction_SelfFiredAsProjectile {} -> selfFireProjectile
     _ -> x
 
     where
@@ -43,14 +45,35 @@ actOn x a = case a of
         & location .~ Just loc
         & owner    .~ Nothing
 
+    selfFireProjectile
+        | x^.itemType.itemKind == ItemKind_Projectile = handleOnUpdate a x
+        | otherwise = x
+
 --------------------------------------------------------------------------------
 
 update :: Item -> EntityContext -> Q (Maybe Item, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_SelfAddedBy pickUpInformOwner
     whenMatch _EntityAction_AddItem containerAddItems
+    firstMatch _EntityAction_SelfFiredAsProjectile projectileFire
     mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
+
+projectileFire :: (Location, V2D, EntityId, AttackPower) -> Update Item ()
+projectileFire (loc, vectorToTarget, tid, attackPower) = do
+    deleteSelf .= True
+    let maxDist   = distanceInMeters 12
+    let projSpeed = speedInMetersPerSecond 40
+    let vel = velocityFromSpeed vectorToTarget projSpeed
+    projType <- use (self.itemType)
+    spawnProjectile $ Projectile
+        { field_location     = loc
+        , field_velocity     = vel
+        , field_distanceLeft = maxDist
+        , field_attackPower  = attackPower
+        , field_target       = tid
+        , field_itemType     = projType
+        }
 
 processAction :: EntityAction -> Update Item ()
 processAction = \case

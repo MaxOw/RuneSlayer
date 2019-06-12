@@ -41,7 +41,7 @@ Requirements for first release: v0.1
 * Named entity types.                                                        [X]
 * Render equipped items.                                                     [X]
 * Make attack match equipped weapon.                                         [X]
-* Add projectiles lunching.                                                  [ ]
+* Add projectiles lunching.                                                  [X]
 
 * Make effects an entity.                                                    [X]
 * Add action delays.                                                         [X]

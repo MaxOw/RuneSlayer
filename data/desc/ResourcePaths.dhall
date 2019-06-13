@@ -24,6 +24,7 @@ in
 , arrowAnimation  = makeCharPath "weapons/left hand/either/arrow"
 
 , bat = makeUnitPath "bat"
+, spider01 = makeUnitPath "spiders/spider01"
 
 , healthPotion = makeImgsPath "items0/P_Red07"
 , arrow = makeImgsPath "items0/W_Arrow01"

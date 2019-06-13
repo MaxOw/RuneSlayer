@@ -177,8 +177,9 @@ testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
     , mkItem "Bag"              0    1
     , mkItem "Arrow"          (-3) (-2)
 
-    , SpawnEntity_Unit (batUnit $ locM 10 6)
-    , SpawnEntity_Unit (batUnit $ locM  9 6.3)
+    , mkUnit "Bat"             10    6
+    , mkUnit "Bat"              9    6.3
+    , mkUnit "Spider"         (-9)   6.3
     ]
     where
 
@@ -186,6 +187,6 @@ testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
         & name     .~ (ItemTypeName n)
         & location .~ (locM x y)
 
-    batUnit loc = def
-        & name     .~ (UnitTypeName "Bat")
-        & location .~ (loc)
+    mkUnit n x y = SpawnEntity_Unit $ def
+        & name     .~ (UnitTypeName n)
+        & location .~ (locM x y)

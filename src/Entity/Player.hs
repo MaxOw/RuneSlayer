@@ -240,11 +240,7 @@ getProjectile = getEquippedItem EquipmentSlot_PrimaryOther
 startAttackAnimation :: WeaponKind -> V2 Float -> Update Player ()
 startAttackAnimation wkind vectorToTarget = do
     self.animationState.current.direction %= Animation.vecToDir vectorToTarget
-    self.animationState.current.kind .= animkind
-    self.animationState.current.era  .= 0
-    self.animationState.progression  .= Animation.defaultTransition
-    where
-    animkind = case wkind of
+    selectAnimation $ case wkind of
         WeaponKind_Slashing   -> Animation.Slash
         WeaponKind_Thrusting  -> Animation.Thrust
         WeaponKind_Projecting -> Animation.Fire
@@ -266,7 +262,7 @@ getAttackRange = \case
     WeaponKind_Projecting -> return $ Distance 8
 
 getAttackPower :: Update x AttackPower
-getAttackPower = return $ AttackPower 1
+getAttackPower = return $ AttackPower 10
     -- TODO: Calculate attack power
 
 getAttackDelay :: Update x Duration

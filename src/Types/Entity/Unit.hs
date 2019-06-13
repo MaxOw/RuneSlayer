@@ -18,6 +18,7 @@ data UnitType = UnitType
    , field_corpse             :: Maybe ItemTypeName
    , field_animation          :: AnimationDesc
    , field_animateWhenStopped :: Bool
+   , field_renderOffset       :: Maybe V2D
    , field_maxHealth          :: Health
    , field_maxSpeed           :: Speed
    , field_attackRange        :: Distance

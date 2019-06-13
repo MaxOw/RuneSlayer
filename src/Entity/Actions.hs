@@ -8,7 +8,8 @@ module Entity.Actions
 
     -- Update Actions
     , integrateLocation
-    , moveTowards
+    , moveTowards, orientTowards
+    , selectAnimation
     , updateAnimationState
     , addEffect
     , spawnProjectile
@@ -63,7 +64,7 @@ import Types.Entity.Item
 import Types.Entity.Projectile
 import Types.Entity.Appearance
 import Types.Entity.Player
-import Types.Entity.Animation (AnimationState)
+import Types.Entity.Animation (AnimationState, AnimationKind)
 import Types.Entity.Reactivity (ReactivCategory)
 import Types.Entity.Effect (EffectKind)
 import qualified Entity.Animation as Animation
@@ -138,6 +139,29 @@ moveTowards (view entity -> e) = do
         self %= setMoveVector dir
     where
     directionToTarget (Location a) (Location b) = b - a
+
+orientTowards
+    :: HasAnimationState s AnimationState
+    => HasLocation       s Location
+    => HasEntity e Entity
+    => e -> Update s ()
+orientTowards (view entity -> e) = do
+    loc <- use $ self.location
+    let mtloc = e^.oracleLocation
+    whenJust mtloc $ \tloc -> do
+        let dir = directionToTarget loc tloc
+        self.animationState.current.direction %= Animation.vecToDir dir
+    where
+    directionToTarget (Location a) (Location b) = b - a
+
+selectAnimation
+    :: HasAnimationState     s AnimationState
+    => AnimationKind
+    -> Update s ()
+selectAnimation k = do
+    self.animationState.current.kind .= k
+    self.animationState.current.era  .= 0
+    self.animationState.progression  .= Animation.defaultTransition
 
 updateAnimationState
     :: HasVelocity           s Velocity

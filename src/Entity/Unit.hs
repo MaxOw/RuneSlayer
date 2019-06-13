@@ -47,6 +47,7 @@ decideAction = do
         attackRange <- use $ self.unitType.ff#attackRange
         pursueRange <- use $ self.unitType.ff#pursueRange
         dist <- fromMaybe pursueRange <$> distanceToEntity t
+        orientTowards t
         if dist < attackRange
         then attackTarget t
         else if dist < pursueRange
@@ -60,12 +61,12 @@ decideAction = do
             Just ti -> queryById ti
 
 attackTarget :: EntityWithId -> Update Unit ()
-attackTarget targetEntity = do
-    whenM (checkTimeUp Timer_Attack) $ do
-        attackPower <- use $ self.unitType.ff#attackPower
-        attackSpeed <- use $ self.unitType.ff#attackSpeed
-        addAction targetEntity $ EntityAction_SelfAttacked attackPower
-        startTimer Timer_Attack attackSpeed
+attackTarget targetEntity = whenM (checkTimeUp Timer_Attack) $ do
+    attackPower <- use $ self.unitType.ff#attackPower
+    attackSpeed <- use $ self.unitType.ff#attackSpeed
+    addAction targetEntity $ EntityAction_SelfAttacked attackPower
+    selectAnimation Animation.Slash
+    startTimer Timer_Attack attackSpeed
 
 procAttacked :: NonEmpty AttackPower -> Update Unit ()
 procAttacked as = do
@@ -89,10 +90,12 @@ procAttacked as = do
 render :: Unit -> RenderContext -> RenderAction
 render x _ctx = withZIndex x $ locate x $ renderComposition
     [ renderIf (x^.isMarked) renderTargetMark
-    , correctHeight $ renderComposition
+    , addRenderOffset $ renderComposition
         [ Animation.renderAnimation (x^.animationState) (x^.animation)
         ]
     ]
+    where
+    addRenderOffset = fromMaybe id $ fmap translate $ x^.unitType.ff#renderOffset
 
 oracle :: Unit -> EntityQuery a -> Maybe a
 oracle x = \case

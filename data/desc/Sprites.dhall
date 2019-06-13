@@ -21,4 +21,5 @@ in
 
 , bat = makeSprite paths.bat
 , batCorpse = utils.selectSpritePart 32 0 0 (makeSprite paths.bat)
+, spiderCorpse01 = utils.selectSpritePart 64 3 4 (makeSprite paths.spider01)
 }

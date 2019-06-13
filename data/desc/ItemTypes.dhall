@@ -3,6 +3,7 @@ let types      = ./Types.dhall
 let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
 
+let Sprite        = types.Sprite
 let ContainerType = types.ContainerType
 let ItemKind      = enums.ItemKind
 let WeaponKind    = enums.WeaponKind
@@ -15,6 +16,17 @@ let defaultItemType =
   , fittingSlots  = [] : List Text
   , containerType = None ContainerType
   }
+
+let makeCorpse =
+  λ(name   : Text) →
+  λ(volume : Natural) →
+  λ(sprite : Sprite) →
+    defaultItemType //
+      { name       = "Corpse of a ${name}"
+      , volume     = volume
+      , itemKind   = ItemKind.BigItem
+      , appearance = appearance.simple sprite
+      }
 
 in
 { helmet = defaultItemType //
@@ -81,10 +93,6 @@ in
   , containerType = Some { maxVolume              = 15 }
   }
 
-, batCorpse = defaultItemType //
-  { name       = "Corpse of a Bat"
-  , volume     = 30
-  , itemKind   = ItemKind.BigItem
-  , appearance = appearance.simple sprites.batCorpse
-  }
+, batCorpse    = makeCorpse "Bat"    30 sprites.batCorpse
+, spiderCorpse = makeCorpse "Spider" 80 sprites.spiderCorpse01
 }

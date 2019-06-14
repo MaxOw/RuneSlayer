@@ -1,12 +1,12 @@
 # Release Requirements
+
+## Version 0.1 #################################################################
 Requirements for first release: v0.1
 
 ## General
 
 * Main Menu.                                                                 [ ]
 * Saving and loading.                                                        [ ]
-* Auto updates. [v0.2?]                                                      [ ]
-* Sqlite powered, nix-like immutable data storage. [v0.2?]                   [ ]
 * Fix scroller lag.                                                          [ ]
 * Benchmark and speedup rendering pipeline.                                  [X]
 
@@ -24,32 +24,28 @@ Requirements for first release: v0.1
 ## Game/Gameplay
 
 * Load entity types from files (Json/Dhall)                                  [X]
-  - Declare/load static types via Dhall                                      (#)
-  - Declare/load item types via Dhall                                        (#)
-  - Declare/load unit types via Dhall                                        (#)
-  - Declare/load player init file via Dhall                                  (#)
-
 * Load resource files. (Json/Dhall)                                          [X]
-  - Declare/load paths via Dhall                                             (#)
-  - Declare/load sprites via Dhall                                           (#)
-  - Declare/load animations via Dhall                                        (#)
-  - Declare/load tile sets via Dhall                                         (#)
 
 * Save/Load map description. (What format?)                                  [ ]
 
 * World actions.                                                             [X]
 * Named entity types.                                                        [X]
-* Render equipped items.                                                     [X]
-* Make attack match equipped weapon.                                         [X]
-* Add projectiles lunching.                                                  [X]
+
+* Equipment                                                                  [ ]
+  - Render equipped items.                                                   (#)
+  - Make attack match equipped weapon.                                       (#)
+  - Add projectiles lunching.                                                (#)
+  - Add quiver.                                                              ( )
+  - Add use item action. (Health potion)                                     ( )
+  - Add items stats.                                                         ( )
 
 * Make effects an entity.                                                    [X]
 * Add action delays.                                                         [X]
 
-* Enemy actions.                                                             [ ]
+* Enemy actions.                                                             [X]
   - Spawn corpse on death.                                                   (#)
   - Go towards & attack hostile reactivities.                                (#)
-  - Spread out.                                                              ( )
+  - Spread out.                                                              (#)
 
 * Proper world generator.                                                    [ ]
   - Add WorldGen debug mode.                                                 (#)
@@ -73,9 +69,16 @@ Requirements for first release: v0.1
 * NPCs.                                                                      [ ]
 * Communication with NPCs.                                                   [ ]
 
-* Enemy units:                                                               [ ]
+* Enemy units:                                                               [#]
   - Gore Bats                                                                (#)
   - Shadow Spiders                                                           (#)
+
+## Version 0.2 #################################################################
+
+* Auto updates.                                                              [ ]
+* Sqlite powered, nix-like immutable data storage.                           [ ]
+
+* Enemy units:                                                               [ ]
   - Shadow Puppets (Skeletons)                                               ( )
   - Shadow Puppets (Zombies)                                                 ( )
 

@@ -31,7 +31,7 @@ in
   { name      = "Spider"
   , animation = animations.spider01
   , maxHealth = 10
-  , maxSpeed  = constants.baseWalkingSpeed
+  , maxSpeed  = constants.slowWalkingSpeed
   , corpse    = Some items.spiderCorpse.name
   , attackRange = 1.2  -- meter
   , attackPower = 5

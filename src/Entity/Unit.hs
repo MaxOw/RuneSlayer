@@ -34,16 +34,25 @@ update x ctx = runUpdate x ctx $ do
     anyMatch _EntityAction_SelfAttacked procAttacked
     self.processOnUpdate .= mempty
 
+bindMaybeM :: Monad m => m (Maybe a) -> (a -> m (Maybe b)) -> m (Maybe b)
+bindMaybeM ma mb = ma >>= maybe (return Nothing) mb
+
 decideAction :: Update Unit ()
 decideAction = do
-    whenNothingM_ (use $ self.target) $ do
+    self.velocity .= 0
+    selectTarget
+    pursueOrAttackTarget
+    spreadOut
+    where
+    selectTarget = whenNothingM_ (use $ self.target) $ do
         aggroRange <- use $ self.unitType.ff#aggroRange
-        es <- queryInRadius EntityKind_Dynamic aggroRange
+        es <- queryInRange EntityKind_Dynamic aggroRange
         ht <- use $ self.unitType.ff#hostileTowards
         let tid = view entityId <$> listToMaybe (filter (isHostileTo ht) es)
         self.target .= tid
-    self.velocity .= 0
-    whenJustM getTarget $ \t -> do
+
+    getTarget = bindMaybeM (use $ self.target) queryById
+    pursueOrAttackTarget = whenJustM getTarget $ \t -> do
         attackRange <- use $ self.unitType.ff#attackRange
         pursueRange <- use $ self.unitType.ff#pursueRange
         dist <- fromMaybe pursueRange <$> distanceToEntity t
@@ -53,12 +62,16 @@ decideAction = do
         else if dist < pursueRange
             then moveTowards t
             else self.target .= Nothing
-    where
-    getTarget = do
-        mtid <- use $ self.target
-        case mtid of
-            Nothing -> return Nothing
-            Just ti -> queryById ti
+
+    spreadOut = do
+        let disperseRange = distanceInMeters 0.5
+        es <- queryInRadius EntityKind_Dynamic disperseRange
+        ht <- use $ self.unitType.ff#hostileTowards
+        let ts = filter (not . isHostileTo ht) es
+        vs <- catMaybes <$> mapM vectorToEntity ts
+        let v = sum $ map (negate . normalize) vs
+        s <- use $ self.maxSpeed
+        self.velocity += velocityFromSpeed v (s*0.3)
 
 attackTarget :: EntityWithId -> Update Unit ()
 attackTarget targetEntity = whenM (checkTimeUp Timer_Attack) $ do

@@ -74,7 +74,7 @@ newtype AttackPower = AttackPower { unAttackPower :: Int    }
 makeWrapped ''AttackPower
 
 newtype Speed    = Speed    { unSpeed    :: Float }
-    deriving (Generic, Default, Show, ToJSON, FromJSON)
+    deriving (Generic, Num, Fractional, Default, Show, ToJSON, FromJSON)
 makeWrapped ''Speed
 
 newtype Volume   = Volume   { unVolume   :: Float }

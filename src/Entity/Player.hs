@@ -93,7 +93,7 @@ update x ctx = runUpdate x ctx $ do
 runicActions :: Update Player ()
 runicActions = do
     -- Detect hostiles
-    ds <- queryInRadius EntityKind_Dynamic hostileDetectionRange
+    ds <- queryInRange EntityKind_Dynamic hostileDetectionRange
     if any isHostile ds
     then runicMode
     else endRunicMode
@@ -278,7 +278,7 @@ playerIntegrateLocation = do
 
 autoTarget :: Update Player ()
 autoTarget = do
-    ds <- queryInRadius EntityKind_Dynamic (disM 8)
+    ds <- queryInRange EntityKind_Dynamic (disM 8)
     sid <- use $ context.selfId
     loc <- use $ self.location
     -- TODO: fix auto targeting reactivity list

@@ -8,6 +8,7 @@ module Entity.Actions
 
     -- Update Actions
     , integrateLocation
+    , vectorToEntity
     , moveTowards, orientTowards
     , selectAnimation
     , updateAnimationState
@@ -35,7 +36,7 @@ module Entity.Actions
 
     -- Queries
     -- , queryStaticInRange
-    , queryInRadius
+    , queryInRange, queryInRadius
     , queryById
     , shouldDie
     , useSelfId
@@ -125,34 +126,31 @@ integrateLocation = do
     where
     upd (Duration t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
 
+vectorToEntity
+    :: HasLocation s Location
+    => HasEntity e Entity
+    => e -> Update s (Maybe V2D)
+vectorToEntity (view entity -> e) = do
+    loc <- use $ self.location
+    return $ directionToTarget loc <$> e^.oracleLocation
+    where
+    directionToTarget (Location a) (Location b) = b - a
+
 moveTowards
     :: HasLocation s Location
     => HasVelocity s Velocity
     => HasMaxSpeed s Speed
     => HasEntity e Entity
     => e -> Update s ()
-moveTowards (view entity -> e) = do
-    loc <- use $ self.location
-    let mtloc = e^.oracleLocation
-    whenJust mtloc $ \tloc -> do
-        let dir = directionToTarget loc tloc
-        self %= setMoveVector dir
-    where
-    directionToTarget (Location a) (Location b) = b - a
+moveTowards e = whenJustM (vectorToEntity e) $ \v -> self %= setMoveVector v
 
 orientTowards
     :: HasAnimationState s AnimationState
     => HasLocation       s Location
     => HasEntity e Entity
     => e -> Update s ()
-orientTowards (view entity -> e) = do
-    loc <- use $ self.location
-    let mtloc = e^.oracleLocation
-    whenJust mtloc $ \tloc -> do
-        let dir = directionToTarget loc tloc
-        self.animationState.current.direction %= Animation.vecToDir dir
-    where
-    directionToTarget (Location a) (Location b) = b - a
+orientTowards e = whenJustM (vectorToEntity e) $ \v ->
+    self.animationState.current.direction %= Animation.vecToDir v
 
 selectAnimation
     :: HasAnimationState     s AnimationState
@@ -459,13 +457,23 @@ queryStaticInRange :: RangeBBox -> Update s [EntityWithId]
 queryStaticInRange rng =
     EntityIndex.lookupInRange EntityKind_Static rng =<< use (context.entities)
 
-queryInRadius
+queryInRange
     :: HasLocation x Location
     => EntityKind -> Distance -> Update x [EntityWithId]
-queryInRadius k (Distance d) = do
+queryInRange k (Distance d) = do
     Location l <- use $ self.location
     let rng = mkBBoxCenter l (pure $ d*2)
     EntityIndex.lookupInRange k rng =<< use (context.entities)
+
+queryInRadius
+    :: HasLocation x Location
+    => EntityKind -> Distance -> Update x [EntityWithId]
+queryInRadius k d = do
+    loc <- use $ self.location
+    catMaybes . map (qloc loc) <$> queryInRange k d
+    where
+    qloc l e = e^.entity.oracleLocation >>= \el ->
+        if isWithinDistance d l el then Just e else Nothing
 
 queryById :: EntityId -> Update s (Maybe EntityWithId)
 queryById eid = EntityIndex.lookupById eid =<< use (context.entities)

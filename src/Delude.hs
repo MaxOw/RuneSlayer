@@ -14,6 +14,8 @@ module Delude
     , monoidJust
     , nothingFalse
     , nothingFalse2
+    , fromMaybe2
+    , bindMaybeM
 
     , toggleSet
     , require
@@ -113,6 +115,14 @@ nothingFalse2 :: Maybe a -> Maybe b -> (a -> b -> Bool) -> Bool
 nothingFalse2 Nothing        _  _ = False
 nothingFalse2       _  Nothing  _ = False
 nothingFalse2 (Just a) (Just b) f = f a b
+
+fromMaybe2 :: c -> Maybe a -> Maybe b -> (a -> b -> c) -> c
+fromMaybe2 c Nothing        _  _ = c
+fromMaybe2 c       _  Nothing  _ = c
+fromMaybe2 _ (Just a) (Just b) f = f a b
+
+bindMaybeM :: Monad m => m (Maybe a) -> (a -> m (Maybe b)) -> m (Maybe b)
+bindMaybeM ma mb = ma >>= maybe (return Nothing) mb
 
 toggleSet :: Ord a => a -> Set a -> Set a
 toggleSet a s

@@ -472,8 +472,8 @@ queryInRadius k d = do
     loc <- use $ self.location
     catMaybes . map (qloc loc) <$> queryInRange k d
     where
-    qloc l e = e^.entity.oracleLocation >>= \el ->
-        if isWithinDistance d l el then Just e else Nothing
+    qloc l e = e^.entity.oracleLocation >>= \x ->
+        if isWithinDistance d l x then Just e else Nothing
 
 queryById :: EntityId -> Update s (Maybe EntityWithId)
 queryById eid = EntityIndex.lookupById eid =<< use (context.entities)

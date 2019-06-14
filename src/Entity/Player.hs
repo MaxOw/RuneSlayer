@@ -286,8 +286,9 @@ autoTarget = do
     let hs = sortWith (distanceTo loc) $ filter (shouldTarget sid ht) ds
     let newTarget = viaNonEmpty head (map (view entityId) hs)
     currentTarget <- use $ self.target
-    self.target .= viaNonEmpty head (map (view entityId) hs)
-    when (newTarget /= currentTarget) $ do
+    when (newTarget /= currentTarget) $
+      whenM (isCloserBy 0.1 newTarget currentTarget) $ do
+        self.target .= newTarget
         mapM_ (flip addAction EntityAction_SelfUnmarkAsTarget) currentTarget
         mapM_ (flip addAction EntityAction_SelfMarkAsTarget) newTarget
 
@@ -295,6 +296,15 @@ autoTarget = do
     shouldTarget sid ht x = x^.entityId /= sid && isHostileTo ht x
     distanceTo loc e = fromMaybe 10000 $
         (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
+
+    isCloserBy d newTarget currentTarget = do
+        newDist <- maybeDistance newTarget
+        oldDist <- maybeDistance currentTarget
+        return $ fromMaybe2 True newDist oldDist (\a b -> a - b < (-d))
+
+    maybeDistance :: Maybe EntityId -> Update Player (Maybe Distance)
+    maybeDistance Nothing = return Nothing
+    maybeDistance (Just eid) = bindMaybeM (queryById eid) distanceToEntity
 
 processAction :: EntityAction -> Update Player ()
 processAction = \case

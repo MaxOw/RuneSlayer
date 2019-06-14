@@ -34,9 +34,6 @@ update x ctx = runUpdate x ctx $ do
     anyMatch _EntityAction_SelfAttacked procAttacked
     self.processOnUpdate .= mempty
 
-bindMaybeM :: Monad m => m (Maybe a) -> (a -> m (Maybe b)) -> m (Maybe b)
-bindMaybeM ma mb = ma >>= maybe (return Nothing) mb
-
 decideAction :: Update Unit ()
 decideAction = do
     self.velocity .= 0

@@ -58,7 +58,7 @@ instance Show Location where
     show (Location (V2 x y)) = printf "(Location x=%.2f y=%.2f)" x y
 
 newtype Distance = Distance { unDistance :: Float }
-    deriving (Generic, Default, Show, Num, Eq, Ord, ToJSON, FromJSON)
+    deriving (Generic, Default, Show, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
 makeWrapped ''Distance
 
 newtype Velocity = Velocity { unVelocity :: V2D    }

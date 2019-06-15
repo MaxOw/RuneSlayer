@@ -37,7 +37,7 @@ Requirements for first release: v0.1
   - Add projectiles lunching.                                                (#)
   - Add quiver.                                                              ( )
   - Add use item action. (Health potion)                                     ( )
-  - Add items stats.                                                         ( )
+  - Add items stats.                                                         (#)
 
 * Make effects an entity.                                                    [X]
 * Add action delays.                                                         [X]
@@ -47,12 +47,11 @@ Requirements for first release: v0.1
   - Go towards & attack hostile reactivities.                                (#)
   - Spread out.                                                              (#)
 
-* Proper world generator.                                                    [ ]
+* World generator.                                                           [X]
   - Add WorldGen debug mode.                                                 (#)
   - Make world gen reloading fast.                                           (#)
   - Add baseTileSet & baseLandTileSet fields to world gen config.            (#)
   - Generate landmass covering layers.                                       (#)
-  - Add WorldGen.dhall watcher/reloader.                                     ( )
   - Perlin noise based landmass generator.                                   (#)
   - Add random tile variants.                                                (#)
 
@@ -75,8 +74,12 @@ Requirements for first release: v0.1
 
 ## Version 0.2 #################################################################
 
+* Merge actOn & update entity functions.                                     [ ]
 * Auto updates.                                                              [ ]
 * Sqlite powered, nix-like immutable data storage.                           [ ]
+
+* World generator.                                                           [ ]
+  - Add WorldGen.dhall watcher/reloader.                                     ( )
 
 * Enemy units:                                                               [ ]
   - Shadow Puppets (Skeletons)                                               ( )

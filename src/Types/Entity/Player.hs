@@ -16,6 +16,7 @@ import Types.Entity.Reactivity
 
 data UpdateOnce
    = UpdateOnce_Equipment
+   | UpdateOnce_Stats
    deriving (Eq, Ord)
 
 data PlayerInit = PlayerInit
@@ -59,6 +60,8 @@ data Player = Player
    , field_attackMode         :: AttackMode
    , field_selectedRune       :: Maybe RuneName
    , field_delayedActions     :: [DelayedAction]
+   , field_baseStats          :: Stats
+   , field_fullStats          :: Stats
    } deriving (Generic)
 instance HasAnimateWhenStopped Player Bool
 instance HasMaxSpeed Player Speed

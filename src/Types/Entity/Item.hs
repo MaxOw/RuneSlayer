@@ -34,6 +34,7 @@ data ItemType = ItemType
    , field_volume        :: Volume
    , field_itemKind      :: ItemKind
    , field_weaponKind    :: Maybe WeaponKind
+   , field_stats         :: Stats
    , field_appearance    :: Appearance
    , field_animation     :: Maybe AnimationName
    , field_fittingSlots  :: Set EquipmentSlot
@@ -71,11 +72,9 @@ instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSO
 makeWrapped ''ItemTypeName
 instance Default ItemTypeName
 
-
 instance Default ItemType
 instance ToJSON ItemType where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON ItemType where parseJSON = genericParseJSON customOptionsJSON
-
 
 instance Default ContainerType
 instance ToJSON ContainerType where toEncoding = genericToEncoding customOptionsJSON

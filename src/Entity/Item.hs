@@ -146,6 +146,7 @@ oracle x = \case
     EntityQuery_Content       -> Just $ x^.content
     EntityQuery_MaxVolume     -> x^?itemType.containerType.traverse.maxVolume
     EntityQuery_ItemAnimation -> x^.itemType.animation
+    EntityQuery_Stats         -> Just $ x^.itemType.ff#stats
     _                         -> Nothing
 
 --------------------------------------------------------------------------------

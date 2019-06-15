@@ -115,6 +115,7 @@ runicActions = do
 processUpdateOnce :: UpdateOnce -> Update Player ()
 processUpdateOnce = \case
     UpdateOnce_Equipment -> updateEquipment
+    UpdateOnce_Stats     -> updateStats
     where
     updateEquipment = do
         eis <- uses (self.equipment) Equipment.slotsList
@@ -124,6 +125,17 @@ processUpdateOnce = \case
         rs <- use $ context.resources
         let eqAnim = mconcat $ mapMaybe (flip lookupAnimation rs) as
         self.ff#equipmentAnimation .= eqAnim
+        updateStats
+
+    updateStats = do
+        eis <- uses (self.equipment) Equipment.contentList
+        es  <- catMaybes <$> mapM queryById eis
+        let ss = mapMaybe (view (entity.oracleStats)) es
+        bs <- use $ self.ff#baseStats
+        self.ff#fullStats .= Stats
+            { field_attack  = bs^.ff#attack  + sumOf (traverse.ff#attack)  ss
+            , field_defence = bs^.ff#defence + sumOf (traverse.ff#defence) ss
+            }
 
 updateDelayedActions :: Update Player ()
 updateDelayedActions = do
@@ -167,9 +179,12 @@ procAttacked = mapM_ (addEffect . HitEffect) <=< mapM applyDefence
     where
     applyDefence x = do
         ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
-        let runicDefence = 1
+        fdef <- getDefence
+        let runicDefence = 1 + fdef
         self.ff#defensiveSlots %= dischargeRunicSlot
-        return $ max 0 $ if ad then x-runicDefence else x
+        return $ max 0 $ if ad then calcDefence x runicDefence else x
+
+    calcDefence (AttackPower x) (Defence d) = AttackPower $ x - d
 
 runAttackMode :: Update Player ()
 runAttackMode = use (self.ff#attackMode) >>= \case
@@ -261,9 +276,11 @@ getAttackRange = \case
     WeaponKind_Thrusting  -> return $ Distance 3
     WeaponKind_Projecting -> return $ Distance 8
 
-getAttackPower :: Update x AttackPower
-getAttackPower = return $ AttackPower 10
-    -- TODO: Calculate attack power
+getAttackPower :: Update Player AttackPower
+getAttackPower = use (self.ff#fullStats.ff#attack)
+
+getDefence :: Update Player Defence
+getDefence = use (self.ff#fullStats.ff#defence)
 
 getAttackDelay :: Update x Duration
 getAttackDelay = return $ timeInSeconds 0.7

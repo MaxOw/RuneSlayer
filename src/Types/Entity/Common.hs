@@ -19,6 +19,15 @@ data EntityStatus
    = EntityStatus_HostilesInRange
    deriving (Eq, Ord)
 
+data Stats = Stats
+   { field_attack  :: AttackPower
+   , field_defence :: Defence
+   } deriving (Generic)
+
+instance Default  Stats
+instance ToJSON   Stats where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON Stats where parseJSON  = genericParseJSON  customOptionsJSON
+
 data EntityKind
    = EntityKind_Tile
    | EntityKind_Static
@@ -52,42 +61,33 @@ type V2D = V2 Float
 
 newtype Location = Location { unLocation :: V2D    }
     deriving (Generic, Default, ToJSON, FromJSON)
-makeWrapped ''Location
 
 instance Show Location where
     show (Location (V2 x y)) = printf "(Location x=%.2f y=%.2f)" x y
 
 newtype Distance = Distance { unDistance :: Float }
     deriving (Generic, Default, Show, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
-makeWrapped ''Distance
 
 newtype Velocity = Velocity { unVelocity :: V2D    }
     deriving (Generic, Default, Show, Num)
-makeWrapped ''Velocity
 
 newtype Health   = Health   { unHealth   :: Int    }
     deriving (Generic, Default, Show, ToJSON, FromJSON)
-makeWrapped ''Health
 
 newtype AttackPower = AttackPower { unAttackPower :: Int    }
     deriving (Generic, Default, Show, ToJSON, FromJSON, Eq, Ord, Num)
-makeWrapped ''AttackPower
+
+newtype Defence = Defence { unDefence :: Int    }
+    deriving (Generic, Default, Show, ToJSON, FromJSON, Eq, Ord, Num)
 
 newtype Speed    = Speed    { unSpeed    :: Float }
     deriving (Generic, Num, Fractional, Default, Show, ToJSON, FromJSON)
-makeWrapped ''Speed
 
 newtype Volume   = Volume   { unVolume   :: Float }
     deriving (Generic, Default, Show, Num, Eq, Ord, ToJSON, FromJSON)
-makeWrapped ''Volume
-
--- newtype Time     = Time Float
--- makeWrapped ''Time
-    -- deriving (Generic, Default, Show)
 
 newtype Duration = Duration Float
     deriving (Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
-makeWrapped ''Duration
 
 --------------------------------------------------------------------------------
 
@@ -143,3 +143,14 @@ defaultPickupRange = disM 1.5
 maxEffectSpawnDistance :: Distance
 maxEffectSpawnDistance = disM 20
 
+--------------------------------------------------------------------------------
+
+makeWrapped ''Location
+makeWrapped ''Distance
+makeWrapped ''Velocity
+makeWrapped ''Health
+makeWrapped ''AttackPower
+makeWrapped ''Defence
+makeWrapped ''Speed
+makeWrapped ''Volume
+makeWrapped ''Duration

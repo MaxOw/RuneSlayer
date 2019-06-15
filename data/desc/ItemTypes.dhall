@@ -9,12 +9,18 @@ let ItemKind      = enums.ItemKind
 let WeaponKind    = enums.WeaponKind
 let EquipmentSlot = enums.EquipmentSlot
 
+let defaultStats =
+  { attack  = 0
+  , defence = 0
+  }
+
 let defaultItemType =
   { itemKind      = ItemKind.SmallItem
   , weaponKind    = None Text
   , appearance    = appearance.empty
   , fittingSlots  = [] : List Text
   , containerType = None ContainerType
+  , stats         = defaultStats
   }
 
 let makeCorpse =
@@ -30,12 +36,13 @@ let makeCorpse =
 
 in
 { helmet = defaultItemType //
-  { name         = "Helmet"
-  , volume       = 1.5
-  , itemKind     = ItemKind.BigItem
-  , appearance   = appearance.simple sprites.helmet
-  , fittingSlots = [ EquipmentSlot.Head ]
-  , animation    = Some "helmet"
+  { name          = "Helmet"
+  , volume        = 1.5
+  , itemKind      = ItemKind.BigItem
+  , appearance    = appearance.simple sprites.helmet
+  , fittingSlots  = [ EquipmentSlot.Head ]
+  , animation     = Some "helmet"
+  , stats         = defaultStats // { defence = 2 }
   }
 
 , dagger = defaultItemType //
@@ -46,6 +53,7 @@ in
   , appearance   = appearance.simple sprites.dagger
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = Some "dagger"
+  , stats        = defaultStats // { attack = 2 }
   }
 
 , spear = defaultItemType //
@@ -56,6 +64,7 @@ in
   , appearance   = appearance.simple sprites.spear
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = Some "spear"
+  , stats        = defaultStats // { attack = 5 }
   }
 
 , bow = defaultItemType //
@@ -66,6 +75,7 @@ in
   , appearance   = appearance.simple sprites.bow
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = Some "bow"
+  , stats        = defaultStats // { attack = 3 }
   }
 
 , arrow = defaultItemType //
@@ -75,6 +85,7 @@ in
   , appearance   = appearance.simple sprites.arrow
   , fittingSlots = [ EquipmentSlot.PrimaryOther ]
   , animation    = Some "arrow"
+  , stats        = defaultStats // { attack = 2 }
   }
 
 , healthPotion = defaultItemType //

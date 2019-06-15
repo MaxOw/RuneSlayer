@@ -26,3 +26,4 @@ data EntityQuery a where
      EntityQuery_ItemAnimation  :: EntityQuery AnimationName
      EntityQuery_Status         :: EntityQuery (Set EntityStatus)
      EntityQuery_PlayerStatus   :: EntityQuery PlayerStatus
+     EntityQuery_Stats          :: EntityQuery Stats

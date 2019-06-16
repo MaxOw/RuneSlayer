@@ -2,7 +2,9 @@ let sprites    = ./Sprites.dhall
 let types      = ./Types.dhall
 let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
+let useEffect  = ./ItemUseEffect.dhall
 
+let ItemUseEffect = types.ItemUseEffect
 let Sprite        = types.Sprite
 let ContainerType = types.ContainerType
 let ItemKind      = enums.ItemKind
@@ -21,6 +23,7 @@ let defaultItemType =
   , fittingSlots  = [] : List Text
   , containerType = None ContainerType
   , stats         = defaultStats
+  , useEffects    = [] : List ItemUseEffect
   }
 
 let makeCorpse =
@@ -34,8 +37,7 @@ let makeCorpse =
       , appearance = appearance.simple sprite
       }
 
-in
-{ helmet = defaultItemType //
+let helmet = defaultItemType //
   { name          = "Helmet"
   , volume        = 1.5
   , itemKind      = ItemKind.BigItem
@@ -45,7 +47,7 @@ in
   , stats         = defaultStats // { defence = 2 }
   }
 
-, dagger = defaultItemType //
+let dagger = defaultItemType //
   { name         = "Dagger"
   , volume       = 0.3
   , itemKind     = ItemKind.SmallItem
@@ -56,7 +58,7 @@ in
   , stats        = defaultStats // { attack = 2 }
   }
 
-, spear = defaultItemType //
+let spear = defaultItemType //
   { name         = "Spear"
   , volume       = 0.5
   , itemKind     = ItemKind.BigItem
@@ -67,7 +69,7 @@ in
   , stats        = defaultStats // { attack = 5 }
   }
 
-, bow = defaultItemType //
+let bow = defaultItemType //
   { name         = "Bow"
   , volume       = 0.5
   , itemKind     = ItemKind.BigItem
@@ -78,7 +80,7 @@ in
   , stats        = defaultStats // { attack = 3 }
   }
 
-, arrow = defaultItemType //
+let arrow = defaultItemType //
   { name         = "Arrow"
   , volume       = 0.2
   , itemKind     = ItemKind.Projectile
@@ -88,14 +90,22 @@ in
   , stats        = defaultStats // { attack = 2 }
   }
 
-, healthPotion = defaultItemType //
+let emptyFlask = defaultItemType //
+  { name       = "Empty Flask"
+  , volume     = 0.1
+  , itemKind   = ItemKind.SmallItem
+  , appearance = appearance.simple sprites.emptyFlask
+  }
+
+let healthPotion = defaultItemType //
   { name       = "Health Potion"
   , volume     = 0.1
   , itemKind   = ItemKind.SmallItem
   , appearance = appearance.simple sprites.healthPotion
+  , useEffects = [ useEffect.heal 5, useEffect.transformInto emptyFlask.name ]
   }
 
-, bag = defaultItemType //
+let bag = defaultItemType //
   { name          = "Bag"
   , volume        = 15
   , itemKind      = ItemKind.Container
@@ -104,6 +114,18 @@ in
   , containerType = Some { maxVolume              = 15 }
   }
 
-, batCorpse    = makeCorpse "Bat"    30 sprites.batCorpse
-, spiderCorpse = makeCorpse "Spider" 80 sprites.spiderCorpse01
+let batCorpse    = makeCorpse "Bat"    30 sprites.batCorpse
+let spiderCorpse = makeCorpse "Spider" 80 sprites.spiderCorpse01
+
+in
+{ helmet       = helmet
+, dagger       = dagger
+, spear        = spear
+, bow          = bow
+, arrow        = arrow
+, healthPotion = healthPotion
+, emptyFlask   = emptyFlask
+, bag          = bag
+, batCorpse    = batCorpse
+, spiderCorpse = spiderCorpse
 }

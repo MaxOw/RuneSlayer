@@ -47,6 +47,8 @@ data EntityAction
    | EntityAction_DropItem EntityId
    -- tell entity to that it's child container wants to drop selected [EntityId]
    | EntityAction_OwnerDropItem EntityId
+   -- tell entity to use item from inventory with [EntityId]
+   | EntityAction_UseItem EntityId
    -- tell entity to mark itself as targeted by player
    | EntityAction_SelfMarkAsTarget
    -- tell entity to unmark itself as targeted by player
@@ -59,6 +61,10 @@ data EntityAction
    | EntityAction_PlayerAction PlayerAction
    -- tell entity to fire self as a projectile at target
    | EntityAction_SelfFiredAsProjectile Location V2D EntityId AttackPower
+   -- tell entity to use self on provided target [EntityId]
+   | EntityAction_SelfUseOn EntityId
+   -- tell entity to heal self
+   | EntityAction_SelfHeal Health
    deriving (Show)
 makePrisms ''EntityAction
 

@@ -25,6 +25,11 @@ let AnimationPart =
   , frames    : List Frame
   }
 
+let ItemUseEffect =
+  < TransformInto : { TransformInto : Text }
+  | Heal          : { Heal          : Natural }
+  >
+
 in
 { Rect          = Rect
 , Sprite        = Sprite
@@ -32,4 +37,5 @@ in
 , ContainerType = ContainerType
 , Frame         = Frame
 , AnimationPart = AnimationPart
+, ItemUseEffect = ItemUseEffect
 }

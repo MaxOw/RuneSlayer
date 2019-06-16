@@ -134,6 +134,7 @@ handleActivation = \case
     SelectItemToPickUp  -> selectItemToPickUp
     SelectItemToDrop    -> selectItemToDrop
     SelectItemToFocus   -> selectItemToFocus
+    UseFocusedItem      -> useFocusedItem
     InputAction_Escape  -> inputActionEscape
     FastQuit            -> Engine.closeWindow
 
@@ -155,6 +156,7 @@ finalize_selectItemToFocus = \case
     SelectItemToPickUp -> return ()
     SelectItemToDrop   -> return ()
     SelectItemToFocus  -> return ()
+    UseFocusedItem     -> return ()
     _ -> unfocusItem
 
 finalize_clearInputString :: InputAction -> Game ()
@@ -194,6 +196,11 @@ selectItemToFocus = do
     res <- fmap (view entityId) <$> focusItemsInRange
     ies <- fmap (view entityId) <$> focusItemsInInventory
     startSelect SelectFocus $ res <> ies
+
+useFocusedItem :: Game ()
+useFocusedItem = getFocusedItem >>= \case
+    Nothing -> putStrLn "No item selected!" -- systemMessage "No item selected!"
+    Just fi -> actOnFocusedEntity $ EntityAction_UseItem fi
 
 --------------------------------------------------------------------------------
 

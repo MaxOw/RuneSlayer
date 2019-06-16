@@ -7,6 +7,7 @@ let makeEnv    = utils.makeEnv
 
 in
 { healthPotion = makeSprite paths.healthPotion
+, emptyFlask   = makeSprite paths.emptyFlask
 
 , bag    = makeItem  4  2
 , helmet = makeItem  1  1

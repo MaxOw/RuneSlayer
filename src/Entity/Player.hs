@@ -41,6 +41,8 @@ actOn x a = x & case a of
     EntityAction_OwnerDropItem     _ -> handleOnUpdate a
     EntityAction_ExecuteAttack       -> handleOnUpdate a
     EntityAction_SelfAttacked      _ -> handleOnUpdate a
+    EntityAction_UseItem           _ -> handleOnUpdate a
+    EntityAction_SelfHeal          h -> selfHeal h
     EntityAction_PlayerAction      p -> handlePlayerAction p
     _ -> id
     where
@@ -48,6 +50,8 @@ actOn x a = x & case a of
         & animationState.current.kind .~ k
         & animationState.current.era  .~ 0
         & animationState.progression  .~ Animation.defaultTransition
+
+    selfHeal _h _ = x -- TODO:
 
     handlePlayerAction = \case
         PlayerAction_SelectRune        -> selectCurrentRune
@@ -325,8 +329,9 @@ autoTarget = do
 
 processAction :: EntityAction -> Update Player ()
 processAction = \case
-    EntityAction_DropItem i -> dropItem i
+    EntityAction_DropItem      i -> dropItem i
     EntityAction_OwnerDropItem i -> dropItemAction i
+    EntityAction_UseItem       i -> useItem i
     _ -> return ()
 
 --------------------------------------------------------------------------------

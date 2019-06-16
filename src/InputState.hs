@@ -10,7 +10,7 @@ module InputState
     , appendHist
     , getInputString, appendInputString, backspaceInputString, clearInputString
     , startSelect, appendSelect, backspaceSelect, endSelect
-    , unfocusItem
+    , unfocusItem, getFocusedItem
     , handleSelectKind
     , inputActionEscape
     , toggleViewPanel, isPanelVisible
@@ -182,6 +182,9 @@ selectFocus = zoomInputState . assign (inventoryState.focusedItem) . Just
 
 unfocusItem :: Game ()
 unfocusItem = zoomInputState $ inventoryState.focusedItem .= Nothing
+
+getFocusedItem :: Game (Maybe EntityId)
+getFocusedItem = zoomInputState $ use (inventoryState.focusedItem)
 
 appendSelect :: Char -> Game (Seq Char)
 appendSelect ch = zoomInputState $ selectState._Just.currentPrefix <%= (|> ch)

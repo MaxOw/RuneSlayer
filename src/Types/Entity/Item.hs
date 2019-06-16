@@ -26,6 +26,11 @@ data ItemKind
    | ItemKind_Projectile
    deriving (Eq, Generic)
 
+data ItemUseEffect
+   = ItemUseEffect_TransformInto ItemTypeName
+   | ItemUseEffect_Heal          Health
+   deriving (Generic)
+
 newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }
     deriving (Eq, Hashable, Generic, ToJSON, FromJSON)
 
@@ -39,6 +44,7 @@ data ItemType = ItemType
    , field_animation     :: Maybe AnimationName
    , field_fittingSlots  :: Set EquipmentSlot
    , field_containerType :: Maybe ContainerType
+   , field_useEffects    :: [ItemUseEffect]
    } deriving (Generic)
 
 data ContainerType = ContainerType
@@ -71,6 +77,9 @@ instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSO
 
 makeWrapped ''ItemTypeName
 instance Default ItemTypeName
+
+instance ToJSON ItemUseEffect where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ItemUseEffect where parseJSON = genericParseJSON customOptionsJSON
 
 instance Default ItemType
 instance ToJSON ItemType where toEncoding = genericToEncoding customOptionsJSON

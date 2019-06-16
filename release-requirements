@@ -36,9 +36,10 @@ Requirements for first release: v0.1
   - Make attack match equipped weapon.                                       (#)
   - Add projectiles lunching.                                                (#)
   - Add quiver.                                                              ( )
-  - Add use item action. (Health potion)                                     ( )
+  - Add use item action. (Health potion)                                     (#)
   - Add items stats.                                                         (#)
 
+* Player health & dying.                                                     [ ]
 * Make effects an entity.                                                    [X]
 * Add action delays.                                                         [X]
 

@@ -4,6 +4,7 @@ module Entity.Item
     ) where
 
 import Delude
+import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Set as Set
 import qualified Data.List as List
 
@@ -27,6 +28,7 @@ actOn x a = case a of
     EntityAction_SelfAddedBy   eid -> selfAddedBy eid
     EntityAction_SelfDroppedAt loc -> slefDroppedAt loc
     EntityAction_SelfFiredAsProjectile {} -> selfFireProjectile
+    EntityAction_SelfUseOn {} -> handleOnUpdate a x
     _ -> x
 
     where
@@ -56,6 +58,7 @@ update x ctx = runUpdate x ctx $ do
     whenMatch _EntityAction_SelfAddedBy pickUpInformOwner
     whenMatch _EntityAction_AddItem containerAddItems
     firstMatch _EntityAction_SelfFiredAsProjectile projectileFire
+    firstMatch _EntityAction_SelfUseOn selfUseOn
     mapM_ processAction =<< use (self.processOnUpdate)
     self.processOnUpdate .= mempty
 
@@ -74,6 +77,27 @@ projectileFire (loc, vectorToTarget, tid, attackPower) = do
         , field_target       = tid
         , field_itemType     = projType
         }
+
+selfUseOn :: EntityId -> Update Item ()
+selfUseOn t = mapM_ performUseEffect =<< use (self.itemType.ff#useEffects)
+    where
+    performUseEffect = \case
+        ItemUseEffect_TransformInto n -> transformInto n
+        ItemUseEffect_Heal h -> addAction t $ EntityAction_SelfHeal h
+
+    transformInto n = do
+        rs <- use $ context.resources.itemsMap
+        whenJust (HashMap.lookup n rs) $ assign (self.itemType)
+        whenNothing_ (HashMap.lookup n rs) $ deleteSelf .= True
+        -- TODO:
+        -- There should be also be proper handling for specific kinds of
+        -- transformations, like for example if we where to change a
+        -- container into a non container we should handle its contents
+        -- somehow.
+        -- For example drop all items:
+        -- > mapM_ containerDropItem =<< use (self.content)
+        -- Or we could just add that as a standalone ItemUseEffect and
+        -- use it in ItemTypes.dhall when needed.
 
 processAction :: EntityAction -> Update Item ()
 processAction = \case

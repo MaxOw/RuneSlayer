@@ -34,6 +34,7 @@ data InputAction
    | SelectItemToPickUp
    | SelectItemToDrop
    | SelectItemToFocus
+   | UseFocusedItem
    | InputAction_Escape
    | FastQuit
    deriving (Show)
@@ -304,6 +305,7 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "pi" SelectItemToDrop
 
         , InputStr "f" SelectItemToFocus
+        , InputStr "u" UseFocusedItem
         ]
     ]
 

@@ -20,6 +20,7 @@ module Entity.Actions
     , dropAllItems
     , pickUpInformOwner
     , dropItem, dropItemAction
+    , useItem
     , getItemsToAdd
     , makeDropItem, splitItemKind
     , getEquippedItem
@@ -389,6 +390,9 @@ addAction e x = actions %= (:> directAtEntity (e^.entityId) x)
 
 addWorldAction :: WorldAction -> Update x ()
 addWorldAction a = actions %= (:> directAtWorld a)
+
+useItem :: HasEntityId e EntityId => e -> Update x ()
+useItem e = addAction e . EntityAction_SelfUseOn =<< use (context.selfId)
 
 dropItemAction
     :: HasLocation x Location

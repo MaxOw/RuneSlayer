@@ -26,6 +26,7 @@ in
 , bat = makeUnitPath "bat"
 , spider01 = makeUnitPath "spiders/spider01"
 
-, healthPotion = makeImgsPath "items0/P_Red07"
+, healthPotion = makeImgsPath "items0/P_Red02"
+, emptyFlask   = makeImgsPath "items0/I_Bottle02"
 , arrow = makeImgsPath "items0/W_Arrow01"
 }

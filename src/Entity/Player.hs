@@ -119,27 +119,38 @@ runicActions = do
 processUpdateOnce :: UpdateOnce -> Update Player ()
 processUpdateOnce = \case
     UpdateOnce_Equipment -> updateEquipment
-    UpdateOnce_Stats     -> updateStats
     where
     updateEquipment = do
+        eqAnim <- makeEquipmentAnimationVia equipmentRenderOrder
+        eqBehindAnim <- makeEquipmentAnimationVia equipmentBehindBodyRenderOrder
+        bodyAnim <- makeBodyAnimation
+        self.ff#equipmentAnimation .= eqAnim
+        self.ff#bodyAnimation .= eqBehindAnim <> bodyAnim
+        updateStats
+
+    makeEquipmentAnimationVia renderOrder = do
         eis <- uses (self.equipment) Equipment.slotsList
-        let seis = map snd $ sortVia fst equipmentRenderOrder eis
+        let seis = map snd $ sortSelectVia fst renderOrder eis
         es <- catMaybes <$> mapM queryById seis
         let as = mapMaybe (view (entity.oracleItemAnimation)) es
         rs <- use $ context.resources
-        let eqAnim = mconcat $ mapMaybe (flip lookupAnimation rs) as
-        self.ff#equipmentAnimation .= eqAnim
-        updateStats
+        return $ mconcat $ mapMaybe (flip lookupAnimation rs) as
 
-    updateStats = do
-        eis <- uses (self.equipment) Equipment.contentList
-        es  <- catMaybes <$> mapM queryById eis
-        let ss = mapMaybe (view (entity.oracleStats)) es
-        bs <- use $ self.ff#baseStats
-        self.ff#fullStats .= Stats
-            { field_attack  = bs^.ff#attack  + sumOf (traverse.ff#attack)  ss
-            , field_defence = bs^.ff#defence + sumOf (traverse.ff#defence) ss
-            }
+    makeBodyAnimation = do
+        bns <- use (self.ff#playerInit.body)
+        rs <- use $ context.resources
+        return $ mconcat $ mapMaybe (flip lookupAnimation rs) bns
+
+updateStats :: Update Player ()
+updateStats = do
+    eis <- uses (self.equipment) Equipment.contentList
+    es  <- catMaybes <$> mapM queryById eis
+    let ss = mapMaybe (view (entity.oracleStats)) es
+    bs <- use $ self.ff#baseStats
+    self.ff#fullStats .= Stats
+        { field_attack  = bs^.ff#attack  + sumOf (traverse.ff#attack)  ss
+        , field_defence = bs^.ff#defence + sumOf (traverse.ff#defence) ss
+        }
 
 updateDelayedActions :: Update Player ()
 updateDelayedActions = do
@@ -159,21 +170,26 @@ performDelayedAction = \case
     where
     attack eid p = addAction eid $ EntityAction_SelfAttacked p
     fireProjectile loc v pid tid p = do
-        selectNextProjectile pid
+        selectNextProjectile
+        removeProjectileFromHand pid
         addAction pid $ EntityAction_SelfFiredAsProjectile loc v tid p
 
-selectNextProjectile :: EntityId -> Update Player ()
-selectNextProjectile pid = uses (self.equipment) lookupPrimaryOther >>= \case
-    Nothing -> selectNextAsPrimaryOther
-    Just xi -> do
-        when (xi == pid) (self.equipment %= Equipment.deleteId pid)
-        selectNextAsPrimaryOther
+selectNextProjectile :: Update Player ()
+selectNextProjectile = whenNothingM_ getPrimaryOther $
+    whenJustM (getEquippedItem EquipmentSlot_Quiver) $ \q ->
+        whenJust (getFirstArrow q) $ \itemId -> do
+            addAction q . EntityAction_PassItem itemId =<< use (context.selfId)
+            self.equipment %= Equipment.insert EquipmentSlot_PrimaryOther itemId
     where
-    lookupPrimaryOther = Equipment.lookupSlot EquipmentSlot_PrimaryOther
-    selectNextAsPrimaryOther = do
-        -- Select arrow from a quiver (if equiped)
-        -- if quiver not empty equip an arrow as primary other
-        return ()
+    getFirstArrow x = join $ fmap (viaNonEmpty head) $ x^.entity.oracleContent
+
+removeProjectileFromHand :: EntityId -> Update Player ()
+removeProjectileFromHand pid = whenJustM getPrimaryOther $ \xi ->
+    when (xi == pid) (self.equipment %= Equipment.deleteId pid)
+
+getPrimaryOther :: Update Player (Maybe EntityId)
+getPrimaryOther = Equipment.lookupSlot EquipmentSlot_PrimaryOther
+    <$> use (self.equipment)
 
 addDelayedAction :: Duration -> DelayedActionType -> Update Player ()
 addDelayedAction d t = self.ff#delayedActions %= (DelayedAction d t:)
@@ -221,7 +237,7 @@ getWeaponKind = do
 executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
 executeAttackAt targetEntity vectorToTarget = do
     wkind <- getWeaponKind
-    whenInAttackRange wkind targetEntity $ do
+    whenWeaponCanAttack wkind targetEntity $ do
         startAttackAnimation wkind vectorToTarget
         executeAttackByKind wkind
         startTimer Timer_Attack =<< getAttackCooldown
@@ -264,15 +280,19 @@ startAttackAnimation wkind vectorToTarget = do
         WeaponKind_Thrusting  -> Animation.Thrust
         WeaponKind_Projecting -> Animation.Fire
 
-whenInAttackRange
-    :: HasLocation s Location
-    => HasEntity e Entity
-    => WeaponKind
-    -> e -> Update s () -> Update s ()
-whenInAttackRange wkind targetEntity act = do
+whenWeaponCanAttack
+    :: HasEntity e Entity
+    => WeaponKind -> e -> Update Player () -> Update Player ()
+whenWeaponCanAttack wkind targetEntity act = do
     attackRange <- getAttackRange wkind
     dist <- fromMaybe attackRange <$> distanceToEntity targetEntity
-    when (dist < attackRange) act
+    canFire <- canFireProjectile wkind
+    when (dist < attackRange && canFire) act
+    where
+    canFireProjectile WeaponKind_Projecting = do
+        whenNothingM_ getProjectile $ selectNextProjectile
+        isJust <$> getProjectile
+    canFireProjectile _ = return True
 
 getAttackRange :: WeaponKind -> Update x Distance
 getAttackRange = \case
@@ -281,10 +301,14 @@ getAttackRange = \case
     WeaponKind_Projecting -> return $ Distance 8
 
 getAttackPower :: Update Player AttackPower
-getAttackPower = use (self.ff#fullStats.ff#attack)
+getAttackPower = do
+    updateStats
+    use (self.ff#fullStats.ff#attack)
 
 getDefence :: Update Player Defence
-getDefence = use (self.ff#fullStats.ff#defence)
+getDefence = do
+    updateStats
+    use (self.ff#fullStats.ff#defence)
 
 getAttackDelay :: Update x Duration
 getAttackDelay = return $ timeInSeconds 0.7
@@ -400,6 +424,7 @@ makePlayer rs p = def
     & ff#offensiveSlots .~ initRunicSlots 4
     & ff#defensiveSlots .~ initRunicSlots 3
     & ff#runicLevel     .~ initKnownRunes
+    & ff#playerInit     .~ p
     where
     as = mconcat $ mapMaybe (flip lookupAnimation rs) (p^.body)
     initRunes = getRunesByLevel 1 (rs^.runeSet)

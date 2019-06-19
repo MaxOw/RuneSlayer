@@ -16,6 +16,7 @@ in
 , bow    = makeItem  5  1
 -- , arrow  = makeSprite paths.arrow
 , arrow  = utils.selectSpritePart 64 12 19 (makeSprite paths.arrowAnimation)
+, quiver = utils.selectSpritePart 64 12 19 (makeSprite paths.quiverAnimation)
 
 , treeTrunk   = makeEnv 50 38 6 6
 , treeFoliage = makeEnv 48 24 6 6

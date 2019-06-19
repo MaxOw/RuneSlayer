@@ -9,6 +9,7 @@ module Equipment
     , deleteAll
     , deleteId
     , emptySlots
+    , selectSlots
     , contentList, slotsList
     ) where
 
@@ -51,6 +52,11 @@ emptySlots e = Set.difference ss ks
 
 contentList :: Equipment -> [EntityId]
 contentList = Bimap.elems . view content
+
+selectSlots :: Equipment -> [EquipmentSlot] -> [EntityId]
+selectSlots eq r
+    = Map.elems $ flip Map.restrictKeys (Set.fromList r)
+    $ Bimap.toMap $ view content eq
 
 slotsList :: Equipment -> [(EquipmentSlot, EntityId)]
 slotsList = Bimap.assocs . view content

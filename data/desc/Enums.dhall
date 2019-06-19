@@ -1,6 +1,3 @@
-let Prelude = ./Prelude.dhall
-let map = Prelude.`List`.map
-
 let WeaponKind =
   { Slashing   = "Slashing"
   , Thrusting  = "Thrusting"
@@ -12,10 +9,12 @@ let ItemKind =
   , SmallItem  = "SmallItem"
   , BigItem    = "BigItem"
   , Projectile = "Projectile"
+  , Arrow      = "Arrow"
   }
 
 let EquipmentSlot =
    { Backpack      = "Backpack"
+   , Quiver        = "Quiver"
    , Belt          = "Belt"
    , Head          = "Head"
    , Torso         = "Torso"
@@ -32,18 +31,6 @@ let Direction =
    , South = "South"
    , East  = "East"
    }
-
-let Index = { index : Natural, value : Text }
-let makeIndex = λ(i : Natural) → λ(v : Text) → { index = i, value = v }
-let mapDirections =
-  λ(b : Type) →
-  λ(f : Index → b) →
-    map Index b f
-    [ makeIndex 0 Direction.North
-    , makeIndex 1 Direction.West
-    , makeIndex 2 Direction.South
-    , makeIndex 3 Direction.East
-    ]
 
 let AnimationKind =
    { Cast   = "Cast"

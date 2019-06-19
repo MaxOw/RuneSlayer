@@ -5,6 +5,7 @@ import Types.Entity.Common
 
 data EquipmentSlot
    = EquipmentSlot_Backpack
+   | EquipmentSlot_Quiver
    -- | EquipmentSlot_Bundle
    | EquipmentSlot_Belt
 
@@ -37,5 +38,10 @@ equipmentRenderOrder =
     , EquipmentSlot_Hands
     , EquipmentSlot_PrimaryWeapon
     , EquipmentSlot_PrimaryOther ]
+
+equipmentBehindBodyRenderOrder :: [EquipmentSlot]
+equipmentBehindBodyRenderOrder =
+    [ EquipmentSlot_Quiver
+    ]
 
 instance Default Equipment

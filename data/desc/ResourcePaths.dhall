@@ -22,6 +22,7 @@ in
 , spearAnimation  = makeCharPath "weapons/right hand/male/spear_male"
 , bowAnimation    = makeCharPath "weapons/right hand/either/bow"
 , arrowAnimation  = makeCharPath "weapons/left hand/either/arrow"
+, quiverAnimation = makeCharPath "behind_body/equipment/quiver"
 
 , bat = makeUnitPath "bat"
 , spider01 = makeUnitPath "spiders/spider01"

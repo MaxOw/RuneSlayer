@@ -90,6 +90,7 @@ in
 , spear  = makeCharAnimation paths.spearAnimation
 , bow    = makeCharAnimation paths.bowAnimation
 , arrow  = makeCharAnimation paths.arrowAnimation
+, quiver = makeCharAnimation paths.quiverAnimation
 
 , bat = simpleCustomAnimation (map Natural Frame makeBatFrame [1, 2, 3])
 , spider01 = makeSpiderAnimation paths.spider01

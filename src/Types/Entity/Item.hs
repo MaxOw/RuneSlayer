@@ -24,7 +24,8 @@ data ItemKind
    | ItemKind_SmallItem
    | ItemKind_BigItem
    | ItemKind_Projectile
-   deriving (Eq, Generic)
+   | ItemKind_Arrow
+   deriving (Eq, Ord, Generic)
 
 data ItemUseEffect
    = ItemUseEffect_TransformInto ItemTypeName
@@ -37,7 +38,7 @@ newtype ItemTypeName = ItemTypeName { unItemTypeName :: Text }
 data ItemType = ItemType
    { field_name          :: ItemTypeName
    , field_volume        :: Volume
-   , field_itemKind      :: ItemKind
+   , field_itemKind      :: Set ItemKind
    , field_weaponKind    :: Maybe WeaponKind
    , field_stats         :: Stats
    , field_appearance    :: Appearance
@@ -48,7 +49,9 @@ data ItemType = ItemType
    } deriving (Generic)
 
 data ContainerType = ContainerType
-   { field_maxVolume :: Volume
+   { field_maxVolume  :: Volume
+   , field_allowKinds :: Set ItemKind
+   , field_showCount  :: Bool
    } deriving (Generic)
 
 --------------------------------------------------------------------------------

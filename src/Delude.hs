@@ -21,6 +21,7 @@ module Delude
     , require
 
     , sortVia
+    , sortSelectVia
     ) where
 
 import Relude         as All
@@ -137,6 +138,14 @@ require msg Nothing  = error msg
 
 sortVia :: Ord e => (a -> e) -> [e] -> [a] -> [a]
 sortVia f ms = sortOn (fromMaybe 0 . flip Map.lookup emap . f)
+    where
+    emap = Map.fromList $ zip ms [1 :: Int ..]
+
+sortSelectVia :: Ord e => (a -> e) -> [e] -> [a] -> [a]
+sortSelectVia f ms
+    = map snd
+    . sortOn fst
+    . mapMaybe (\x -> (,x) <$> Map.lookup (f x) emap)
     where
     emap = Map.fromList $ zip ms [1 :: Int ..]
 

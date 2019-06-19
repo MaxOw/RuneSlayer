@@ -47,6 +47,8 @@ data EntityAction
    | EntityAction_DropItem EntityId
    -- tell entity to that it's child container wants to drop selected [EntityId]
    | EntityAction_OwnerDropItem EntityId
+   -- tell entity to pass item [EntityId] to [EntityId]
+   | EntityAction_PassItem EntityId EntityId
    -- tell entity to use item from inventory with [EntityId]
    | EntityAction_UseItem EntityId
    -- tell entity to mark itself as targeted by player

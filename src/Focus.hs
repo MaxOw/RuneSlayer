@@ -43,7 +43,7 @@ focusItemsInRange = focusLocation >>= \case
         (pure . (*2) $ defaultPickupRange^._Wrapped)
 
     isItemInRange loc x
-        = withinRange loc (x^.oracleLocation) && isJust (x^.oracleItemKind)
+        = withinRange loc (x^.oracleLocation) && isJust (x^.oracleItemType)
     withinRange l xl = nothingFalse xl $ isWithinDistance defaultPickupRange l
 
 focusItemsInInventory :: Game [EntityWithId]

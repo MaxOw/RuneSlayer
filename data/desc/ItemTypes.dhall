@@ -17,7 +17,7 @@ let defaultStats =
   }
 
 let defaultItemType =
-  { itemKind      = ItemKind.SmallItem
+  { itemKind      = [] : List Text
   , weaponKind    = None Text
   , appearance    = appearance.empty
   , fittingSlots  = [] : List Text
@@ -33,14 +33,14 @@ let makeCorpse =
     defaultItemType //
       { name       = "Corpse of a ${name}"
       , volume     = volume
-      , itemKind   = ItemKind.BigItem
+      , itemKind   = [ ItemKind.BigItem ]
       , appearance = appearance.simple sprite
       }
 
 let helmet = defaultItemType //
   { name          = "Helmet"
   , volume        = 1.5
-  , itemKind      = ItemKind.BigItem
+  , itemKind      = [ ItemKind.BigItem ]
   , appearance    = appearance.simple sprites.helmet
   , fittingSlots  = [ EquipmentSlot.Head ]
   , animation     = Some "helmet"
@@ -50,7 +50,7 @@ let helmet = defaultItemType //
 let dagger = defaultItemType //
   { name         = "Dagger"
   , volume       = 0.3
-  , itemKind     = ItemKind.SmallItem
+  , itemKind     = [ ItemKind.SmallItem ]
   , weaponKind   = Some WeaponKind.Slashing
   , appearance   = appearance.simple sprites.dagger
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
@@ -61,7 +61,7 @@ let dagger = defaultItemType //
 let spear = defaultItemType //
   { name         = "Spear"
   , volume       = 0.5
-  , itemKind     = ItemKind.BigItem
+  , itemKind     = [ ItemKind.BigItem ]
   , weaponKind   = Some WeaponKind.Thrusting
   , appearance   = appearance.simple sprites.spear
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
@@ -72,7 +72,7 @@ let spear = defaultItemType //
 let bow = defaultItemType //
   { name         = "Bow"
   , volume       = 0.5
-  , itemKind     = ItemKind.BigItem
+  , itemKind     = [ ItemKind.BigItem ]
   , weaponKind   = Some WeaponKind.Projecting
   , appearance   = appearance.simple sprites.bow
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
@@ -82,25 +82,39 @@ let bow = defaultItemType //
 
 let arrow = defaultItemType //
   { name         = "Arrow"
-  , volume       = 0.2
-  , itemKind     = ItemKind.Projectile
+  , volume       = 1
+  , itemKind     = [ ItemKind.Projectile, ItemKind.Arrow ]
   , appearance   = appearance.simple sprites.arrow
   , fittingSlots = [ EquipmentSlot.PrimaryOther ]
   , animation    = Some "arrow"
   , stats        = defaultStats // { attack = 2 }
   }
 
+let quiver = defaultItemType //
+  { name         = "Quiver"
+  , volume       = 10
+  , itemKind     = [ ItemKind.Container ]
+  , appearance   = appearance.simple sprites.quiver
+  , fittingSlots = [ EquipmentSlot.Quiver ]
+  , animation    = Some "quiver"
+  , containerType = Some
+    { maxVolume  = 15
+    , allowKinds = [ ItemKind.Arrow ]
+    , showCount  = True
+    }
+  }
+
 let emptyFlask = defaultItemType //
   { name       = "Empty Flask"
   , volume     = 0.1
-  , itemKind   = ItemKind.SmallItem
+  , itemKind   = [ ItemKind.SmallItem ]
   , appearance = appearance.simple sprites.emptyFlask
   }
 
 let healthPotion = defaultItemType //
   { name       = "Health Potion"
   , volume     = 0.1
-  , itemKind   = ItemKind.SmallItem
+  , itemKind   = [ ItemKind.SmallItem ]
   , appearance = appearance.simple sprites.healthPotion
   , useEffects = [ useEffect.heal 5, useEffect.transformInto emptyFlask.name ]
   }
@@ -108,10 +122,14 @@ let healthPotion = defaultItemType //
 let bag = defaultItemType //
   { name          = "Bag"
   , volume        = 15
-  , itemKind      = ItemKind.Container
+  , itemKind      = [ ItemKind.Container ]
   , appearance    = appearance.simple sprites.bag
   , fittingSlots  = [ EquipmentSlot.Backpack ]
-  , containerType = Some { maxVolume              = 15 }
+  , containerType = Some
+    { maxVolume  = 15
+    , allowKinds = [ ItemKind.SmallItem ]
+    , showCount  = False
+    }
   }
 
 let batCorpse    = makeCorpse "Bat"    30 sprites.batCorpse
@@ -123,6 +141,7 @@ in
 , spear        = spear
 , bow          = bow
 , arrow        = arrow
+, quiver       = quiver
 , healthPotion = healthPotion
 , emptyFlask   = emptyFlask
 , bag          = bag

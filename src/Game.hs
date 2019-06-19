@@ -169,13 +169,16 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
 
 testInitialActions :: [DirectedAction]
 testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
-    [ mkItem "Helmet"           1    0
-    , mkItem "Health Potion"  (-1)   0.2
-    , mkItem "Dagger"         (-3)   1.2
-    , mkItem "Bow"            (-3) (-1)
-    , mkItem "Spear"          (-5)   1
-    , mkItem "Bag"              0    1
-    , mkItem "Arrow"          (-3) (-2)
+    [ mkItem "Helmet"           1      0
+    , mkItem "Health Potion"  (-1)     0.2
+    , mkItem "Dagger"         (-3)     1.2
+    , mkItem "Bow"            (-3)   (-1)
+    , mkItem "Spear"          (-5)     1
+    , mkItem "Bag"              0      1
+    , mkItem "Arrow"          (-3)   (-2)
+    , mkItem "Arrow"          (-3.1) (-2.1)
+    , mkItem "Arrow"          (-3.2) (-2.2)
+    , mkItem "Quiver"         (-4)   (-3)
 
     , mkUnit "Bat"             10    6
     , mkUnit "Bat"              9    6.3

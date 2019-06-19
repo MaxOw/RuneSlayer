@@ -22,7 +22,7 @@ module Entity.Actions
     , dropItem, dropItemAction
     , useItem
     , getItemsToAdd
-    , makeDropItem, splitItemKind
+    , makeDropItem, splitAllowedItems
     , getEquippedItem
     , flagUpdate
 
@@ -269,14 +269,30 @@ addItems
     => HasLocation        x Location
     => HasUpdateOnce      x (Set UpdateOnce)
     => Update x ()
-addItems = do
-    os <- equipItems =<< getItemsToAdd
-    let (sit, oit) = splitItemKind ItemKind_SmallItem os
-    equippedBackpack >>= \case
-        Just ct -> mapM_ (addAction ct . EntityAction_AddItem . view entityId) sit
-        Nothing -> mapM_ (dropItemAction . view entityId) sit
-    mapM_ (dropItemAction . view entityId) oit
-    flagUpdate UpdateOnce_Equipment
+addItems = getItemsToAdd
+    >>= equipItems
+    >>= stuffInto EquipmentSlot_Backpack
+    >>= stuffInto EquipmentSlot_Quiver
+    >>= doDropItems
+    >> flagUpdate UpdateOnce_Equipment
+    where
+    doDropItems :: HasLocation x Location => [EntityWithId] -> Update x ()
+    doDropItems = mapM_ (dropItemAction . view entityId)
+
+stuffInto
+    :: HasEquipment x Equipment
+    => EquipmentSlot
+    -> [EntityWithId]
+    -> Update x [EntityWithId]
+stuffInto slot is = getEquippedItem slot >>= \x -> maybeReturn x $ \eq -> do
+    let alwd = eq^.entity.oracleItemType.*.containerType.*.ff#allowKinds
+    let (allowedItems, otherItems) = splitAllowedItems alwd is
+    mapM_ (addAction eq . EntityAction_AddItem . view entityId) allowedItems
+    return otherItems
+    where
+    maybeReturn x f = maybe (return is) f x
+    infixr 9 .*.
+    a.*.b = a.traverse.b
 
 getEquippedItem
     :: HasEquipment x Equipment
@@ -311,7 +327,7 @@ equippedBackpack = do
     case mb of
         Just eb -> return (Just eb, es)
         Nothing -> do
-            let (cs, os) = splitItemKind ItemKind_Container es
+            let (cs, os) = splitAllowedItems ItemKind_Container es
             case map (view entityId) cs of
                 []     -> return (Nothing, [])
                 (a:as) -> do
@@ -319,10 +335,14 @@ equippedBackpack = do
                     return (Just a, os)
 -}
 
-splitItemKind :: ItemKind -> [EntityWithId] -> ([EntityWithId], [EntityWithId])
-splitItemKind k = List.partition properKind
+splitAllowedItems
+    :: Set ItemKind
+    -> [EntityWithId]
+    -> ([EntityWithId], [EntityWithId])
+splitAllowedItems k = List.partition properKind
     where
-    properKind x = x^.entity.oracleItemKind == Just k
+    properKind x = let ks = x^?entity.oracleItemType.traverse.itemKind
+        in fmap (not . Set.null . Set.intersection k) ks == Just True
 
 equipItems
     :: HasEquipment x Equipment

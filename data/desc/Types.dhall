@@ -11,7 +11,8 @@ let LocatedSprite =
   }
 
 let ContainerType =
-  { maxVolue : Double
+  { maxVolue   : Double
+  , allowKinds : List Text
   }
 
 let Frame =

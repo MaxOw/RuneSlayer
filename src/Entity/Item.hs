@@ -23,6 +23,7 @@ actOn x a = case a of
     -- For containers
     EntityAction_AddItem  {} -> handleOnUpdate a x
     EntityAction_DropItem {} -> handleOnUpdate a x
+    EntityAction_PassItem {} -> handleOnUpdate a x
     -- For any item
     EntityAction_SelfPassedTo  eid -> selfPassedTo eid
     EntityAction_SelfAddedBy   eid -> selfAddedBy eid
@@ -47,8 +48,9 @@ actOn x a = case a of
         & location .~ Just loc
         & owner    .~ Nothing
 
+    ks = x^.itemType.itemKind
     selfFireProjectile
-        | x^.itemType.itemKind == ItemKind_Projectile = handleOnUpdate a x
+        | Set.member ItemKind_Projectile ks = handleOnUpdate a x
         | otherwise = x
 
 --------------------------------------------------------------------------------
@@ -79,7 +81,7 @@ projectileFire (loc, vectorToTarget, tid, attackPower) = do
         }
 
 selfUseOn :: EntityId -> Update Item ()
-selfUseOn t = mapM_ performUseEffect =<< use (self.itemType.ff#useEffects)
+selfUseOn t = mapM_ performUseEffect =<< use (self.itemType.useEffects)
     where
     performUseEffect = \case
         ItemUseEffect_TransformInto n -> transformInto n
@@ -101,7 +103,8 @@ selfUseOn t = mapM_ performUseEffect =<< use (self.itemType.ff#useEffects)
 
 processAction :: EntityAction -> Update Item ()
 processAction = \case
-    EntityAction_DropItem i -> containerDropItem i
+    EntityAction_DropItem i   -> containerDropItem i
+    EntityAction_PassItem i t -> containerPassItem i t
     _ -> return ()
 
 containerAddItems :: Update Item ()
@@ -120,9 +123,15 @@ containerDropItem e = use (self.location) >>= \case
     where
     eid = e^.entityId
 
+containerPassItem :: EntityId -> EntityId -> Update Item ()
+containerPassItem itemId targetId = do
+    addAction itemId $ EntityAction_SelfPassedTo targetId
+    self.content %= List.delete itemId
+
 fitIntoContainer :: [EntityWithId] -> Update Item [EntityWithId]
 fitIntoContainer ees = do
-    let (smallItems, otherItems) = splitItemKind ItemKind_SmallItem ees
+    alwd <- use (self.itemType.containerType.traverse.ff#allowKinds)
+    let (smallItems, otherItems) = splitAllowedItems alwd ees
     overflow <- go smallItems
     return $ otherItems <> overflow
     where
@@ -162,16 +171,21 @@ render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
 oracle :: Item -> EntityQuery a -> Maybe a
 oracle x = \case
     EntityQuery_Location      -> x^.location
-    EntityQuery_Name          -> Just $ x^.itemType.name._Wrapped
+    EntityQuery_Name          -> Just showName
     EntityQuery_Volume        -> Just $ x^.itemType.volume
-    EntityQuery_ItemKind      -> Just $ x^.itemType.itemKind
     EntityQuery_FittingSlots  -> Just $ x^.itemType.fittingSlots
     EntityQuery_ItemType      -> Just $ x^.itemType
     EntityQuery_Content       -> Just $ x^.content
     EntityQuery_MaxVolume     -> x^?itemType.containerType.traverse.maxVolume
     EntityQuery_ItemAnimation -> x^.itemType.animation
-    EntityQuery_Stats         -> Just $ x^.itemType.ff#stats
+    EntityQuery_Stats         -> Just $ x^.itemType.stats
     _                         -> Nothing
+    where
+    nn = x^.itemType.name._Wrapped
+    ct = x^.content.to length
+    showName = if x^?itemType.containerType.traverse.showCount == Just True
+        then nn <> " (" <> show ct <> ")"
+        else nn
 
 --------------------------------------------------------------------------------
 
@@ -188,3 +202,13 @@ itemToEntity = makeEntity $ EntityParts
 makeItem :: ItemType -> Item
 makeItem t = set itemType t def
 
+--------------------------------------------------------------------------------
+
+stats :: Lens' ItemType Stats
+stats = ff#stats
+
+useEffects :: Lens' ItemType [ItemUseEffect]
+useEffects = ff#useEffects
+
+showCount :: Lens' ContainerType Bool
+showCount = ff#showCount

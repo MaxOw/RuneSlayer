@@ -31,11 +31,11 @@ Requirements for first release: v0.1
 * World actions.                                                             [X]
 * Named entity types.                                                        [X]
 
-* Equipment                                                                  [ ]
+* Equipment                                                                  [X]
   - Render equipped items.                                                   (#)
   - Make attack match equipped weapon.                                       (#)
   - Add projectiles lunching.                                                (#)
-  - Add quiver.                                                              ( )
+  - Add quiver.                                                              (#)
   - Add use item action. (Health potion)                                     (#)
   - Add items stats.                                                         (#)
 

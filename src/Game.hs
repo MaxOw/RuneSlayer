@@ -19,6 +19,7 @@ import Types.Entity.Common
 import Entity.Player (makePlayer)
 import Types.ResourceManager
 import Types.DirectedAction
+import Types.EntityAction
 import Types.Entity.Item
 import Types.Entity.Unit
 import EntityLike
@@ -168,7 +169,7 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
     mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
 
 testInitialActions :: [DirectedAction]
-testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
+testInitialActions = map directAtWorld
     [ mkItem "Helmet"           1      0
     , mkItem "Health Potion"  (-1)     0.2
     , mkItem "Dagger"         (-3)     1.2
@@ -186,10 +187,9 @@ testInitialActions = map (directAtWorld . WorldAction_SpawnEntity)
     ]
     where
 
-    mkItem n x y = SpawnEntity_Item $ def
-        & name     .~ (ItemTypeName n)
-        & location .~ (locM x y)
+    mkItem n x y = WorldAction_SpawnEntity (SpawnEntity_Item $ ItemTypeName n)
+        [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
 
-    mkUnit n x y = SpawnEntity_Unit $ def
-        & name     .~ (UnitTypeName n)
-        & location .~ (locM x y)
+    mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Unit $ UnitTypeName n)
+        [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
+

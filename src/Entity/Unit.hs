@@ -23,10 +23,15 @@ actOn x a = x & case a of
     EntityAction_SelfMarkAsTarget   -> set isMarked True
     EntityAction_SelfUnmarkAsTarget -> set isMarked False
     EntityAction_SelfAttacked     _ -> handleOnUpdate a
+    EntityAction_SetValue         v -> handleSetValue v
     _ -> id
+    where
+    handleSetValue v _ = case v of
+        EntityValue_Location  l -> x & location .~ l & isActive .~ True
+        EntityValue_Direction _ -> x
 
 update :: Unit -> EntityContext -> Q (Maybe Unit, [DirectedAction])
-update x ctx = runUpdate x ctx $ do
+update x ctx = runUpdate x ctx $ whenActive $ do
     decideAction
     updateAnimationState
     updateTimer
@@ -90,10 +95,10 @@ procAttacked as = do
         mco <- use $ self.unitType.corpse
         dir <- use $ self.animationState.current.direction
         whenJust mco $ \c ->
-            addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Item $ def
-                & location  .~ loc
-                & name      .~ c
-                & direction .~ Just dir
+            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Item c)
+                [ EntityAction_SetValue $ EntityValue_Location  loc
+                , EntityAction_SetValue $ EntityValue_Direction dir
+                ]
     where
     applyDefence     x = return x
 

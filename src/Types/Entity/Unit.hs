@@ -38,6 +38,7 @@ data Unit = Unit
    , field_health          :: Health
    , field_unitType        :: UnitType
    , field_isMarked        :: Bool
+   , field_isActive        :: Bool
    , field_processOnUpdate :: [EntityAction]
    , field_target          :: Maybe EntityId
    , field_timer           :: Timer

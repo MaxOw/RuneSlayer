@@ -44,6 +44,7 @@ actOn x a = x & case a of
     EntityAction_UseItem           _ -> handleOnUpdate a
     EntityAction_SelfHeal          h -> selfHeal h
     EntityAction_PlayerAction      p -> handlePlayerAction p
+    EntityAction_SetValue          v -> handleSetValue v
     _ -> id
     where
     setAnimationKind k _ = x
@@ -76,6 +77,10 @@ actOn x a = x & case a of
         Just sn -> over (ff#runicLevel) $ updateUsage sn (RuneUsage r)
 
     setAttackMode     = set (ff#attackMode)
+
+    handleSetValue v _ = case v of
+        EntityValue_Location  l -> x & location .~ l
+        EntityValue_Direction _ -> x
 
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do

@@ -30,6 +30,7 @@ Requirements for first release: v0.1
 
 * World actions.                                                             [X]
 * Named entity types.                                                        [X]
+* Improve spawn mechanics.                                                   [X]
 
 * Equipment                                                                  [X]
   - Render equipped items.                                                   (#)

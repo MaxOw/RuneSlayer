@@ -52,6 +52,7 @@ new conf = do
     dRef <- newIORef mempty
     aRef <- newIORef mempty
     tRef <- newIORef mempty
+    nRef <- newIORef []
     return $ EntityIndex
         { field_lastId              = lRef
         , field_entities            = v
@@ -60,6 +61,7 @@ new conf = do
         , field_activatedList       = aRef
         , field_spatialIndex        = FullMap.build f
         , field_tags                = tRef
+        , field_nextFrameActions    = nRef
         }
 
 noSetMoveVector :: EntityAction -> Bool
@@ -68,7 +70,7 @@ noSetMoveVector _                               = True
 
 update :: MonadIO m
     => Resources
-    -> (WorldAction -> m (Maybe Entity))
+    -> (WorldAction -> m (Maybe (Entity, [EntityAction])))
     -> [DirectedAction] -> Word32 -> EntityIndex -> m ()
 update res handleWorldAction globalActions fct eix = do
 
@@ -90,7 +92,9 @@ update res handleWorldAction globalActions fct eix = do
         in (k,) <$> liftIO (runQ (entityUpdate v ctx))
 
     -- List of directed actions resulting from update + global ones
-    let directedActions = concatMap (snd.snd) updateResult <> globalActions
+    delayedActions <- readIORef $ eix^.nextFrameActions
+    let updateActions = concatMap (snd.snd) updateResult
+    let directedActions = delayedActions <> updateActions <> globalActions
     let (actionsAtEntity, actionsAtWorld) = partitionActions directedActions
     debugPrintActions actionsAtEntity
 
@@ -122,8 +126,14 @@ update res handleWorldAction globalActions fct eix = do
     forM_ actOnResult $ \(i, e) -> VectorIndex.update i (Just e) (eix^.entities)
 
     -- Preform world actions
-    toAddToIndexList <- map (\e -> (e^.entityId, Nothing, Just $ e^.entity))
-         . catMaybes <$> mapM handleAndInsert actionsAtWorld
+    (toAddList, directedActionsList) <- unzip . catMaybes
+        <$> mapM handleAndInsert actionsAtWorld
+
+    writeIORef (eix^.nextFrameActions) (concat directedActionsList)
+
+    let toAddToIndexList =
+            map (\e -> (e^.entityId, Nothing, Just $ e^.entity))
+            toAddList
 
     -- Reindex changed entities
     toUpdateOnIndexList <- forM preChangeList $ \ewid -> do
@@ -172,11 +182,13 @@ update res handleWorldAction globalActions fct eix = do
         me <- handleWorldAction w
         case me of
             Nothing -> return Nothing
-            Just en -> do
+            Just (en, as) -> do
                 i <- insert en eix
-                return $ Just $ EntityWithId i en
+                let das = map (DirectedAtEntity . DirectedEntityAction i) as
+                return $ Just (EntityWithId i en, das)
 
     action = ff#action
+    nextFrameActions = ff#nextFrameActions
 
     ----------------------------------------------------------------------------
     debugPrintActions = mapM_ prt . filter (noSetMoveVector . view action)

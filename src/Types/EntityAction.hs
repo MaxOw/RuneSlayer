@@ -4,7 +4,7 @@ module Types.EntityAction where
 import Delude
 import qualified Prelude
 import Types.Entity.Common
-import Types.Entity.Animation (AnimationKind)
+import Types.Entity.Animation (AnimationKind, Direction)
 
 --------------------------------------------------------------------------------
 
@@ -29,8 +29,14 @@ data PlayerAction
    | PlayerAction_SetAttackMode AttackMode
    deriving (Show)
 
+data EntityValue
+   = EntityValue_Location  Location
+   | EntityValue_Direction Direction
+   deriving (Show)
+
 data EntityAction
    = EntityAction_SetMoveVector V2D
+   | EntityAction_SetValue EntityValue
    | EntityAction_ToggleDebug EntityDebugFlag
    | EntityAction_DebugRunAnimation AnimationKind
    -- tell entity that it was picked up by [EntityId]

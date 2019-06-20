@@ -30,6 +30,7 @@ actOn x a = case a of
     EntityAction_SelfDroppedAt loc -> slefDroppedAt loc
     EntityAction_SelfFiredAsProjectile {} -> selfFireProjectile
     EntityAction_SelfUseOn {} -> handleOnUpdate a x
+    EntityAction_SetValue   v -> handleSetValue v x
     _ -> x
 
     where
@@ -52,6 +53,10 @@ actOn x a = case a of
     selfFireProjectile
         | Set.member ItemKind_Projectile ks = handleOnUpdate a x
         | otherwise = x
+
+    handleSetValue v _ = case v of
+        EntityValue_Location  l -> x & location  .~ Just l
+        EntityValue_Direction d -> x & direction .~ Just d
 
 --------------------------------------------------------------------------------
 

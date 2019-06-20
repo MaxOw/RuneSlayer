@@ -25,6 +25,7 @@ module Entity.Actions
     , makeDropItem, splitAllowedItems
     , getEquippedItem
     , flagUpdate
+    , whenActive
 
     -- Render Actions
     , maybeLocate, locate
@@ -187,10 +188,11 @@ addEffect k = do
     whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
         loc <- use $ self.location
         when (isWithinDistance maxEffectSpawnDistance loc cloc) $
-            addWorldAction $ WorldAction_SpawnEntity $ SpawnEntity_Effect loc k
+            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Effect loc k) []
 
 spawnProjectile :: Projectile -> Update s ()
-spawnProjectile = addWorldAction . WorldAction_SpawnEntity . SpawnEntity_Projectile
+spawnProjectile p =
+    addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Projectile p) []
 
 updateTimer
     :: HasTimer s Timer
@@ -242,6 +244,13 @@ dropAllItems = do
     self.equipment %= Equipment.deleteAll
     mapM_ dropItemAction is
     flagUpdate UpdateOnce_Equipment
+
+--------------------------------------------------------------------------------
+
+whenActive
+    :: HasIsActive x Bool
+    => Update x () -> Update x ()
+whenActive = whenM (use $ self.isActive)
 
 --------------------------------------------------------------------------------
 

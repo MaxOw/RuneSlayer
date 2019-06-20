@@ -3,6 +3,7 @@ module Types.EntityIndex where
 import Delude
 import Engine.Common.Types (Size)
 import Types.Entity.Common
+import Types.DirectedAction (DirectedAction)
 
 import Data.VectorIndex (VectorIndex)
 import Data.SpatialIndex (SpatialIndex)
@@ -27,6 +28,7 @@ data EntityIndexT a = EntityIndex
    , field_activatedList       :: IORef [EntityId]
    , field_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
    , field_tags                :: IORef (Map EntityIndexTag EntityId)
+   , field_nextFrameActions    :: IORef [DirectedAction]
    } deriving (Generic)
 
 --------------------------------------------------------------------------------

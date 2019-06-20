@@ -13,7 +13,7 @@ data Direction
    | West
    | South
    | East
-   deriving (Generic, Eq, Ord, Enum, Bounded)
+   deriving (Generic, Show, Eq, Ord, Enum, Bounded)
 
 data AnimationKind
    = Cast

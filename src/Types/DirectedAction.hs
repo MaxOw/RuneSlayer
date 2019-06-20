@@ -6,27 +6,18 @@ import Types.EntityAction
 import Types.Entity.Item
 import Types.Entity.Unit
 import Types.Entity.Projectile (Projectile)
-import Types.Entity.Animation (Direction)
 import Types.Entity.Effect (EffectKind)
--- import Types.Entity.EntityType
 
 --------------------------------------------------------------------------------
 
-data Spawn a = Spawn
-   { field_location  :: Location
-   , field_direction :: Maybe Direction
-   , field_name      :: a
-   } deriving (Generic)
-instance Default a => Default (Spawn a)
-
 data SpawnEntity
-   = SpawnEntity_Item   (Spawn ItemTypeName)
-   | SpawnEntity_Unit   (Spawn UnitTypeName)
+   = SpawnEntity_Item   ItemTypeName
+   | SpawnEntity_Unit   UnitTypeName
    | SpawnEntity_Effect Location EffectKind
    | SpawnEntity_Projectile Projectile
 
 data WorldAction
-   = WorldAction_SpawnEntity SpawnEntity
+   = WorldAction_SpawnEntity SpawnEntity [EntityAction]
 
 --------------------------------------------------------------------------------
 

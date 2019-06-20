@@ -52,29 +52,27 @@ updateGameState = do
     where
     gs l = userState.gameState.l
 
-handleWorldAction :: WorldAction -> Game (Maybe Entity)
+handleWorldAction :: WorldAction -> Game (Maybe (Entity, [EntityAction]))
 handleWorldAction = \case
-    WorldAction_SpawnEntity s -> spawnEntity s
+    WorldAction_SpawnEntity s as -> fmap (,as) <$> spawnEntity s
     where
     spawnEntity = \case
-        SpawnEntity_Item       s -> spawnItem s
-        SpawnEntity_Unit       s -> spawnUnit s
+        SpawnEntity_Item       n -> spawnItem n
+        SpawnEntity_Unit       n -> spawnUnit n
         SpawnEntity_Effect   l s -> spawnEffect l s
         SpawnEntity_Projectile p -> spawnProjectile p
 
-    spawnItem s = do
-        mit <- lookupItemType $ s^.name
+    spawnItem n = do
+        mit <- lookupItemType n
         flip (maybe (pure Nothing)) mit $ \it -> do
             let e = toEntity $ makeItem it
-                  & location .~ (Just $ s^.location)
             return $ Just e
 
-    spawnUnit s = do
-        mit <- lookupUnitType $ s^.name
+    spawnUnit n = do
+        mit <- lookupUnitType n
         rs  <- use $ userState.resources
         flip (maybe (pure Nothing)) mit $ \it -> do
             let e = toEntity $ makeUnit rs it
-                  & location .~ (s^.location)
             return $ Just e
 
     spawnEffect l s = do

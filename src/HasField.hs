@@ -75,6 +75,7 @@ type HasHealth          = HasF "health"
 type HasEquipment       = HasF "equipment"
 type HasCollisionShape  = HasF "collisionShape"
 type HasUpdateOnce      = HasF "updateOnce"
+type HasIsActive        = HasF "isActive"
 
 #define MakeFieldLens(X) X :: HasF "X" s a => Lens' s a; X = ff#X
 
@@ -176,3 +177,4 @@ MakeFieldLens(debugMode)
 MakeFieldLens(status)
 MakeFieldLens(runeSet)
 MakeFieldLens(weaponKind)
+MakeFieldLens(isActive)

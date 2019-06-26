@@ -24,6 +24,13 @@ focusEntity = do
 focusLocation :: Game (Maybe Location)
 focusLocation = (view (oracleLocation) =<<) <$> focusEntity
 
+-- Get location of a camera
+cameraLocation :: Game (Maybe Location)
+cameraLocation = do
+    eix <- use $ userState.gameState.entities
+    mei <- lookupByTag EntityIndexTag_Camera eix
+    return (view (entity.oracleLocation) =<< mei)
+
 focusEntityId :: Game (Maybe EntityId)
 focusEntityId = use (userState.gameState.focusId)
 

@@ -15,6 +15,7 @@ import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
 import Focus (focusEntity)
 import Entity
 import Types.Entity.Common (EntityStatus(..))
+import GameState (getGameOverScreen)
 
 import Types.GUI
 import GUI.Common
@@ -44,12 +45,18 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
     , rIf StatusPanel           statusPanelLayout
     , rIf OffensiveSlotsPanel   offensiveSlotsPanelLayout
     , rIf DefensiveSlotsPanel   defensiveSlotsPanelLayout
+    , healthStatus
     ]
     where
     rIf panel renderFunc =
         isPanelVisible panel >>= \case
             True  -> Just <$> renderFunc
             False -> pure Nothing
+
+gameOverScreenLayout :: Game (Maybe Alt.Layout)
+gameOverScreenLayout = getGameOverScreen >>= \case
+    Nothing -> return Nothing
+    Just gs -> return $ Just $ layout_gameOverScreen gs
 
 statusPanelLayout :: Game Alt.Layout
 statusPanelLayout = do
@@ -73,6 +80,18 @@ defensiveSlotsPanelLayout = slotsPanelLayout
     (DefensiveMode ==)
     (view $ ff#defensiveSlots)
     layout_defensiveSlotsPanel
+
+healthStatus :: Game (Maybe Alt.Layout)
+healthStatus = withStatus $ \s -> do
+    return $ Just $ layout_healthStatus $ def
+        & health    .~ s^.health
+        & maxHealth .~ s^.ff#fullStats.maxHealth
+    where
+    withStatus f = do
+        mfo <- focusEntity
+        case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
+            Nothing -> return Nothing
+            Just ps -> f ps
 
 slotsPanelLayout
     :: (InputMode -> Bool)

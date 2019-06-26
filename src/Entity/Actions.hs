@@ -11,6 +11,7 @@ module Entity.Actions
     , vectorToEntity
     , moveTowards, orientTowards
     , selectAnimation
+    , updateActiveAnimation
     , updateAnimationState
     , addEffect
     , spawnProjectile
@@ -25,7 +26,6 @@ module Entity.Actions
     , makeDropItem, splitAllowedItems
     , getEquippedItem
     , flagUpdate
-    , whenActive
 
     -- Render Actions
     , maybeLocate, locate
@@ -163,22 +163,26 @@ selectAnimation k = do
     self.animationState.current.era  .= 0
     self.animationState.progression  .= Animation.defaultTransition
 
-updateAnimationState
+updateActiveAnimation
     :: HasVelocity           s Velocity
     => HasAnimationState     s AnimationState
     => HasAnimateWhenStopped s Bool
     => Update s ()
-updateAnimationState = do
+updateActiveAnimation = do
     vel <- use $ self.velocity._Wrapped
     a <- use $ self.animationState
     dontStop <- use $ self.animateWhenStopped
     when (a^.current.kind == Animation.Walk) $
         if (norm vel == 0 && not dontStop)
-        then self.animationState.progression .= Animation.Stopped
+        then do
+            self.animationState.progression .= Animation.Stopped 0
         else do
             self.animationState.progression       .= Animation.Cycle
             self.animationState.current.direction %= Animation.vecToDir vel
-    self.animationState %= Animation.update defaultDelta
+    updateAnimationState
+
+updateAnimationState :: HasAnimationState s AnimationState => Update s ()
+updateAnimationState = self.animationState %= Animation.update defaultDelta
 
 addEffect
     :: HasLocation s Location
@@ -188,11 +192,12 @@ addEffect k = do
     whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
         loc <- use $ self.location
         when (isWithinDistance maxEffectSpawnDistance loc cloc) $
-            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Effect loc k) []
+            let st = SpawnEntity_Effect loc k
+            in addWorldAction $ WorldAction_SpawnEntity st def
 
 spawnProjectile :: Projectile -> Update s ()
 spawnProjectile p =
-    addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Projectile p) []
+    addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Projectile p) def
 
 updateTimer
     :: HasTimer s Timer
@@ -244,13 +249,6 @@ dropAllItems = do
     self.equipment %= Equipment.deleteAll
     mapM_ dropItemAction is
     flagUpdate UpdateOnce_Equipment
-
---------------------------------------------------------------------------------
-
-whenActive
-    :: HasIsActive x Bool
-    => Update x () -> Update x ()
-whenActive = whenM (use $ self.isActive)
 
 --------------------------------------------------------------------------------
 

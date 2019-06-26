@@ -29,10 +29,15 @@ handleEvent event = use (userState.menuState) >>= \case
 
 handleMenu :: Event -> Game ()
 -- handleMenu event = defaultExit event
-handleMenu = interpretGameEvent
+handleMenu = handleGame
 
 handleGame :: Event -> Game ()
-handleGame = interpretGameEvent
+handleGame e = getGameOverScreen >>= \case
+    Nothing -> interpretGameEvent e
+    Just s -> when (s^.ff#pressAnyKey) goToMainMenu
+
+goToMainMenu :: Game ()
+goToMainMenu = Engine.closeWindow -- TODO
 
 --------------------------------------------------------------------------------
 
@@ -214,7 +219,7 @@ toggleDebug x = do
     debugFocus = actOnFocusedEntity . EntityAction_ToggleDebug
 
 debugRunAnimation :: AnimationKind -> Game ()
-debugRunAnimation = actOnFocusedEntity . EntityAction_DebugRunAnimation
+debugRunAnimation = actOnFocusedEntity . EntityAction_RunAnimation
 
 pickupAllItems :: Game ()
 pickupAllItems = withFocusId $ \fi -> do

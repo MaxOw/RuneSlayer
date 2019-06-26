@@ -44,7 +44,7 @@ tileToEntity = makeEntity $ EntityParts
    , makeRender = render
    , makeOracle = oracle
    , makeSave   = Just . EntitySum_Tile
-   , makeKind   = EntityKind_Tile
+   , makeKind   = const EntityKind_Tile
    }
 
 makeTile :: TileRole -> TileSet -> Tile

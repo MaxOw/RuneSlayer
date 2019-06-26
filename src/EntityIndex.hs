@@ -52,7 +52,6 @@ new conf = do
     dRef <- newIORef mempty
     aRef <- newIORef mempty
     tRef <- newIORef mempty
-    nRef <- newIORef []
     return $ EntityIndex
         { field_lastId              = lRef
         , field_entities            = v
@@ -61,7 +60,6 @@ new conf = do
         , field_activatedList       = aRef
         , field_spatialIndex        = FullMap.build f
         , field_tags                = tRef
-        , field_nextFrameActions    = nRef
         }
 
 noSetMoveVector :: EntityAction -> Bool
@@ -70,7 +68,7 @@ noSetMoveVector _                               = True
 
 update :: MonadIO m
     => Resources
-    -> (WorldAction -> m (Maybe (Entity, [EntityAction])))
+    -> (WorldAction -> m (Maybe (Entity, SpawnEntityOpts)))
     -> [DirectedAction] -> Word32 -> EntityIndex -> m ()
 update res handleWorldAction globalActions fct eix = do
 
@@ -92,20 +90,25 @@ update res handleWorldAction globalActions fct eix = do
         in (k,) <$> liftIO (runQ (entityUpdate v ctx))
 
     -- List of directed actions resulting from update + global ones
-    delayedActions <- readIORef $ eix^.nextFrameActions
     let updateActions = concatMap (snd.snd) updateResult
-    let directedActions = delayedActions <> updateActions <> globalActions
+    let directedActions = updateActions <> globalActions
     let (actionsAtEntity, actionsAtWorld) = partitionActions directedActions
     debugPrintActions actionsAtEntity
 
+    -- Preform world actions
+    (toAddList, newEntitiesActionsList) <- unzip . catMaybes
+        <$> mapM handleAndInsert actionsAtWorld
+
+    let allActionsAtEntity = concat newEntitiesActionsList <> actionsAtEntity
+
     -- Map of entity action grouped by target entity id
     let directedActionsMap :: HashMap EntityId [EntityAction]
-        directedActionsMap = HashMap.fromListWith (<>) $ map f actionsAtEntity
+        directedActionsMap = HashMap.fromListWith (<>) $ map f allActionsAtEntity
             where f d = (d^.entityId, [d^.action])
 
     -- Set of all entity ids that changed in this frame
     let changedList = hashNub $
-            (map fst updateResult) <> (map (view entityId) actionsAtEntity)
+            (map fst updateResult) <> (map (view entityId) allActionsAtEntity)
     -- List of values that entities had before change
     preChangeList <- liftIO $ lookupManyById changedList eix
 
@@ -124,12 +127,6 @@ update res handleWorldAction globalActions fct eix = do
 
     -- Write acted on entities to index
     forM_ actOnResult $ \(i, e) -> VectorIndex.update i (Just e) (eix^.entities)
-
-    -- Preform world actions
-    (toAddList, directedActionsList) <- unzip . catMaybes
-        <$> mapM handleAndInsert actionsAtWorld
-
-    writeIORef (eix^.nextFrameActions) (concat directedActionsList)
 
     let toAddToIndexList =
             map (\e -> (e^.entityId, Nothing, Just $ e^.entity))
@@ -182,13 +179,13 @@ update res handleWorldAction globalActions fct eix = do
         me <- handleWorldAction w
         case me of
             Nothing -> return Nothing
-            Just (en, as) -> do
+            Just (en, opts) -> do
                 i <- insert en eix
-                let das = map (DirectedAtEntity . DirectedEntityAction i) as
+                when (opts^.tagAsCamera) $ addTag EntityIndexTag_Camera i eix
+                let das = map (DirectedEntityAction i) (opts^.actions)
                 return $ Just (EntityWithId i en, das)
 
     action = ff#action
-    nextFrameActions = ff#nextFrameActions
 
     ----------------------------------------------------------------------------
     debugPrintActions = mapM_ prt . filter (noSetMoveVector . view action)

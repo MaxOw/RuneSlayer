@@ -5,6 +5,8 @@ import Engine.Layout.Alt hiding (left)
 import Engine.FontsManager.Types (FontStyle)
 import Types.GUI
 import Types.EntityAction (AttackMode(..))
+import Types.GameState (GameOverScreen)
+import Text.Printf
 
 import qualified Color
 
@@ -24,6 +26,34 @@ layout_statusPanel s
     am = case s^.ff#attackMode of
         AttackMode_Manual -> "M"
         AttackMode_Auto   -> "A"
+
+--------------------------------------------------------------------------------
+
+layout_healthStatus :: HealthStatusDesc -> Layout
+layout_healthStatus s
+    = container txt
+    & padding.each .~ 10 @@ px
+    where
+    txt = textline fs msg & align .~ BottomCenter
+    fs = makeFs 14 warningColor
+
+    msg = toText @String $ printf "%d/%d HP"
+        (s^.health._Wrapped)
+        (s^.maxHealth._Wrapped)
+
+--------------------------------------------------------------------------------
+
+layout_gameOverScreen :: GameOverScreen -> Layout
+layout_gameOverScreen gs = vrel
+    [ (80 @@ px, text_youDied)
+    , (60 @@ px, text_pressAnyKey) ]
+    & align .~ MiddleCenter
+    where
+    fm = makeFsa 48 warningColor (max 0 $ min 1 $ gs^.timer._Wrapped)
+    fb = makeFsa 14 warningColor (if gs^.ff#pressAnyKey then 1 else 0)
+
+    text_youDied     = textline fm "You Died"      & align .~ BottomCenter
+    text_pressAnyKey = textline fb "Press any key" & align .~ TopCenter
 
 --------------------------------------------------------------------------------
 
@@ -82,6 +112,10 @@ layout_slotsPanel agn fcol desc = vseprel (8 @@ px)
 makeFs :: Int -> Color -> FontStyle
 makeFs s c = makeFontStyle ["Arial", "SourceHanSerif"] s
     & color .~ Color.opaque c
+
+makeFsa :: Int -> Color -> Float -> FontStyle
+makeFsa s c a = makeFontStyle ["Arial", "SourceHanSerif"] s
+    & color .~ Color.withOpacity c a
 
 basePadding :: Sizing
 basePadding = 20 @@ px

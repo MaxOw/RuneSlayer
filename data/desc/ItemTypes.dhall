@@ -12,8 +12,9 @@ let WeaponKind    = enums.WeaponKind
 let EquipmentSlot = enums.EquipmentSlot
 
 let defaultStats =
-  { attack  = 0
-  , defence = 0
+  { attack    = 0
+  , defence   = 0
+  , maxHealth = 0
   }
 
 let defaultItemType =
@@ -132,6 +133,12 @@ let bag = defaultItemType //
     }
   }
 
+let humanCorpse = defaultItemType //
+  { name          = "Human Corpse"
+  , volume        = 70
+  , itemKind      = [ ItemKind.BigItem ]
+  }
+
 let batCorpse    = makeCorpse "Bat"    30 sprites.batCorpse
 let spiderCorpse = makeCorpse "Spider" 80 sprites.spiderCorpse01
 
@@ -147,4 +154,5 @@ in
 , bag          = bag
 , batCorpse    = batCorpse
 , spiderCorpse = spiderCorpse
+, humanCorpse  = humanCorpse
 }

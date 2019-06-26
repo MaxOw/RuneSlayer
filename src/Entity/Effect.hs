@@ -48,7 +48,7 @@ effectToEntity = makeEntity $ EntityParts
    , makeRender = render
    , makeOracle = oracle
    , makeSave   = const Nothing
-   , makeKind   = EntityKind_Dynamic
+   , makeKind   = const EntityKind_Dynamic
    }
 
 makeEffect :: EffectKind -> Effect

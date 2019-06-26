@@ -32,9 +32,14 @@ import qualified Entity.Animation as Animation
 
 actOn :: Player -> EntityAction -> Player
 actOn x a = x & case a of
+    -- Handle here:
     EntityAction_ToggleDebug       f -> toggleDebugFlag f
-    EntityAction_DebugRunAnimation k -> setAnimationKind k
+    EntityAction_RunAnimation      k -> setAnimationKind k
     EntityAction_SetMoveVector     v -> setMoveVector v
+    EntityAction_SelfHeal          h -> selfHeal h
+    EntityAction_PlayerAction      p -> handlePlayerAction p
+    EntityAction_SetValue          v -> handleSetValue v
+    -- Handle on update:
     EntityAction_DropAllItems        -> handleOnUpdate a
     EntityAction_AddItem           _ -> handleOnUpdate a
     EntityAction_DropItem          _ -> handleOnUpdate a
@@ -42,17 +47,15 @@ actOn x a = x & case a of
     EntityAction_ExecuteAttack       -> handleOnUpdate a
     EntityAction_SelfAttacked      _ -> handleOnUpdate a
     EntityAction_UseItem           _ -> handleOnUpdate a
-    EntityAction_SelfHeal          h -> selfHeal h
-    EntityAction_PlayerAction      p -> handlePlayerAction p
-    EntityAction_SetValue          v -> handleSetValue v
     _ -> id
     where
+    selfHeal h _ = x & health %~
+        (\ch -> min (x^.ff#fullStats.maxHealth) (ch+h))
+
     setAnimationKind k _ = x
         & animationState.current.kind .~ k
         & animationState.current.era  .~ 0
         & animationState.progression  .~ Animation.defaultTransition
-
-    selfHeal _h _ = x -- TODO:
 
     handlePlayerAction = \case
         PlayerAction_SelectRune        -> selectCurrentRune
@@ -78,14 +81,16 @@ actOn x a = x & case a of
 
     setAttackMode     = set (ff#attackMode)
 
-    handleSetValue v _ = case v of
-        EntityValue_Location  l -> x & location .~ l
-        EntityValue_Direction _ -> x
+    handleSetValue ev _ = case ev of
+        EntityValue_Location     v -> x & location .~ v
+        EntityValue_Direction    _ -> x
+        EntityValue_Animation    _ -> x
+        EntityValue_CenterOffset _ -> x
 
 update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     runAttackMode
-    updateAnimationState
+    updateActiveAnimation
     updateTimer
     updateDelayedActions
     playerIntegrateLocation
@@ -93,7 +98,6 @@ update x ctx = runUpdate x ctx $ do
     autoTarget
     whenMatch _EntityAction_AddItem      addItems
     whenMatch _EntityAction_DropAllItems dropAllItems
-    anyMatch  _EntityAction_SelfAttacked procAttacked
     mapM_ processUpdateOnce =<< use (self.ff#updateOnce)
     mapM_ processAction =<< use (self.processOnUpdate)
     runicActions
@@ -129,8 +133,7 @@ processUpdateOnce = \case
         eqAnim <- makeEquipmentAnimationVia equipmentRenderOrder
         eqBehindAnim <- makeEquipmentAnimationVia equipmentBehindBodyRenderOrder
         bodyAnim <- makeBodyAnimation
-        self.ff#equipmentAnimation .= eqAnim
-        self.ff#bodyAnimation .= eqBehindAnim <> bodyAnim
+        self.animation .= eqBehindAnim <> bodyAnim <> eqAnim
         updateStats
 
     makeEquipmentAnimationVia renderOrder = do
@@ -153,8 +156,9 @@ updateStats = do
     let ss = mapMaybe (view (entity.oracleStats)) es
     bs <- use $ self.ff#baseStats
     self.ff#fullStats .= Stats
-        { field_attack  = bs^.ff#attack  + sumOf (traverse.ff#attack)  ss
-        , field_defence = bs^.ff#defence + sumOf (traverse.ff#defence) ss
+        { field_attack    = bs^.ff#attack    + sumOf (traverse.ff#attack)    ss
+        , field_defence   = bs^.ff#defence   + sumOf (traverse.ff#defence)   ss
+        , field_maxHealth = bs^.ff#maxHealth + sumOf (traverse.ff#maxHealth) ss
         }
 
 updateDelayedActions :: Update Player ()
@@ -198,18 +202,6 @@ getPrimaryOther = Equipment.lookupSlot EquipmentSlot_PrimaryOther
 
 addDelayedAction :: Duration -> DelayedActionType -> Update Player ()
 addDelayedAction d t = self.ff#delayedActions %= (DelayedAction d t:)
-
-procAttacked :: NonEmpty AttackPower -> Update Player ()
-procAttacked = mapM_ (addEffect . HitEffect) <=< mapM applyDefence
-    where
-    applyDefence x = do
-        ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
-        fdef <- getDefence
-        let runicDefence = 1 + fdef
-        self.ff#defensiveSlots %= dischargeRunicSlot
-        return $ max 0 $ if ad then calcDefence x runicDefence else x
-
-    calcDefence (AttackPower x) (Defence d) = AttackPower $ x - d
 
 runAttackMode :: Update Player ()
 runAttackMode = use (self.ff#attackMode) >>= \case
@@ -361,24 +353,45 @@ processAction = \case
     EntityAction_DropItem      i -> dropItem i
     EntityAction_OwnerDropItem i -> dropItemAction i
     EntityAction_UseItem       i -> useItem i
+    EntityAction_SelfAttacked  d -> procAttacked d
     _ -> return ()
+
+procAttacked :: AttackPower -> Update Player ()
+procAttacked x = do
+    ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
+    self.ff#defensiveSlots %= dischargeRunicSlot
+    fdef <- getDefence
+    let ap = max 0 $ if ad then calcDefence x fdef else x
+    h <- self.health <%= max 0 . subtract (ap^._Wrapped.to Health)
+    addEffect $ HitEffect ap
+    when (h <= 0) doDie
+    where
+    calcDefence (AttackPower a) (Defence d) = AttackPower $ a - d
+    doDie = do
+        deleteSelf .= True
+        loc <- use $ self.location
+        c <- use $ self.ff#playerInit.corpse
+        ani <- use $ self.animation
+        addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Item c) $ def
+            & tagAsCamera .~ True
+            & actions .~
+            [ EntityAction_SetValue $ EntityValue_Location  loc
+            , EntityAction_SetValue $ EntityValue_Animation ani
+            , EntityAction_SetValue $ EntityValue_CenterOffset (V2 0 0.8)
+            , EntityAction_RunAnimation Animation.Die ]
+        addWorldAction WorldAction_GameOver
 
 --------------------------------------------------------------------------------
 
 render :: Player -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
     [ renderDebug
-    , correctHeight $ renderComposition
-        [ renderBody
-        , renderEquipment
-        ]
+    , correctHeight renderAnim
     ]
     where
     renderDebug     = renderComposition $ localDebug <> globalDebug
 
-    renderAnim      = Animation.renderAnimation (x^.animationState)
-    renderBody      = renderAnim (x^.ff#bodyAnimation)
-    renderEquipment = renderAnim (x^.ff#equipmentAnimation)
+    renderAnim = Animation.renderAnimation (x^.animationState) (x^.animation)
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)
@@ -399,6 +412,7 @@ render x ctx = withZIndex x $ locate x $ renderComposition
 
 oracle :: Player -> EntityQuery a -> Maybe a
 oracle x = \case
+    EntityQuery_Name           -> Just "Player"
     EntityQuery_Location       -> Just $ x^.location
     EntityQuery_Equipment      -> Just $ x^.equipment
     EntityQuery_CollisionShape -> locate x <$> x^.collisionShape
@@ -416,22 +430,23 @@ playerToEntity = makeEntity $ EntityParts
    , makeRender = render
    , makeOracle = oracle
    , makeSave   = Just . EntitySum_Player
-   , makeKind   = EntityKind_Dynamic
+   , makeKind   = const EntityKind_Dynamic
    }
 
 makePlayer :: Resources -> PlayerInit -> Player
 makePlayer rs p = def
-    & ff#bodyAnimation  .~ as
-    & reactivity        .~ (p^.reactivity)
-    & maxSpeed          .~ (p^.maxSpeed)
+    & reactivity        .~ p^.reactivity
+    & maxSpeed          .~ p^.maxSpeed
     & equipment         .~ Equipment.create playerSlots
+    & health            .~ p^.ff#stats.maxHealth
+    & ff#updateOnce     .~ Set.fromList [ UpdateOnce_Equipment ]
     & ff#attackRange    .~ disM 2
     & ff#offensiveSlots .~ initRunicSlots 4
     & ff#defensiveSlots .~ initRunicSlots 3
     & ff#runicLevel     .~ initKnownRunes
+    & ff#baseStats      .~ p^.ff#stats
     & ff#playerInit     .~ p
     where
-    as = mconcat $ mapMaybe (flip lookupAnimation rs) (p^.body)
     initRunes = getRunesByLevel 1 (rs^.runeSet)
     initKnownRunes = addKnownRunes initRunes def
 

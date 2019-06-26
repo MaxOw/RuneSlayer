@@ -1,9 +1,15 @@
 module Types.GameState where
 
 import Delude
-import Types.Entity.Common (EntityId)
+import Types.Entity.Common (EntityId, Duration)
 import Types.Entity (EntityIndex)
 import Types.DirectedAction (DirectedAction)
+
+data GameOverScreen = GameOverScreen
+   { field_timer       :: Duration
+   , field_pressAnyKey :: Bool
+   } deriving (Generic)
+instance Default GameOverScreen
 
 data GameState = GameState
    { field_entities       :: EntityIndex
@@ -13,8 +19,8 @@ data GameState = GameState
    , field_menuScale      :: Float
    , field_frameCount     :: Word32
    , field_changeCache    :: HashMap String Int
+   , field_gameOverScreen :: Maybe GameOverScreen
    } deriving (Generic)
-
 
 type GameStateM = StateT GameState IO
 
@@ -28,5 +34,6 @@ defaultGameState eix = do
         , field_menuScale      = 1.0
         , field_frameCount     = 0
         , field_changeCache    = mempty
+        , field_gameOverScreen = Nothing
         }
 

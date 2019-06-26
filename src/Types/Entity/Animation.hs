@@ -64,7 +64,7 @@ data AnimationFrameState = AnimationFrameState
    } deriving (Generic)
 
 data AnimationProgression
-   = Stopped
+   = Stopped Float
    | Cycle
    | TransitionInto AnimationKind AnimationProgression
    deriving (Eq)
@@ -90,7 +90,7 @@ instance Default AnimationDesc where
 instance Default AnimationState where
     def = AnimationState
         { field_current     = def
-        , field_progression = Stopped
+        , field_progression = Stopped 0
         , field_speed       = 1
         }
 

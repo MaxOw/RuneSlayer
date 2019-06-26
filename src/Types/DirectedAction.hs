@@ -16,8 +16,15 @@ data SpawnEntity
    | SpawnEntity_Effect Location EffectKind
    | SpawnEntity_Projectile Projectile
 
+data SpawnEntityOpts = SpawnEntityOpts
+   { field_actions     :: [EntityAction]
+   , field_tagAsCamera :: Bool
+   } deriving (Generic)
+instance Default SpawnEntityOpts
+
 data WorldAction
-   = WorldAction_SpawnEntity SpawnEntity [EntityAction]
+   = WorldAction_SpawnEntity SpawnEntity SpawnEntityOpts
+   | WorldAction_GameOver
 
 --------------------------------------------------------------------------------
 
@@ -33,3 +40,7 @@ directAtEntity eid ea = DirectedAtEntity $ DirectedEntityAction eid ea
 directAtWorld :: WorldAction -> DirectedAction
 directAtWorld = DirectedAtWorld
 
+--------------------------------------------------------------------------------
+
+tagAsCamera :: Lens' SpawnEntityOpts Bool
+tagAsCamera = ff#tagAsCamera

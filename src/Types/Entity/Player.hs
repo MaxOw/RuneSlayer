@@ -8,6 +8,7 @@ import Types.Entity.Common
 import Types.Entity.ZIndex
 import Types.Entity.Animation
 import Types.Entity.Timer
+import Types.Entity.Item
 import Types.Equipment
 import Types.Skills.Runes (RunicLevel, RunicSlots, RuneName)
 import Types.Entity.Reactivity
@@ -23,6 +24,8 @@ data PlayerInit = PlayerInit
    , field_reactivity  :: Map ReactivCategory ReactivValue
    , field_attackRange :: Distance
    , field_maxSpeed    :: Speed
+   , field_stats       :: Stats
+   , field_corpse      :: ItemTypeName
    } deriving (Generic)
 instance HasMaxSpeed PlayerInit Speed
 
@@ -39,15 +42,15 @@ data Player = Player
    { field_location           :: Location
    , field_velocity           :: Velocity
    , field_maxSpeed           :: Speed
+   , field_health             :: Health
    , field_equipment          :: Equipment
    , field_debugFlags         :: EntityDebugFlags
    , field_processOnUpdate    :: [EntityAction]
    , field_updateOnce         :: Set UpdateOnce
    , field_collisionShape     :: Maybe CollisionShape
    , field_animationState     :: AnimationState
+   , field_animation          :: Animation
    , field_animateWhenStopped :: Bool
-   , field_bodyAnimation      :: Animation
-   , field_equipmentAnimation :: Animation
    , field_runicLevel         :: RunicLevel
    , field_offensiveSlots     :: RunicSlots
    , field_defensiveSlots     :: RunicSlots
@@ -71,9 +74,11 @@ data PlayerStatus = PlayerStatus
    { field_runicLevel         :: RunicLevel
    , field_offensiveSlots     :: RunicSlots
    , field_defensiveSlots     :: RunicSlots
+   , field_health             :: Health
    , field_selectedRune       :: Maybe RuneName
    , field_status             :: Set EntityStatus
    , field_attackMode         :: AttackMode
+   , field_fullStats          :: Stats
    } deriving (Generic)
 
 playerSlots :: Set EquipmentSlot

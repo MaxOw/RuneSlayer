@@ -7,7 +7,7 @@ import Data.Hashable (hash)
 import qualified Data.HashMap.Strict as HashMap
 import Engine (userState)
 
-import Types (Game, Integrator)
+import Types (Game, Integrator, stepGameWire)
 import Types.EntityAction
 
 import GameState
@@ -17,6 +17,7 @@ import InputState
 
 integrate :: Integrator
 integrate _time = unlessDebugMode $ do -- getMenuState >>= \case
+    updateWires
     updateGameState
     preformActiveActions
     zoomGameState $ frameCount += 1
@@ -25,6 +26,12 @@ integrate _time = unlessDebugMode $ do -- getMenuState >>= \case
 
 unlessDebugMode :: Game () -> Game ()
 unlessDebugMode = whenNothingM_ (use $ userState.config.debugMode)
+
+updateWires :: Game ()
+updateWires
+    = assign (userState.ff#wires)
+    =<< fmap catMaybes . mapM stepGameWire
+    =<< use (userState.ff#wires)
 
 preformActiveActions :: Game ()
 preformActiveActions = do

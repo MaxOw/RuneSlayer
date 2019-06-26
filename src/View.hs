@@ -9,7 +9,7 @@ import qualified Linear.Matrix as Matrix
 import qualified Engine
 import Engine (graphics, context, RenderAction)
 import Engine.Layout.Render (makeRenderLayout)
-import Engine.Debug (logOnce)
+-- import Engine.Debug (logOnce)
 import Graphics.GL
 
 -- import Data.Vector (Vector)
@@ -64,7 +64,7 @@ renderGame _delta st = do
 
     let viewScale = st^.gameState.gameScale
 
-    viewPos <- focusPos
+    viewPos <- cameraPos
     let viewportPos  = viewPos ^* viewScale
     let viewportSize = Size (fromIntegral w) (fromIntegral h)
 
@@ -101,6 +101,8 @@ renderGame _delta st = do
             & set scale (st^.gameState.menuScale)
         Engine.drawLayout =<< statusPanesLayout
         Engine.draw menuProjM =<< makeRenderLayout =<< gameMenuLayout
+
+    whenJustM gameOverScreenLayout Engine.drawLayout
 
     Engine.swapBuffers
 
@@ -189,7 +191,7 @@ viewMatrix :: Float -> Graphics Mat4
 viewMatrix s
     = fromMaybe Matrix.identity
     . fmap locationToViewMatrix
-    <$> focusLocation
+    <$> cameraLocation
     where
     locationToViewMatrix :: Location -> Mat4
     locationToViewMatrix
@@ -201,22 +203,22 @@ viewMatrix s
 
 --------------------------------------------------------------------------------
 
-focusPos :: Graphics (V2 Float)
-focusPos = do
-    mloc <- focusLocation
+cameraPos :: Graphics (V2 Float)
+cameraPos = do
+    mloc <- cameraLocation
     return $ fromMaybe 0 $ view _Wrapped <$> mloc
 
 prerenderUpdate :: Bool -> St -> Graphics RenderAction
 prerenderUpdate forceRedraw st = do
     let s = st^.scroller
     let vscale = st^.gameState.gameScale
-    vpos <- focusPos
+    vpos <- cameraPos
     -- (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
     -- let vtrigsize = Size (fromIntegral w) (fromIntegral h)
     let vtrigsize = Size 2 2
     updateScroller' s forceRedraw vscale vpos vtrigsize $ \bb -> do
         es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
-        logOnce (show $ length es)
+        -- logOnce (show $ length es)
         return $ renderEntitiesRaw es st
         -- Engine.drawAtlasBatch projM $ renderEntitiesRaw es st
         -- return $ renderEntities (take 500 es) st

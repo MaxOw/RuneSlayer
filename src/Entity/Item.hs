@@ -15,53 +15,65 @@ import Engine.Common.Types (BBox(..))
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Projectile
+import ResourceManager (Resources)
+import Entity.Animation
+    (AnimationProgression(..), makeStaticAnimation, renderAnimation)
 
 --------------------------------------------------------------------------------
 
 actOn :: Item -> EntityAction -> Item
-actOn x a = case a of
+actOn x a = x & case a of
     -- For containers
-    EntityAction_AddItem  {} -> handleOnUpdate a x
-    EntityAction_DropItem {} -> handleOnUpdate a x
-    EntityAction_PassItem {} -> handleOnUpdate a x
+    EntityAction_AddItem  {} -> handleOnUpdate a
+    EntityAction_DropItem {} -> handleOnUpdate a
+    EntityAction_PassItem {} -> handleOnUpdate a
     -- For any item
     EntityAction_SelfPassedTo  eid -> selfPassedTo eid
     EntityAction_SelfAddedBy   eid -> selfAddedBy eid
     EntityAction_SelfDroppedAt loc -> slefDroppedAt loc
     EntityAction_SelfFiredAsProjectile {} -> selfFireProjectile
-    EntityAction_SelfUseOn {} -> handleOnUpdate a x
-    EntityAction_SetValue   v -> handleSetValue v x
-    _ -> x
+    EntityAction_SelfUseOn   {} -> handleOnUpdate a
+    EntityAction_SetValue     v -> handleSetValue v
+    EntityAction_RunAnimation k -> setAnimationKind k
+    _ -> id
 
     where
-    selfAddedBy eid = case x^.owner of
+    selfPassedTo eid _ = x
+            & location .~ Nothing
+            & owner    .~ (Just eid)
+
+    selfAddedBy eid _ = case x^.owner of
         Just _  -> x
         Nothing -> x
             & location .~ Nothing
             & owner    .~ (Just eid)
             & handleOnUpdate a
 
-    selfPassedTo eid = x
-            & location .~ Nothing
-            & owner    .~ (Just eid)
-
-    slefDroppedAt loc = x
+    slefDroppedAt loc _ = x
         & location .~ Just loc
         & owner    .~ Nothing
 
     ks = x^.itemType.itemKind
-    selfFireProjectile
+    selfFireProjectile _
         | Set.member ItemKind_Projectile ks = handleOnUpdate a x
         | otherwise = x
 
-    handleSetValue v _ = case v of
-        EntityValue_Location  l -> x & location  .~ Just l
-        EntityValue_Direction d -> x & direction .~ Just d
+    handleSetValue ev = case ev of
+        EntityValue_Location     v -> location  .~ Just v
+        EntityValue_Direction    v -> direction .~ Just v
+        EntityValue_Animation    v -> animation .~ v
+        EntityValue_CenterOffset v -> centerOffset .~ v
+
+    setAnimationKind k _ = x
+        & animationState.current.kind .~ k
+        & animationState.current.era  .~ 0
+        & animationState.progression  .~ TransitionInto k (Stopped 1)
 
 --------------------------------------------------------------------------------
 
 update :: Item -> EntityContext -> Q (Maybe Item, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
+    updateAnimationState
     whenMatch _EntityAction_SelfAddedBy pickUpInformOwner
     whenMatch _EntityAction_AddItem containerAddItems
     firstMatch _EntityAction_SelfFiredAsProjectile projectileFire
@@ -93,9 +105,13 @@ selfUseOn t = mapM_ performUseEffect =<< use (self.itemType.useEffects)
         ItemUseEffect_Heal h -> addAction t $ EntityAction_SelfHeal h
 
     transformInto n = do
-        rs <- use $ context.resources.itemsMap
-        whenJust (HashMap.lookup n rs) $ assign (self.itemType)
-        whenNothing_ (HashMap.lookup n rs) $ deleteSelf .= True
+        rs <- use $ context.resources
+        case (HashMap.lookup n $ rs^.itemsMap) of
+            Just tt -> do
+                self.itemType  .= tt
+                self.animation .= makeStaticAnimation
+                    (renderAppearance rs $ tt^.appearance)
+            Nothing -> deleteSelf .= True
         -- TODO:
         -- There should be also be proper handling for specific kinds of
         -- transformations, like for example if we where to change a
@@ -158,12 +174,12 @@ fitIntoContainer ees = do
 
 render :: Item -> RenderContext -> RenderAction
 render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
-    $ renderComposition
+    $ translate (x^.centerOffset) $ renderComposition
     [ itemRenderAction
     , renderDebug
     ]
     where
-    itemRenderAction = renderAppearance ctx $ x^.itemType.appearance
+    itemRenderAction = renderAnimation (x^.animationState) (x^.animation)
 
     renderDebug
         = renderComposition $ map snd
@@ -192,6 +208,15 @@ oracle x = \case
         then nn <> " (" <> show ct <> ")"
         else nn
 
+toKind :: Item -> EntityKind
+toKind x
+    | isStopped = EntityKind_Item
+    | otherwise = EntityKind_Dynamic
+    where
+    isStopped = case x^.animationState.progression of
+        Stopped _ -> True
+        _         -> False
+
 --------------------------------------------------------------------------------
 
 itemToEntity :: Item -> Entity
@@ -201,11 +226,13 @@ itemToEntity = makeEntity $ EntityParts
    , makeRender = render
    , makeOracle = oracle
    , makeSave   = Just . EntitySum_Item
-   , makeKind   = EntityKind_Item
+   , makeKind   = toKind
    }
 
-makeItem :: ItemType -> Item
-makeItem t = set itemType t def
+makeItem :: Resources -> ItemType -> Item
+makeItem rs t = def
+    & itemType  .~ t
+    & animation .~ makeStaticAnimation (renderAppearance rs $ t^.appearance)
 
 --------------------------------------------------------------------------------
 
@@ -217,3 +244,6 @@ useEffects = ff#useEffects
 
 showCount :: Lens' ContainerType Bool
 showCount = ff#showCount
+
+centerOffset :: Lens' Item V2D
+centerOffset = ff#centerOffset

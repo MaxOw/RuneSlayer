@@ -2,11 +2,13 @@ module Types.St
     ( St(..)
     , defaultSt
 
+    , GameWire (..)
+    , Game
     ) where
 
 import Delude
 
-import Engine (RenderAction)
+import Engine (Engine, RenderAction)
 import Engine.Graphics.Scroller.Types (Scroller)
 
 import Types.Config (Config)
@@ -26,8 +28,12 @@ data St = St
    , field_debugFlags :: Set DebugFlag
    , field_overview   :: RenderAction
    , field_config     :: Config
+   , field_wires      :: [GameWire]
    } deriving (Generic)
 instance HasResources St Resources
+
+type Game a = Engine St a
+newtype GameWire = GameWire { stepGameWire :: Game (Maybe GameWire) }
 
 defaultSt :: MonadIO m => EntityIndex -> Scroller -> m St
 defaultSt eix scro = do
@@ -41,5 +47,6 @@ defaultSt eix scro = do
         , field_debugFlags = def
         , field_overview   = mempty
         , field_config     = def
+        , field_wires      = def
         }
 

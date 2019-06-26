@@ -20,8 +20,9 @@ data EntityStatus
    deriving (Eq, Ord)
 
 data Stats = Stats
-   { field_attack  :: AttackPower
-   , field_defence :: Defence
+   { field_attack    :: AttackPower
+   , field_defence   :: Defence
+   , field_maxHealth :: Health
    } deriving (Generic)
 
 instance Default  Stats
@@ -72,7 +73,7 @@ newtype Velocity = Velocity { unVelocity :: V2D    }
     deriving (Generic, Default, Show, Num)
 
 newtype Health   = Health   { unHealth   :: Int    }
-    deriving (Generic, Default, Show, ToJSON, FromJSON)
+    deriving (Generic, Default, Show, ToJSON, FromJSON, Eq, Ord, Num)
 
 newtype AttackPower = AttackPower { unAttackPower :: Int    }
     deriving (Generic, Default, Show, ToJSON, FromJSON, Eq, Ord, Num)

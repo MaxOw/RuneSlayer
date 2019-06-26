@@ -26,14 +26,16 @@ actOn x a = x & case a of
     EntityAction_SetValue         v -> handleSetValue v
     _ -> id
     where
-    handleSetValue v _ = case v of
-        EntityValue_Location  l -> x & location .~ l & isActive .~ True
-        EntityValue_Direction _ -> x
+    handleSetValue ev _ = case ev of
+        EntityValue_Location     v -> x & location .~ v
+        EntityValue_Direction    _ -> x
+        EntityValue_Animation    _ -> x
+        EntityValue_CenterOffset _ -> x
 
 update :: Unit -> EntityContext -> Q (Maybe Unit, [DirectedAction])
-update x ctx = runUpdate x ctx $ whenActive $ do
+update x ctx = runUpdate x ctx $ do
     decideAction
-    updateAnimationState
+    updateActiveAnimation
     updateTimer
     integrateLocation
     anyMatch _EntityAction_SelfAttacked procAttacked
@@ -95,7 +97,8 @@ procAttacked as = do
         mco <- use $ self.unitType.corpse
         dir <- use $ self.animationState.current.direction
         whenJust mco $ \c ->
-            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Item c)
+            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Item c) $ def
+                & actions .~
                 [ EntityAction_SetValue $ EntityValue_Location  loc
                 , EntityAction_SetValue $ EntityValue_Direction dir
                 ]
@@ -128,7 +131,7 @@ unitToEntity = makeEntity $ EntityParts
    , makeRender = render
    , makeOracle = oracle
    , makeSave   = Just . EntitySum_Unit
-   , makeKind   = EntityKind_Dynamic
+   , makeKind   = const EntityKind_Dynamic
    }
 
 --------------------------------------------------------------------------------

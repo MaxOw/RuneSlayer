@@ -71,6 +71,6 @@ data EntityParts p = EntityParts
    , makeRender :: p -> RenderContext -> RenderAction
    , makeOracle :: p -> forall a. EntityQuery a -> Maybe a
    , makeSave   :: p -> Maybe EntitySum
-   , makeKind   :: EntityKind
+   , makeKind   :: p -> EntityKind
    }
 

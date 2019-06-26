@@ -186,10 +186,9 @@ testInitialActions = map directAtWorld
     , mkUnit "Spider"         (-9)   6.3
     ]
     where
+    mkItem n x y = WorldAction_SpawnEntity (SpawnEntity_Item $ ItemTypeName n) $ def
+        & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
 
-    mkItem n x y = WorldAction_SpawnEntity (SpawnEntity_Item $ ItemTypeName n)
-        [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
-
-    mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Unit $ UnitTypeName n)
-        [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
+    mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Unit $ UnitTypeName n) $ def
+        & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
 

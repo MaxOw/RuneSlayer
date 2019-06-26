@@ -5,6 +5,7 @@ module GameState
     , actOnEntity
     , actOnFocusedEntity
     , actOnPlayer
+    , getGameOverScreen
 
     , isDebugFlagOn
     , pickupItem, dropItem
@@ -14,10 +15,10 @@ import Delude
 import qualified Data.Set as Set
 import qualified Data.HashMap.Strict as HashMap
 
-import Engine (userState)
-import Types (Game)
+import Engine (EngineState, userState)
+import Types (Game, GameWire(..), St)
 import Types.Entity (Entity)
-import Types.Entity.Common (EntityId)
+import Types.Entity.Common (EntityId, defaultDelta)
 import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
@@ -52,9 +53,10 @@ updateGameState = do
     where
     gs l = userState.gameState.l
 
-handleWorldAction :: WorldAction -> Game (Maybe (Entity, [EntityAction]))
+handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case
-    WorldAction_SpawnEntity s as -> fmap (,as) <$> spawnEntity s
+    WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
+    WorldAction_GameOver -> startGameOver >> return Nothing
     where
     spawnEntity = \case
         SpawnEntity_Item       n -> spawnItem n
@@ -64,8 +66,9 @@ handleWorldAction = \case
 
     spawnItem n = do
         mit <- lookupItemType n
+        rs  <- use $ userState.resources
         flip (maybe (pure Nothing)) mit $ \it -> do
-            let e = toEntity $ makeItem it
+            let e = toEntity $ makeItem rs it
             return $ Just e
 
     spawnUnit n = do
@@ -79,6 +82,24 @@ handleWorldAction = \case
         return $ Just $ toEntity $ makeEffect s & location .~ l
 
     spawnProjectile = return . Just . toEntity
+
+startGameOver :: Game ()
+startGameOver = do
+    screen .= Just def
+    userState.ff#wires %= (gameOverWire:)
+    where
+    gameOverWire = GameWire $ use screen >>= \case
+        Nothing -> return Nothing
+        Just sc -> if sc^.timer >= 1
+            then do
+                screen.traverse.ff#pressAnyKey .= True
+                return Nothing
+            else do
+                screen.traverse.timer += (defaultDelta / 2)
+                return (Just gameOverWire)
+
+    screen :: Lens' (EngineState St) (Maybe GameOverScreen)
+    screen = userState.gameState.ff#gameOverScreen
 
 lookupItemType :: ItemTypeName -> Game (Maybe ItemType)
 lookupItemType n = do
@@ -101,6 +122,9 @@ actOnFocusedEntity act = withFocusId $ \fi -> actOnEntity fi act
 
 actOnPlayer :: PlayerAction -> Game ()
 actOnPlayer = actOnFocusedEntity . EntityAction_PlayerAction
+
+getGameOverScreen :: Game (Maybe GameOverScreen)
+getGameOverScreen = use $ userState.gameState.ff#gameOverScreen
 
 --------------------------------------------------------------------------------
 

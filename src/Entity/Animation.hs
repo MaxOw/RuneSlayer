@@ -4,8 +4,8 @@ module Entity.Animation
     , AnimationProgression (..)
     , direction, kind, era
 
-    , makeAnimation
     , renderAnimation
+    , makeAnimation, makeStaticAnimation
 
     , vecToDir
     , defaultTransition
@@ -31,6 +31,9 @@ makeAnimation :: Resources -> AnimationDesc -> Animation
 makeAnimation rs desc = case desc of
    CustomAnimation    ps -> makeCustomAnimation    rs ps
    CharacterAnimation sd -> makeCharacterAnimation rs sd
+
+makeStaticAnimation :: RenderAction -> Animation
+makeStaticAnimation = Animation . const
 
 makeCustomAnimation
     :: Resources -> [AnimationPart] -> Animation
@@ -84,32 +87,39 @@ vecToDir v defDir
 
 kindFrameCount :: Num a => AnimationKind -> a
 kindFrameCount = \case
-    Cast      -> 7
-    Thrust    -> 8
-    Walk      -> 9
-    Slash     -> 6
-    Fire      -> 11
+    Cast      -> 8
+    Thrust    -> 9
+    Walk      -> 10
+    Slash     -> 7
+    Fire      -> 12
     Die       -> 6
 
 eraToFrame :: (HasKind a AnimationKind, HasEra a Float) => a -> Int
-eraToFrame a = floor $ (kindFrameCount $ a^.kind) * (a^.era)
+eraToFrame a = floor $ (kindFrameCount (a^.kind) - 1) * (a^.era)
 
 defaultTransition :: AnimationProgression
-defaultTransition = TransitionInto Walk Stopped
+defaultTransition = TransitionInto Walk (Stopped 0)
 
+-- This is an absolute mess and should be rewritten by a sane person in the
+-- future.
 update :: Duration -> AnimationState -> AnimationState
 update (Duration delta) a
-    | newEra >= 1 = progressKind (a^.progression) $ a & current.era .~ newEra-1
+    | newEra > 1  = progressKind (a^.progression) a
     | otherwise   = a & current.era .~ newEra
     where
     d = a^.current.direction
     dirSpeed = if d == North || d == South then 1.6 else 1.2
     eraChange = a^.speed * delta * dirSpeed
-    newEra
-        | a^.progression == Stopped = 0
-        | otherwise = a^.current.era + eraChange
+    newEra = case a^.progression of
+        Stopped ev -> ev
+        _          -> a^.current.era + eraChange
     progressKind = \case
-        Stopped -> id
-        Cycle   -> id
-        TransitionInto k p -> set (current.kind) k . set progression p
+        Stopped ev -> set (current.era) ev
+        Cycle      -> set (current.era) (newEra-1)
+        TransitionInto k p ->
+            set (current.era) (finish p $ newEra-1) .
+            set (current.kind) k .
+            set progression p
+    finish (Stopped k) _ = k
+    finish _           v = v
 

@@ -40,7 +40,7 @@ Requirements for first release: v0.1
   - Add use item action. (Health potion)                                     (#)
   - Add items stats.                                                         (#)
 
-* Player health & dying.                                                     [ ]
+* Player health & dying.                                                     [X]
 * Make effects an entity.                                                    [X]
 * Add action delays.                                                         [X]
 

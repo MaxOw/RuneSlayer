@@ -42,6 +42,7 @@ data ItemType = ItemType
    , field_weaponKind    :: Maybe WeaponKind
    , field_stats         :: Stats
    , field_appearance    :: Appearance
+   -- Animation when equipped, TODO: rename it as such.
    , field_animation     :: Maybe AnimationName
    , field_fittingSlots  :: Set EquipmentSlot
    , field_containerType :: Maybe ContainerType
@@ -64,6 +65,9 @@ data Item = Item
    , field_content         :: [EntityId]
    , field_contentVolume   :: Volume
    , field_direction       :: Maybe Direction
+   , field_animationState  :: AnimationState
+   , field_animation       :: Animation
+   , field_centerOffset    :: V2D -- This is such a ducktape...
    } deriving (Generic)
 
 --------------------------------------------------------------------------------

@@ -11,9 +11,10 @@ Executable RuneSlayer
   ghc-options      :
     -O2
     -rtsopts
-    -with-rtsopts=-G3
-    -- -threaded
+    -threaded
+    "-with-rtsopts=-G3 -N -qg1"
     -- -with-rtsopts=-N4
+    -- -with-rtsopts=-qg
     -Wall
     -fdiagnostics-color=always
     -fno-warn-missing-home-modules

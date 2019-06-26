@@ -61,7 +61,7 @@ projectileToEntity = makeEntity $ EntityParts
    , makeRender = render
    , makeOracle = oracle
    , makeSave   = const Nothing -- Just . EntitySum_Projectile
-   , makeKind   = EntityKind_Dynamic
+   , makeKind   = const EntityKind_Dynamic
    }
 
 --------------------------------------------------------------------------------

@@ -1,4 +1,7 @@
-let makeImgsPath = λ(x : Text) → "data/imgs/${x}.png"
+let types = ./Types.dhall
+let makePath = types.Path.MakePath
+
+let makeImgsPath = λ(x : Text) → makePath "data/imgs/${x}.png"
 let makeCharPath = λ(x : Text) → makeImgsPath "characters/${x}"
 let makeUnitPath = λ(x : Text) → makeImgsPath "units/${x}"
 let makeTileSetPath = λ(x : Text) → makeImgsPath "tilesets/twosided/${x}"

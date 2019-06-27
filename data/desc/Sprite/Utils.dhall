@@ -1,6 +1,7 @@
 let types = ../Types.dhall
 let paths = ../ResourcePaths.dhall
 
+let Path   = types.Path
 let Rect   = types.Rect
 let Sprite = types.Sprite
 
@@ -19,7 +20,7 @@ let makeRect =
     { offset = [ x*g, y*g ], size = [ w*g, h*g ] }
 
 let makeSprite =
-  λ(path : Text) →
+  λ(path : Path) →
     { path = path, pixelsPerUnit = Some 32, part = None Rect }
 
 let selectSpritePart =

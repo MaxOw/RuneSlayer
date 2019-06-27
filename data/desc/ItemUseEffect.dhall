@@ -1,9 +1,10 @@
 let types = ./Types.dhall
 
 let ItemUseEffect = types.ItemUseEffect
+let ItemTypeName  = types.ItemTypeName
 
 let transformInto =
-  λ(x : Text) →
+  λ(x : ItemTypeName) →
     ItemUseEffect.TransformInto { TransformInto = x }
 
 let heal =

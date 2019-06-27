@@ -4,12 +4,15 @@ let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
 let useEffect  = ./ItemUseEffect.dhall
 
+let ItemTypeName  = types.ItemTypeName
 let ItemUseEffect = types.ItemUseEffect
 let Sprite        = types.Sprite
 let ContainerType = types.ContainerType
 let ItemKind      = enums.ItemKind
 let WeaponKind    = enums.WeaponKind
 let EquipmentSlot = enums.EquipmentSlot
+
+let makeName = ItemTypeName.MakeName
 
 let defaultStats =
   { attack    = 0
@@ -18,10 +21,10 @@ let defaultStats =
   }
 
 let defaultItemType =
-  { itemKind      = [] : List Text
-  , weaponKind    = None Text
+  { itemKind      = [] : List ItemKind
+  , weaponKind    = None WeaponKind
   , appearance    = appearance.empty
-  , fittingSlots  = [] : List Text
+  , fittingSlots  = [] : List EquipmentSlot
   , containerType = None ContainerType
   , stats         = defaultStats
   , useEffects    = [] : List ItemUseEffect
@@ -32,14 +35,14 @@ let makeCorpse =
   λ(volume : Natural) →
   λ(sprite : Sprite) →
     defaultItemType //
-      { name       = "Corpse of a ${name}"
+      { name       = makeName "Corpse of a ${name}"
       , volume     = volume
       , itemKind   = [ ItemKind.BigItem ]
       , appearance = appearance.simple sprite
       }
 
 let helmet = defaultItemType //
-  { name          = "Helmet"
+  { name          = makeName "Helmet"
   , volume        = 1.5
   , itemKind      = [ ItemKind.BigItem ]
   , appearance    = appearance.simple sprites.helmet
@@ -49,7 +52,7 @@ let helmet = defaultItemType //
   }
 
 let dagger = defaultItemType //
-  { name         = "Dagger"
+  { name         = makeName "Dagger"
   , volume       = 0.3
   , itemKind     = [ ItemKind.SmallItem ]
   , weaponKind   = Some WeaponKind.Slashing
@@ -60,7 +63,7 @@ let dagger = defaultItemType //
   }
 
 let spear = defaultItemType //
-  { name         = "Spear"
+  { name         = makeName "Spear"
   , volume       = 0.5
   , itemKind     = [ ItemKind.BigItem ]
   , weaponKind   = Some WeaponKind.Thrusting
@@ -71,7 +74,7 @@ let spear = defaultItemType //
   }
 
 let bow = defaultItemType //
-  { name         = "Bow"
+  { name         = makeName "Bow"
   , volume       = 0.5
   , itemKind     = [ ItemKind.BigItem ]
   , weaponKind   = Some WeaponKind.Projecting
@@ -82,7 +85,7 @@ let bow = defaultItemType //
   }
 
 let arrow = defaultItemType //
-  { name         = "Arrow"
+  { name         = makeName "Arrow"
   , volume       = 1
   , itemKind     = [ ItemKind.Projectile, ItemKind.Arrow ]
   , appearance   = appearance.simple sprites.arrow
@@ -92,7 +95,7 @@ let arrow = defaultItemType //
   }
 
 let quiver = defaultItemType //
-  { name         = "Quiver"
+  { name         = makeName "Quiver"
   , volume       = 10
   , itemKind     = [ ItemKind.Container ]
   , appearance   = appearance.simple sprites.quiver
@@ -106,14 +109,14 @@ let quiver = defaultItemType //
   }
 
 let emptyFlask = defaultItemType //
-  { name       = "Empty Flask"
+  { name       = makeName "Empty Flask"
   , volume     = 0.1
   , itemKind   = [ ItemKind.SmallItem ]
   , appearance = appearance.simple sprites.emptyFlask
   }
 
 let healthPotion = defaultItemType //
-  { name       = "Health Potion"
+  { name       = makeName "Health Potion"
   , volume     = 0.1
   , itemKind   = [ ItemKind.SmallItem ]
   , appearance = appearance.simple sprites.healthPotion
@@ -121,7 +124,7 @@ let healthPotion = defaultItemType //
   }
 
 let bag = defaultItemType //
-  { name          = "Bag"
+  { name          = makeName "Bag"
   , volume        = 15
   , itemKind      = [ ItemKind.Container ]
   , appearance    = appearance.simple sprites.bag
@@ -134,7 +137,7 @@ let bag = defaultItemType //
   }
 
 let humanCorpse = defaultItemType //
-  { name          = "Human Corpse"
+  { name          = makeName "Human Corpse"
   , volume        = 70
   , itemKind      = [ ItemKind.BigItem ]
   }

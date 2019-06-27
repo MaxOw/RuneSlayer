@@ -1,10 +1,13 @@
 let paths   = ./ResourcePaths.dhall
+let types   = ./Types.dhall
 let utils   = ./Sprite/Utils.dhall
+
+let Path = types.Path
 
 let makeTileSet =
   λ(i : Natural) →
   λ(n : Text) →
-  λ(p : Text) →
+  λ(p : Path) →
     { name = n
     , color = None Text
     , desc = { Standard = utils.makeSprite p }

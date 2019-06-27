@@ -1,53 +1,53 @@
-let WeaponKind =
-  { Slashing   = "Slashing"
-  , Thrusting  = "Thrusting"
-  , Projecting = "Projecting"
-  }
-
 let ItemKind =
-  { Container  = "Container"
-  , SmallItem  = "SmallItem"
-  , BigItem    = "BigItem"
-  , Projectile = "Projectile"
-  , Arrow      = "Arrow"
-  }
+  < Container
+  | SmallItem
+  | BigItem
+  | Projectile
+  | Arrow
+  >
+
+let WeaponKind =
+  < Slashing
+  | Thrusting
+  | Projecting
+  >
 
 let EquipmentSlot =
-   { Backpack      = "Backpack"
-   , Quiver        = "Quiver"
-   , Belt          = "Belt"
-   , Head          = "Head"
-   , Torso         = "Torso"
-   , Hands         = "Hands"
-   , Legs          = "Legs"
-   , Feet          = "Feet"
-   , PrimaryWeapon = "PrimaryWeapon"
-   , PrimaryOther  = "PrimaryOther"
-   }
+  < Backpack
+  | Quiver
+  | Belt
+  | Head
+  | Torso
+  | Hands
+  | Legs
+  | Feet
+  | PrimaryWeapon
+  | PrimaryOther
+  >
 
 let Direction =
-   { North = "North"
-   , West  = "West"
-   , South = "South"
-   , East  = "East"
-   }
+  < North
+  | West
+  | South
+  | East
+  >
 
 let AnimationKind =
-   { Cast   = "Cast"
-   , Thrust = "Thrust"
-   , Walk   = "Walk"
-   , Slash  = "Slash"
-   , Fire   = "Fire"
-   , Die    = "Die"
-   }
+  < Cast
+  | Thrust
+  | Walk
+  | Slash
+  | Fire
+  | Die
+  >
 
 let Reactivity =
-   { Shadow = "Shadow"
-   , Light  = "Light"
-   , Poison = "Poison"
-   , Blood  = "Blood"
-   , Life   = "Life"
-   }
+  < Shadow
+  | Light
+  | Poison
+  | Blood
+  | Life
+  >
 
 in
 { ItemKind      = ItemKind

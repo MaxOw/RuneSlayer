@@ -1,6 +1,12 @@
+let enums = ./Enums.dhall
+let Direction     = enums.Direction
+let AnimationKind = enums.AnimationKind
+
+let Path = < MakePath : Text >
+
 let Rect   = { offset : List Natural, size : List Natural }
 let Sprite =
-  { path : Text
+  { path : Path
   , part : Optional Rect
   , pixelsPerUnit : Optional Natural
   }
@@ -21,22 +27,29 @@ let Frame =
   }
 
 let AnimationPart =
-  { direction : Optional Text
-  , kind      : Optional Text
+  { direction : Optional Direction
+  , kind      : Optional AnimationKind
   , frames    : List Frame
   }
 
+let ItemTypeName = < MakeName : Text >
+
 let ItemUseEffect =
-  < TransformInto : { TransformInto : Text }
+  < TransformInto : { TransformInto : ItemTypeName }
   | Heal          : { Heal          : Natural }
   >
 
+let StaticTypeName = < MakeName : Text >
+
 in
-{ Rect          = Rect
-, Sprite        = Sprite
-, LocatedSprite = LocatedSprite
-, ContainerType = ContainerType
-, Frame         = Frame
-, AnimationPart = AnimationPart
-, ItemUseEffect = ItemUseEffect
+{ Path           = Path
+, Rect           = Rect
+, Sprite         = Sprite
+, LocatedSprite  = LocatedSprite
+, ContainerType  = ContainerType
+, Frame          = Frame
+, AnimationPart  = AnimationPart
+, ItemTypeName   = ItemTypeName
+, ItemUseEffect  = ItemUseEffect
+, StaticTypeName = StaticTypeName
 }

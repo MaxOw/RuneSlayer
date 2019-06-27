@@ -80,11 +80,11 @@ Executable RuneSlayer
                 , Noise
 
                 , aeson
-                , dhall
+                , dhall == 1.24.0
                 , dhall-json
 
                 , linear
-                , Carnot == 0.1.18.9
+                , Carnot == 0.1.18.10
                 , gl
                 , colour
                 , palette

@@ -5,11 +5,12 @@ let utils   = ./Sprite/Utils.dhall
 let types   = ./Types.dhall
 let enums   = ./Enums.dhall
 
-let map       = Prelude.`List`.map
-let indexed   = Prelude.`List`.indexed
-let concat    = Prelude.`List`.concat
-let enumerate = Prelude.`Natural`.enumerate
+let map       = Prelude.List.map
+let indexed   = Prelude.List.indexed
+let concat    = Prelude.List.concat
+let enumerate = Prelude.Natural.enumerate
 
+let Path          = types.Path
 let Sprite        = types.Sprite
 let Frame         = types.Frame
 let AnimationPart = types.AnimationPart
@@ -17,8 +18,8 @@ let AnimationPart = types.AnimationPart
 let Direction     = enums.Direction
 let AnimationKind = enums.AnimationKind
 
-let Any = None Text
-let makeCharAnimation = λ(p : Text) →
+let Any = None
+let makeCharAnimation = λ(p : Path) →
   { CharacterAnimation = utils.makeSprite p }
 
 let selectSpritePart = utils.selectSpritePart
@@ -39,8 +40,8 @@ let makeFrame =
 let simpleCustomAnimation =
   λ(frames : List Frame) →
     { CustomAnimation =
-      [ { direction = Any
-        , kind      = Any
+      [ { direction = Any Direction
+        , kind      = Any AnimationKind
         , frames    = frames
         }
       ]
@@ -49,20 +50,20 @@ let simpleCustomAnimation =
 let Indexed = λ(a : Type) → { index : Natural, value : a }
 
 let overEachDirection =
-  λ(f : (Indexed Text → AnimationPart)) →
-    map (Indexed Text) AnimationPart f
-      (indexed Text
+  λ(f : (Indexed Direction → AnimationPart)) →
+    map (Indexed Direction) AnimationPart f
+      (indexed Direction
         [Direction.North, Direction.West, Direction.South, Direction.East]
       )
 
 let makeParts =
-  λ(kind : Optional Text) →
+  λ(kind : Optional AnimationKind) →
   λ(s : Natural) →
   λ(x : Natural) →
   λ(y : Natural) →
   λ(n : Natural) →
   λ(sprite : Sprite) →
-    overEachDirection (λ(i : Indexed Text) →
+    overEachDirection (λ(i : Indexed Direction) →
       { direction = Some (i.value)
       , kind      = kind
       , frames    = map Natural Frame
@@ -72,7 +73,7 @@ let makeParts =
     )
 
 let makeSpiderAnimation =
-  λ(p : Text) →
+  λ(p : Path) →
     { CustomAnimation = concat AnimationPart
       [ makeParts (Some AnimationKind.Walk)  64 4 0 6 (utils.makeSprite p)
       , makeParts (Some AnimationKind.Slash) 64 0 0 4 (utils.makeSprite p)

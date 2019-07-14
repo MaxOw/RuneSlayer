@@ -6,7 +6,7 @@ import Dhall
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
 import Dhall.Parser (Src)
-import Dhall.JSON (dhallToJSON)
+import Dhall.JSON
 import Data.Aeson
 
 --------------------------------------------------------------------------------
@@ -21,10 +21,15 @@ inputExprFromFile rdir fpath = inputExprWithSettings opts
         & rootDirectory .~ prdr
         & sourceName    .~ full
 
+dhallToJSONConv :: Expr s X -> Either CompileError Value
+dhallToJSONConv expr = dhallToJSON (convertToHomogeneousMaps conv expr)
+    where
+    conv = Conversion "mapKey" "mapValue"
+
 dhallToMap :: FromJSON x => FilePath -> FilePath -> IO (HashMap Text x)
 dhallToMap rdir fpath = do
     expr <- inputExprFromFile rdir fpath
-    case dhallToJSON expr of
+    case dhallToJSONConv expr of
         Left err -> error (show err)
         Right vl -> case fromJSON vl of
             Error err -> error $ toText (fpath <> ": " <> err)
@@ -33,7 +38,7 @@ dhallToMap rdir fpath = do
 loadDhall :: (MonadIO m, FromJSON x, Default x) => FilePath -> FilePath -> m x
 loadDhall rdir fpath = liftIO $ do
     expr <- inputExprFromFile rdir fpath
-    case dhallToJSON expr of
+    case dhallToJSONConv expr of
         Left err -> error (show err)
         Right vl -> case fromJSON vl of
             Error err -> error (toText err)

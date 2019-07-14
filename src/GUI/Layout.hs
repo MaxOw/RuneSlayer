@@ -43,6 +43,18 @@ layout_healthStatus s
 
 --------------------------------------------------------------------------------
 
+layout_actionsMenu :: [ActionHintDesc] -> Layout
+layout_actionsMenu ls = vrel hintLines
+    & align .~ MiddleLeft
+    & padding.each .~ basePadding
+    where
+    hintLines = zip (repeat $ 20 @@ px) (map toLine ls)
+    toLine l = textline fs (l^.ff#actionHint <> " " <> l^.ff#actionName)
+        & align .~ BottomLeft
+    fs = makeFs 12 warningColor
+
+--------------------------------------------------------------------------------
+
 layout_gameOverScreen :: GameOverScreen -> Layout
 layout_gameOverScreen gs = vrel
     [ (80 @@ px, text_youDied)

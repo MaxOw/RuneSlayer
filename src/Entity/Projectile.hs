@@ -32,8 +32,9 @@ update x ctx = runUpdate x ctx $ do
 
 doDemage :: EntityWithId -> Update Projectile ()
 doDemage eid = do
-    p <- use (self.attackPower)
-    addAction eid $ EntityAction_SelfAttacked p
+    ap <- use $ self.attackPower
+    pt <- use $ self.passiveType.ff#stats.ff#attack
+    addAction eid $ EntityAction_SelfAttacked (ap + pt)
     deleteSelf .= True
 
 getEffectiveDistance :: Update Projectile Distance
@@ -42,14 +43,14 @@ getEffectiveDistance = return $ Distance 1
 render :: Projectile -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ correctHeight
     $ T.rotate velocityAngle
-    $ renderAppearance ctx $ x^.itemType.appearance
+    $ renderAppearance ctx $ x^.passiveType.appearance
     where
     velocityAngle = view _theta $ T.direction (x^.velocity._Wrapped)
 
 oracle :: Projectile -> EntityQuery a -> Maybe a
 oracle x = \case
     EntityQuery_Location      -> Just $ x^.location
-    EntityQuery_Name          -> Just $ x^.itemType.name._Wrapped
+    EntityQuery_Name          -> Just $ x^.passiveType.name._Wrapped
     _                         -> Nothing
 
 --------------------------------------------------------------------------------

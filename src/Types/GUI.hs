@@ -24,6 +24,14 @@ instance Default HealthStatusDesc
 
 --------------------------------------------------------------------------------
 
+data ActionHintDesc = ActionHintDesc
+   { field_actionName :: Text
+   , field_actionHint :: Text
+   } deriving (Generic)
+instance Default ActionHintDesc
+
+--------------------------------------------------------------------------------
+
 data SlotDesc = SlotDesc
    { field_percent :: Float
    } deriving (Generic)

@@ -5,6 +5,7 @@ import Delude
 import qualified Prelude
 import Types.Entity.Common
 import Types.Entity.Animation (AnimationKind, Direction, Animation)
+import Types.Equipment (EquipmentSlot)
 
 --------------------------------------------------------------------------------
 
@@ -29,6 +30,21 @@ data PlayerAction
    | PlayerAction_SetAttackMode AttackMode
    deriving (Show)
 
+newtype UseActionName = UseActionName { unUseActionName :: Text }
+    deriving (Show, Eq, Ord, Generic, ToJSON, FromJSON, ToJSONKey, FromJSONKey)
+
+data UseAction
+   = UseAction_Open
+   | UseAction_InspectContents
+   | UseAction_Close
+   deriving (Eq, Ord, Show, Generic)
+instance ToJSON UseAction where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON UseAction where
+    parseJSON = genericParseJSON customOptionsJSON
+instance ToJSONKey   UseAction where toJSONKey   = defaultToJSONKey
+instance FromJSONKey UseAction where fromJSONKey = defaultFromJSONKey
+
 data EntityValue
    = EntityValue_Location  Location
    | EntityValue_Direction Direction
@@ -46,22 +62,18 @@ data EntityAction
    | EntityAction_SetValue EntityValue
    | EntityAction_ToggleDebug EntityDebugFlag
    | EntityAction_RunAnimation AnimationKind
-   -- tell entity that it was picked up by [EntityId]
-   | EntityAction_SelfAddedBy EntityId
-   -- tell entity that it was passed to [EntityId]
-   | EntityAction_SelfPassedTo EntityId
-   -- tell entity that it should add [EntityId] to inventory
-   | EntityAction_AddItem EntityId
-   -- tell entity that it got dropped at [Location]
-   | EntityAction_SelfDroppedAt Location
-   -- tell entity to drop all items
-   | EntityAction_DropAllItems
-   -- tell entity to drop selected [EntityId]
-   | EntityAction_DropItem EntityId
-   -- tell entity to that it's child container wants to drop selected [EntityId]
-   | EntityAction_OwnerDropItem EntityId
-   -- tell entity to pass item [EntityId] to [EntityId]
-   | EntityAction_PassItem EntityId EntityId
+
+-- Item ownership/moving/dropping actions
+--------------------------------------------------------------------------------
+   -- tell entity to add item [EntityId] (possibly at a specified slot)
+   | EntityAction_AddItem    EntityId (Maybe EquipmentSlot)
+   -- tell entity to remove [EntityId] from its content
+   | EntityAction_RemoveItem EntityId
+   -- tell entity to pass self to
+   -- target: Nothing = Drop, slot: Nothing = Wherever
+   | EntityAction_SelfPassTo (Maybe EntityId) (Maybe EquipmentSlot)
+--------------------------------------------------------------------------------
+
    -- tell entity to use item from inventory with [EntityId]
    | EntityAction_UseItem EntityId
    -- tell entity to mark itself as targeted by player
@@ -76,10 +88,10 @@ data EntityAction
    | EntityAction_PlayerAction PlayerAction
    -- tell entity to fire self as a projectile at target
    | EntityAction_SelfFiredAsProjectile Location V2D EntityId AttackPower
-   -- tell entity to use self on provided target [EntityId]
-   | EntityAction_SelfUseOn EntityId
    -- tell entity to heal self
    | EntityAction_SelfHeal Health
+   -- tell entity to perform given [UseActionName] at [EntityId]
+   | EntityAction_UseAction UseActionName EntityId
    deriving (Show)
 makePrisms ''EntityAction
 

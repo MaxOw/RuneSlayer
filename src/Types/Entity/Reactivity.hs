@@ -1,9 +1,6 @@
 module Types.Entity.Reactivity where
 
 import Delude
-import Data.Aeson (ToJSONKey(..), FromJSONKey(..))
-import qualified Data.Aeson as Aeson
-import qualified Data.Aeson.Encoding as Aeson
 
 --------------------------------------------------------------------------------
 
@@ -29,11 +26,8 @@ instance ToJSON   ReactivCategory where
     toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON ReactivCategory where
     parseJSON  = genericParseJSON  customOptionsJSON
-instance ToJSONKey   ReactivCategory where
-    toJSONKey = Aeson.ToJSONKeyText f (Aeson.text . f)
-        where f = decodeUtf8 . Aeson.encode
-instance FromJSONKey ReactivCategory where
-    fromJSONKey = Aeson.FromJSONKeyTextParser (parseJSON . Aeson.String)
+instance ToJSONKey   ReactivCategory where toJSONKey   = defaultToJSONKey
+instance FromJSONKey ReactivCategory where fromJSONKey = defaultFromJSONKey
 
 instance ToJSON   Reactivity where
     toEncoding = genericToEncoding customOptionsJSON

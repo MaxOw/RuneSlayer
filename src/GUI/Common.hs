@@ -42,7 +42,10 @@ menuBox opts cont = layoutBox desc [ simpleLineupV ins ]
         & padding.each        .~ basePadding
 
 withTitle :: Text -> Layout -> Layout
-withTitle t lay = simpleLineupV [ tit, lay ]
+withTitle t = withTitleAndHint t Nothing
+
+withTitleAndHint :: Text -> Maybe Text -> Layout -> Layout
+withTitleAndHint t mh lay = simpleLineupV [ tit, lay ]
     where
     tit = layoutBox boxDesc [ simpleText t ]
     boxDesc = def

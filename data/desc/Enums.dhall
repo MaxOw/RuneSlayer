@@ -1,9 +1,10 @@
-let ItemKind =
+let PassiveKind =
   < Container
   | SmallItem
   | BigItem
   | Projectile
   | Arrow
+  | Item
   >
 
 let WeaponKind =
@@ -14,7 +15,6 @@ let WeaponKind =
 
 let EquipmentSlot =
   < Backpack
-  | Quiver
   | Belt
   | Head
   | Torso
@@ -50,7 +50,7 @@ let Reactivity =
   >
 
 in
-{ ItemKind      = ItemKind
+{ PassiveKind   = PassiveKind
 , WeaponKind    = WeaponKind
 , EquipmentSlot = EquipmentSlot
 , Direction     = Direction

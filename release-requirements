@@ -57,6 +57,19 @@ Requirements for first release: v0.1
   - Perlin noise based landmass generator.                                   (#)
   - Add random tile variants.                                                (#)
 
+* Merge Item & Static into one Passive Entity type.                          [X]
+* Merge Unit & Player into one (Active/Actor/Agent/Unit?) Entity type.       [ ]
+  -- The name Agent seems optimal since it should group entities that
+  -- have individual (not necessary artificial) agency.
+
+* Static Entities.                                                           [ ]
+  - Trees.                                                                   (#)
+  - Chest.                                                                   (#)
+  - Cottage parts.                                                           ( )
+  - Building set.                                                            ( )
+  - Floor-plan to building map. (via building set)                           ( )
+  - Floor-plan generator. [v0.2?]                                            ( )
+
 * Initial village.                                                           [ ]
 * Initial island.                                                            [ ]
 

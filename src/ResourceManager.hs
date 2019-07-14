@@ -5,7 +5,7 @@ module ResourceManager
     , lookupSprite
     , lookupAnimation
     , lookupTileSet
-    , lookupStaticEntity
+    , lookupPassive
 
     , renderSprite
     ) where
@@ -16,7 +16,7 @@ import qualified Diagrams.TwoD.Transform as T
 import Types.ResourceManager
 import Types.Entity.Animation
 import Types.Entity.TileSet   (TileSetName, TileSet)
-import Types.Entity.StaticEntity
+import Types.Entity.Passive
 import qualified Data.HashMap.Strict as HashMap
 
 lookupImg :: FilePath -> Resources -> Maybe Img
@@ -33,8 +33,8 @@ lookupAnimation x = HashMap.lookup x . view animationsMap
 lookupTileSet :: TileSetName -> Resources -> Maybe TileSet
 lookupTileSet x = HashMap.lookup x . view tileSetMap
 
-lookupStaticEntity :: StaticEntityTypeName -> Resources -> Maybe StaticEntityType
-lookupStaticEntity x = HashMap.lookup x . view staticMap
+lookupPassive :: PassiveTypeName -> Resources -> Maybe PassiveType
+lookupPassive x = HashMap.lookup x . view (ff#passiveMap)
 
 renderSprite :: Resources -> SpriteDesc -> RenderAction
 renderSprite rs s = case lookupSprite s rs of

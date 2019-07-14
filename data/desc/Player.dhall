@@ -1,5 +1,5 @@
 let constants = ./Constants.dhall
-let items      = ./ItemTypes.dhall
+let passives  = ./PassiveTypes.dhall
 
 let defaultBody =
   [ "maleBodyLight"
@@ -13,7 +13,7 @@ in
 , reactivity  = { Life = 0.1 }
 , attackRange = 2.0
 , maxSpeed    = constants.fastWalkingSpeed
-, corpse      = items.humanCorpse.name
+, corpse      = passives.humanCorpse.name
 , stats       =
   { attack    = 1
   , defence   = 1

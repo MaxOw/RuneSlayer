@@ -32,24 +32,23 @@ let AnimationPart =
   , frames    : List Frame
   }
 
-let ItemTypeName = < MakeName : Text >
+let PassiveTypeName = < MakeName : Text >
 
-let ItemUseEffect =
-  < TransformInto : { TransformInto : ItemTypeName }
-  | Heal          : { Heal          : Natural }
+let UseActionEffect =
+  < TransformInto  : { TransformInto  : PassiveTypeName }
+  | InspectContent : { InspectContent : List {} }
+  | DeleteSelf     : { DeleteSelf     : List {} }
+  | Heal           : { Heal           : Natural }
   >
 
-let StaticTypeName = < MakeName : Text >
-
 in
-{ Path           = Path
-, Rect           = Rect
-, Sprite         = Sprite
-, LocatedSprite  = LocatedSprite
-, ContainerType  = ContainerType
-, Frame          = Frame
-, AnimationPart  = AnimationPart
-, ItemTypeName   = ItemTypeName
-, ItemUseEffect  = ItemUseEffect
-, StaticTypeName = StaticTypeName
+{ Path            = Path
+, Rect            = Rect
+, Sprite          = Sprite
+, LocatedSprite   = LocatedSprite
+, ContainerType   = ContainerType
+, Frame           = Frame
+, AnimationPart   = AnimationPart
+, PassiveTypeName = PassiveTypeName
+, UseActionEffect = UseActionEffect
 }

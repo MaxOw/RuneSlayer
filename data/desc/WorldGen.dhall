@@ -1,5 +1,5 @@
 let tilesets = ./TileSets.dhall
-let statics  = ./StaticTypes.dhall
+let statics  = ./PassiveTypes.dhall
 
 let grassLayer =
   { tileset = tilesets.grass.name

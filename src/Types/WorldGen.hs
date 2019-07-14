@@ -4,13 +4,13 @@ import Delude
 import Engine.Common.Types (Size)
 import Types.Entity (Entity)
 import Types.Entity.TileSet (TileSetName)
-import Types.Entity.StaticEntity (StaticEntityTypeName)
+import Types.Entity.Passive (PassiveTypeName)
 import Data.Vector (Vector)
 import Codec.Picture (DynamicImage)
 
 data CoveringLayer = CoveringLayer
    { field_tileset :: TileSetName
-   , field_statics :: [ StaticEntityTypeName ]
+   , field_statics :: [ PassiveTypeName ]
    } deriving (Generic)
 
 data WorldGenConfig = WorldGenConfig

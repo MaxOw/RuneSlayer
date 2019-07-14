@@ -20,7 +20,7 @@ import Entity.Player (makePlayer)
 import Types.ResourceManager
 import Types.DirectedAction
 import Types.EntityAction
-import Types.Entity.Item
+import Types.Entity.Passive
 import Types.Entity.Unit
 import EntityLike
 import WorldGen
@@ -91,17 +91,16 @@ makeRenderOverview out = case out^.overviewImage of
 loadResources :: Config -> Engine us Resources
 loadResources conf = case conf^.debugMode of
     Just _m -> do
-        se <- loadDhallList "StaticTypes.dhall"
         ts <- loadDhallList "TileSets.dhall"
+        ps <- loadDhallList "PassiveTypes.dhall"
         return $ def
-               & staticMap     .~ buildMap se
                & tileSetMap    .~ buildMap ts
+                & passiveMap   .~ buildMap ps
     Nothing -> do
         rs <- loadAllPaths
         ss <- loadDhallMap  "Sprites.dhall"
-        se <- loadDhallList "StaticTypes.dhall"
         ts <- loadDhallList "TileSets.dhall"
-        is <- loadDhallList "ItemTypes.dhall"
+        ps <- loadDhallList "PassiveTypes.dhall"
         us <- loadDhallList "UnitTypes.dhall"
         as <- loadDhallMap  "Animations.dhall"
 
@@ -110,9 +109,8 @@ loadResources conf = case conf^.debugMode of
         let res = def
                 & imgMap        .~ HashMap.fromList rs
                 & spriteMap     .~ ss
-                & staticMap     .~ buildMap se
                 & tileSetMap    .~ buildMap ts
-                & itemsMap      .~ buildMap is
+                & passiveMap    .~ buildMap ps
                 & unitsMap      .~ buildMap us
                 & runeSet       .~ rust
         let pr = fmap (Animation.makeAnimation res)
@@ -170,24 +168,27 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
 
 testInitialActions :: [DirectedAction]
 testInitialActions = map directAtWorld
-    [ mkItem "Helmet"           1      0
-    , mkItem "Health Potion"  (-1)     0.2
-    , mkItem "Dagger"         (-3)     1.2
-    , mkItem "Bow"            (-3)   (-1)
-    , mkItem "Spear"          (-5)     1
-    , mkItem "Bag"              0      1
-    , mkItem "Arrow"          (-3)   (-2)
-    , mkItem "Arrow"          (-3.1) (-2.1)
-    , mkItem "Arrow"          (-3.2) (-2.2)
-    , mkItem "Quiver"         (-4)   (-3)
+    [ mkPassive "Helmet"           1      0
+    , mkPassive "Health Potion"  (-1)     0.2
+    , mkPassive "Dagger"         (-3)     1.2
+    , mkPassive "Bow"            (-3)   (-1)
+    , mkPassive "Spear"          (-5)     1
+    , mkPassive "Bag"              0      1
+    , mkPassive "Arrow"          (-3)   (-2)
+    , mkPassive "Arrow"          (-3.1) (-2.1)
+    , mkPassive "Arrow"          (-3.2) (-2.2)
+    , mkPassive "Quiver"         (-4)   (-3)
 
-    , mkUnit "Bat"             10    6
-    , mkUnit "Bat"              9    6.3
-    , mkUnit "Spider"         (-9)   6.3
+    , mkPassive "Wooden Chest"     0      4
+
+    , mkUnit "Bat"             11    8
+    , mkUnit "Bat"             10    8.3
+    , mkUnit "Spider"        (-11)   8
     ]
     where
-    mkItem n x y = WorldAction_SpawnEntity (SpawnEntity_Item $ ItemTypeName n) $ def
+    mkPassive n x y = WorldAction_SpawnEntity (mkSpawnPassive n) $ def
         & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
+    mkSpawnPassive = SpawnEntity_Passive . PassiveTypeName
 
     mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Unit $ UnitTypeName n) $ def
         & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]

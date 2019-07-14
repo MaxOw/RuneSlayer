@@ -3,7 +3,7 @@ module Types.DirectedAction where
 import Delude
 import Types.Entity.Common
 import Types.EntityAction
-import Types.Entity.Item
+import Types.Entity.Passive
 import Types.Entity.Unit
 import Types.Entity.Projectile (Projectile)
 import Types.Entity.Effect (EffectKind)
@@ -11,8 +11,9 @@ import Types.Entity.Effect (EffectKind)
 --------------------------------------------------------------------------------
 
 data SpawnEntity
-   = SpawnEntity_Item   ItemTypeName
-   | SpawnEntity_Unit   UnitTypeName
+   = SpawnEntity_Passive PassiveTypeName
+   | SpawnEntity_Unit    UnitTypeName
+
    | SpawnEntity_Effect Location EffectKind
    | SpawnEntity_Projectile Projectile
 
@@ -24,6 +25,8 @@ instance Default SpawnEntityOpts
 
 data WorldAction
    = WorldAction_SpawnEntity SpawnEntity SpawnEntityOpts
+   -- Open inventory/contents inspection window of [EntityId] for player
+   | WorldAction_InspectContent EntityId
    | WorldAction_GameOver
 
 --------------------------------------------------------------------------------

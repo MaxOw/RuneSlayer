@@ -6,7 +6,7 @@ import Types.Entity.Timer
 import Types.Entity.Reactivity
 import Types.Entity.Common
 import Types.Entity.ZIndex
-import Types.Entity.Item (ItemTypeName)
+import Types.Entity.Passive
 import Types.Entity.Animation (Animation, AnimationState, AnimationDesc)
 
 --------------------------------------------------------------------------------
@@ -15,7 +15,7 @@ newtype UnitTypeName = UnitTypeName { unUnitTypeName :: Text }
     deriving (Default, Eq, Hashable, Generic, ToJSON, FromJSON)
 data UnitType = UnitType
    { field_name               :: UnitTypeName
-   , field_corpse             :: Maybe ItemTypeName
+   , field_corpse             :: Maybe PassiveTypeName
    , field_animation          :: AnimationDesc
    , field_animateWhenStopped :: Bool
    , field_renderOffset       :: Maybe V2D

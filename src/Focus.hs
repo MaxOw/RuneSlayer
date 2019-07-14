@@ -1,14 +1,18 @@
 module Focus where
 
 import Delude
+import qualified Data.Set as Set
 import Engine (userState)
-import Engine.Common.Types (mkBBoxCenter)
 import Entity
 import Types
+import Types.EntityAction (UseActionName)
 import Types.Entity.Common
+import Types.Entity.Passive
 import Equipment (EquipmentSlot(..), contentList)
 import qualified Equipment
 import EntityIndex
+import GameState.Query
+import InputState.Actions
 
 --------------------------------------------------------------------------------
 
@@ -43,15 +47,21 @@ focusItemsInRange = focusLocation >>= \case
     Nothing -> return []
     Just lc -> do
         eix <- use $ userState.gameState.entities
-        es <- lookupInRange EntityKind_Item (queryRange lc) eix
-        return $ filter (isItemInRange lc . view entity) es
+        es <- lookupInRadius EntityKind_Passive lc defaultPickupRange eix
+        return $ filter isItem es
     where
-    queryRange loc = mkBBoxCenter (loc^._Wrapped)
-        (pure . (*2) $ defaultPickupRange^._Wrapped)
+    isItem x = Set.member PassiveKind_Item
+        $ x^.entity.oraclePassiveType.traverse.passiveKind
 
-    isItemInRange loc x
-        = withinRange loc (x^.oracleLocation) && isJust (x^.oracleItemType)
-    withinRange l xl = nothingFalse xl $ isWithinDistance defaultPickupRange l
+focusActionsInRange :: Game [(EntityWithId, UseActionName)]
+focusActionsInRange = focusLocation >>= \case
+    Nothing -> return []
+    Just lc -> do
+        eix <- use $ userState.gameState.entities
+        es <- lookupInRadius EntityKind_Passive lc defaultActionRange eix
+        return $ concatMap f es
+    where
+    f x = map (x,) $ x^.entity.oracleUseActions.traverse
 
 focusItemsInInventory :: Game [EntityWithId]
 focusItemsInInventory = do
@@ -61,6 +71,10 @@ focusItemsInInventory = do
     let bs = mbp^..traverse.entity.oracleContent.traverse.traverse
     lookupEntities (es <> bs)
 
+focusItemsInContainer :: Game [EntityWithId]
+focusItemsInContainer = getInventoryContainer >>= \mc ->
+    lookupEntities $ mc^.traverse.entity.oracleContent.traverse
+
 focusEquipmentSlot :: EquipmentSlot -> Game (Maybe EntityWithId)
 focusEquipmentSlot es = do
     mf <- focusEntity
@@ -68,16 +82,4 @@ focusEquipmentSlot es = do
     case Equipment.lookupSlot es =<< meq of
         Nothing -> return Nothing
         Just  i -> lookupEntity i
-
---------------------------------------------------------------------------------
-
-lookupEntities :: Foldable t => t EntityId -> Game [EntityWithId]
-lookupEntities is = do
-    es <- use $ userState.gameState.entities
-    EntityIndex.lookupManyById is es
-
-lookupEntity :: EntityId -> Game (Maybe EntityWithId)
-lookupEntity i = do
-    es <- use $ userState.gameState.entities
-    EntityIndex.lookupById i es
 

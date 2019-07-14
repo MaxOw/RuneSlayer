@@ -8,7 +8,7 @@ import Types.Entity.Common
 import Types.Entity.ZIndex
 import Types.Entity.Animation
 import Types.Entity.Timer
-import Types.Entity.Item
+import Types.Entity.Passive
 import Types.Equipment
 import Types.Skills.Runes (RunicLevel, RunicSlots, RuneName)
 import Types.Entity.Reactivity
@@ -25,13 +25,13 @@ data PlayerInit = PlayerInit
    , field_attackRange :: Distance
    , field_maxSpeed    :: Speed
    , field_stats       :: Stats
-   , field_corpse      :: ItemTypeName
+   , field_corpse      :: PassiveTypeName
    } deriving (Generic)
 instance HasMaxSpeed PlayerInit Speed
 
 data DelayedActionType
    = DelayedActionType_Attack EntityId AttackPower
-   | DelayedActionType_FireProjectile Location V2D EntityId EntityId AttackPower
+   | DelayedActionType_FireProjectile V2D EntityId AttackPower
 
 data DelayedAction = DelayedAction
    { field_timeLeft :: Duration
@@ -84,7 +84,6 @@ data PlayerStatus = PlayerStatus
 playerSlots :: Set EquipmentSlot
 playerSlots = Set.fromList
     [ EquipmentSlot_Backpack
-    , EquipmentSlot_Quiver
     -- , EquipmentSlot_Bundle
     , EquipmentSlot_Belt
     , EquipmentSlot_Head
@@ -107,6 +106,4 @@ instance Default Player
 
 instance GetZIndex Player Word32 where
     get_zindex _ = toZIndex EntityZIndex_Vertical
-
-
 

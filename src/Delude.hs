@@ -8,6 +8,8 @@ module Delude
     , isPrism
     , makeFieldsCustom
     , customOptionsJSON
+    , defaultToJSONKey
+    , defaultFromJSONKey
 
     , boundedRange
 
@@ -32,7 +34,11 @@ import Linear.Affine  as All (Point (..))
 import Diagrams.Angle as All ((@@), turn)
 import Data.Bimap     as All (Bimap)
 import Data.Aeson     as All
-    (ToJSON(..), FromJSON(..), genericToEncoding, genericParseJSON)
+    ( ToJSON(..), FromJSON(..), ToJSONKey(..), FromJSONKey(..)
+    , genericToEncoding, genericParseJSON)
+
+-- import qualified Data.Aeson as Aeson
+import qualified Data.Aeson.Encoding as Aeson
 
 import Relude.Extra.Enum as All (next, prec)
 
@@ -96,6 +102,15 @@ customOptionsJSON = Aeson.defaultOptions
     }
     where
     dropPrefix x = if any (=='_') x then drop 1 $ dropWhile (/='_') x else x
+
+--------------------------------------------------------------------------------
+
+defaultToJSONKey :: ToJSON a => Aeson.ToJSONKeyFunction a
+defaultToJSONKey = Aeson.ToJSONKeyText f (Aeson.text . f)
+    where f = decodeUtf8 . Aeson.encode
+
+defaultFromJSONKey :: FromJSON a => Aeson.FromJSONKeyFunction a
+defaultFromJSONKey = Aeson.FromJSONKeyTextParser (parseJSON . Aeson.String)
 
 --------------------------------------------------------------------------------
 

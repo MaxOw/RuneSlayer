@@ -82,14 +82,13 @@ renderGame _delta st = do
     let viewProjM = gameProjM !*! viewM
 
     es <- lookupInRange EntityKind_Dynamic viewRange $ st^.gameState.entities
-    is <- lookupInRange EntityKind_Item    viewRange $ st^.gameState.entities
-    ss <- lookupInRange EntityKind_Static  viewRange $ st^.gameState.entities
+    is <- lookupInRange EntityKind_Passive viewRange $ st^.gameState.entities
 
     Engine.draw viewProjM $ renderComposition
         [ mempty
         , renderUnless hideScrollerDebug renderScroller
         , T.scale viewScale $ renderComposition
-            [ renderEntities (es <> is <> ss) st
+            [ renderEntities (es <> is) st
             , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize

@@ -2,6 +2,7 @@ module GUI.GameMenu where
 
 import Delude
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 
 import Engine
 import Engine.Layout.Types
@@ -13,6 +14,7 @@ import Types.Entity.Player (PlayerStatus)
 import InputState (getMode, isPanelVisible, getInputString)
 import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
 import Focus (focusEntity)
+import GameState.Query
 import Entity
 import Types.Entity.Common (EntityStatus(..))
 import GameState (getGameOverScreen)
@@ -46,6 +48,7 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
     , rIf OffensiveSlotsPanel   offensiveSlotsPanelLayout
     , rIf DefensiveSlotsPanel   defensiveSlotsPanelLayout
     , healthStatus
+    , actionsMenu
     ]
     where
     rIf panel renderFunc =
@@ -92,6 +95,28 @@ healthStatus = withStatus $ \s -> do
         case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
             Nothing -> return Nothing
             Just ps -> f ps
+
+actionsMenu :: Game (Maybe Alt.Layout)
+actionsMenu = do
+    fmap layout_actionsMenu <$> getHintMap
+    where
+    getHintMap = do
+        ss <- use $ userState.inputState.selectState
+        case ss^?traverse.selectKind of
+            Just (SelectKind_Action v) | not (Map.null $ v^.hintMap) ->
+                Just . catMaybes <$> (mapM toDesc $ Map.assocs $ v^.hintMap)
+            _ -> return Nothing
+
+    toDesc :: ((EntityId, UseActionName), [Char]) -> Game (Maybe ActionHintDesc)
+    toDesc ((eid, a), h) = lookupEntity eid >>= \case
+        Nothing -> return Nothing
+        Just  e -> return $ Just $ ActionHintDesc
+            { field_actionName = toName (e^.entity.oracleName) a
+            , field_actionHint = toText h
+            }
+
+    toName Nothing  a = show a
+    toName (Just n) a = unUseActionName a <> " " <> n
 
 slotsPanelLayout
     :: (InputMode -> Bool)

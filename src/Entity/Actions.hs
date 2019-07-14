@@ -19,13 +19,13 @@ module Entity.Actions
     , separateCollision
     , addItems
     , dropAllItems
-    , pickUpInformOwner
-    , dropItem, dropItemAction
+    , dropItem
+    , passItemTo
     , useItem
-    , getItemsToAdd
-    , makeDropItem, splitAllowedItems
+    , splitAllowedItems
     , getEquippedItem
     , flagUpdate
+    , getRootLocation
 
     -- Render Actions
     , maybeLocate, locate
@@ -37,7 +37,6 @@ module Entity.Actions
     , renderTargetMark
 
     -- Queries
-    -- , queryStaticInRange
     , queryInRange, queryInRadius
     , queryById
     , shouldDie
@@ -45,11 +44,12 @@ module Entity.Actions
 
     -- Utils
     , addAction, addWorldAction
-    , firstMatch, anyMatch, whenMatch
+    , firstMatch, allMatch, whenMatch
     , ifJustLocation
     , isHostileTo
     , distanceBetween
     , velocityFromSpeed
+    , genDropOffset
     ) where
 
 import Delude
@@ -57,13 +57,12 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.List as List
 import Random.Utils
-import Data.Hashable (hash)
 import Engine.Common.Types (BBox, bboxToRect, mkBBoxCenter)
 import Engine.Layout.Render (renderSimpleBox)
 
 import Entity
 import Types.Entity.Timer
-import Types.Entity.Item
+import Types.Entity.Passive
 import Types.Entity.Projectile
 import Types.Entity.Appearance
 import Types.Entity.Player
@@ -221,9 +220,7 @@ separateCollision
     => HasCollisionShape s (Maybe CollisionShape)
     => Update s ()
 separateCollision = do
-    Location l <- use $ self.location
-    let range = mkBBoxCenter l maxCollisionBBoxSize
-    ss <- queryStaticInRange range
+    ss <- queryInRange EntityKind_Passive maxCollisionBBoxSize
     mc <- use $ self.collisionShape
     x <- use self
     let mlc = locate x <$> mc
@@ -231,7 +228,7 @@ separateCollision = do
     let svs = mapMaybe (mCol mlc) ms
     whenJust (viaNonEmpty head svs) $ \v -> self.location._Wrapped -= v
     where
-    maxCollisionBBoxSize = pure 4
+    maxCollisionBBoxSize = Distance 4
     mCol ma mb = do
         a <- ma
         b <- mb
@@ -241,63 +238,61 @@ separateCollision = do
 
 dropAllItems
     :: HasEquipment       x Equipment
-    => HasLocation        x Location
     => HasUpdateOnce      x (Set UpdateOnce)
     => Update             x ()
 dropAllItems = do
     is <- use $ self.equipment.to contentList
     self.equipment %= Equipment.deleteAll
-    mapM_ dropItemAction is
+    mapM_ dropItem is
     flagUpdate UpdateOnce_Equipment
 
 --------------------------------------------------------------------------------
 
-purePickUpInformOwner
-    :: HasOwner x (Maybe EntityId)
-    => x -> EntityContext -> [DirectedAction]
-purePickUpInformOwner x ctx = case x^.owner of
-    Just ownerId -> [directAtEntity ownerId act]
-    _            -> []
-    where
-    act = EntityAction_AddItem        $ ctx^.selfId
-
-pickUpInformOwner
-    :: HasOwner x (Maybe EntityId)
-    => Update x ()
-pickUpInformOwner = do
-    newActions <- purePickUpInformOwner <$> use self <*> use context
-    actions <>= fromList newActions
-
---------------------------------------------------------------------------------
-
 addItems
-    :: HasProcessOnUpdate x [EntityAction]
-    => HasEquipment       x Equipment
+    :: HasEquipment       x Equipment
     => HasLocation        x Location
     => HasUpdateOnce      x (Set UpdateOnce)
-    => Update x ()
-addItems = getItemsToAdd
+    => [(EntityId, Maybe EquipmentSlot)] -> Update x ()
+addItems is = prepItems
     >>= equipItems
-    >>= stuffInto EquipmentSlot_Backpack
-    >>= stuffInto EquipmentSlot_Quiver
-    >>= doDropItems
+    >>= stuffIntoContainers
+    >>= mapM_ dropItem
     >> flagUpdate UpdateOnce_Equipment
     where
-    doDropItems :: HasLocation x Location => [EntityWithId] -> Update x ()
-    doDropItems = mapM_ (dropItemAction . view entityId)
+    prepItems = catMaybes <$> mapM (\(e, ms) -> fmap (,ms) <$> queryById e) is
 
+stuffIntoContainers
+    :: HasEquipment x Equipment
+    => [EntityWithId]
+    -> Update x [EntityWithId]
+stuffIntoContainers ls = do
+    es <- fmap catMaybes . mapM queryById =<< uses (self.equipment) contentList
+    foldStuff (filter isContainer es) ls
+    where
+    isContainer x
+        = Set.member PassiveKind_Container
+        $ x^.entity.oraclePassiveType.traverse.passiveKind
+    foldStuff
+        :: HasEquipment x Equipment
+        => [EntityWithId]
+        -> [EntityWithId]
+        -> Update x [EntityWithId]
+    foldStuff []     xs = return xs
+    foldStuff (r:rs) xs = stuffInto r xs >>= foldStuff rs
+
+-- TODO: combine this with fitIntoContainer function from Passive module
+-- to account for volume (and weight in the future).
 stuffInto
     :: HasEquipment x Equipment
-    => EquipmentSlot
+    => EntityWithId
     -> [EntityWithId]
     -> Update x [EntityWithId]
-stuffInto slot is = getEquippedItem slot >>= \x -> maybeReturn x $ \eq -> do
-    let alwd = eq^.entity.oracleItemType.*.containerType.*.ff#allowKinds
+stuffInto eq is = do
+    let alwd = eq^.entity.oraclePassiveType.*.containerType.*.allowKinds
     let (allowedItems, otherItems) = splitAllowedItems alwd is
-    mapM_ (addAction eq . EntityAction_AddItem . view entityId) allowedItems
+    mapM_ (flip passItemTo eq) allowedItems
     return otherItems
     where
-    maybeReturn x f = maybe (return is) f x
     infixr 9 .*.
     a.*.b = a.traverse.b
 
@@ -314,50 +309,48 @@ flagUpdate
     -> Update x ()
 flagUpdate f = self.ff#updateOnce %= Set.insert f
 
+getRootLocation
+    :: HasOwner x (Maybe EntityId)
+    => HasLocation x (Maybe Location)
+    => Update x (Maybe Location)
+getRootLocation = do
+    mloc <- use (self.location)
+    mown <- use (self.owner)
+    go mloc mown
+    where
+    -- This will loop if there is cycle in the owner chain
+    -- That should never happen but it could be good to add a check for
+    -- starting entityId
+    go :: Maybe Location -> Maybe EntityId -> Update x (Maybe Location)
+    go ml mi = case ml of
+        Just lo -> return $ Just lo
+        Nothing -> do
+            me <- runMaybeT $ MaybeT . queryById =<< MaybeT (pure mi)
+            let ol = me^?traverse.entity.oracleLocation.traverse
+            let oo = me^?traverse.entity.oracleOwner.traverse
+            go ol oo
+
 useSelfId :: Update x EntityId
 useSelfId = use $ context.selfId
 
-equippedBackpack
-    :: HasEquipment x Equipment
-    => Update x (Maybe EntityId)
-equippedBackpack = do
-    Equipment.lookupSlot EquipmentSlot_Backpack <$> use (self.equipment)
-
-
-{-
-    -- if there is no container equiped find one
-    -- if found equip it and drop the rest
-    -- (newSelf, newActions) <- pureAddItems <$> use context <*> use self
-    -- self .= newSelf
-    -- actions <>= fromList newActions
-    -- return ()
-    case mb of
-        Just eb -> return (Just eb, es)
-        Nothing -> do
-            let (cs, os) = splitAllowedItems ItemKind_Container es
-            case map (view entityId) cs of
-                []     -> return (Nothing, [])
-                (a:as) -> do
-                    mapM_ dropItemAction as
-                    return (Just a, os)
--}
-
 splitAllowedItems
-    :: Set ItemKind
+    :: Set PassiveKind
     -> [EntityWithId]
     -> ([EntityWithId], [EntityWithId])
 splitAllowedItems k = List.partition properKind
     where
-    properKind x = let ks = x^?entity.oracleItemType.traverse.itemKind
+    properKind x = let ks = x^?entity.oraclePassiveType.traverse.passiveKind
         in fmap (not . Set.null . Set.intersection k) ks == Just True
 
 equipItems
     :: HasEquipment x Equipment
-    => [EntityWithId]
+    => [(EntityWithId, Maybe EquipmentSlot)]
     -> Update x [EntityWithId]
-equipItems eis = do
+equipItems xs = do
+    let (eis, ess) = partitionEithers $ map f xs
+    pss <- catMaybes <$> mapM placeAtSlot ess
     p <- use self
-    let (newSelf, os) = go p (emptySlots p) [] eis
+    let (newSelf, os) = go p (emptySlots p) [] (pss <> eis)
     self .= newSelf
     return os
     where
@@ -373,6 +366,23 @@ equipItems eis = do
         Just t  -> go (equipItem (e^.entityId) t x) (Set.delete t ss) bs es
         Nothing -> go x ss (e:bs) es
 
+    f (eid, Nothing) = Left eid
+    f (eid, Just sl) = Right (eid, sl)
+
+    placeAtSlot
+        :: HasEquipment x Equipment
+        => (EntityWithId, EquipmentSlot) -> Update x (Maybe EntityWithId)
+    placeAtSlot (e, s) = uses (self.equipment) (Equipment.lookupSlot s) >>= \case
+        Nothing -> do
+            self.equipment %= Equipment.insert s eid
+            return Nothing
+        Just ce -> do
+            self.equipment %= Equipment.deleteId ce
+            self.equipment %= Equipment.insert s eid
+            queryById ce
+        where
+        eid = e^.entityId
+
     emptySlots :: HasEquipment x Equipment => x -> Set EquipmentSlot
     emptySlots = Equipment.emptySlots . view equipment
 
@@ -382,33 +392,18 @@ equipItems eis = do
         => EntityId -> EquipmentSlot -> (x -> x)
     equipItem e eslot = over equipment $ Equipment.insert eslot e
 
-getItemsToAdd
-    :: HasProcessOnUpdate x [EntityAction]
-    => Update x [EntityWithId]
-getItemsToAdd = do
-    ps <- mapMaybe g <$> use (self.processOnUpdate)
-    eix <- use $ context.entities
-    catMaybes <$> mapM (flip EntityIndex.lookupById eix) ps
-    where
-    g (EntityAction_AddItem        i) = Just i
-    g _                               = Nothing
-
 --------------------------------------------------------------------------------
 
-dropItem
-    :: HasEquipment       x Equipment
-    => HasLocation        x Location
-    => HasUpdateOnce      x (Set UpdateOnce)
-    => EntityId -> Update x ()
-dropItem i = do
-    eq <- use $ self.equipment
-    if (Equipment.hasId i eq)
-    then do
-        self.equipment %= Equipment.deleteId i
-        dropItemAction i
-        flagUpdate UpdateOnce_Equipment
-    else whenJustM equippedBackpack $ \b -> do
-        addAction b $ EntityAction_DropItem i
+dropItem :: HasEntityId e EntityId => e -> Update x ()
+dropItem (view entityId -> e)
+    = addAction e $ EntityAction_SelfPassTo Nothing Nothing
+
+passItemTo
+    :: HasEntityId a EntityId
+    => HasEntityId b EntityId
+    => a -> b -> Update x ()
+passItemTo (view entityId -> a) (view entityId -> b)
+    = addAction a $ EntityAction_SelfPassTo (Just b) Nothing
 
 --------------------------------------------------------------------------------
 
@@ -419,21 +414,8 @@ addWorldAction :: WorldAction -> Update x ()
 addWorldAction a = actions %= (:> directAtWorld a)
 
 useItem :: HasEntityId e EntityId => e -> Update x ()
-useItem e = addAction e . EntityAction_SelfUseOn =<< use (context.selfId)
-
-dropItemAction
-    :: HasLocation x Location
-    => EntityId -> Update x ()
-dropItemAction eid = do
-    loc <- use $ self.location
-    fct <- use $ context.frameCount
-    addAction eid $ makeDropItem fct loc eid
-
-makeDropItem :: Word32 -> Location -> EntityId -> EntityAction
-makeDropItem rnd loc eid = EntityAction_SelfDroppedAt dloc
-    where
-    rgid = fromIntegral $ hash eid
-    dloc = over _Wrapped (\v -> v + genDropOffset [rnd + rgid]) loc
+useItem e = addAction e . EntityAction_UseAction n =<< use (context.selfId)
+    where n = UseActionName "Use"
 
 --------------------------------------------------------------------------------
 -- Render Actions
@@ -484,10 +466,6 @@ renderTargetMark = renderShape $ def
 --------------------------------------------------------------------------------
 -- Queries
 
-queryStaticInRange :: RangeBBox -> Update s [EntityWithId]
-queryStaticInRange rng =
-    EntityIndex.lookupInRange EntityKind_Static rng =<< use (context.entities)
-
 queryInRange
     :: HasLocation x Location
     => EntityKind -> Distance -> Update x [EntityWithId]
@@ -527,12 +505,12 @@ firstMatch p act = do
     as <- uses (self.processOnUpdate) $ firstOf (traverse.clonePrism p)
     whenJust as act
 
-anyMatch
+allMatch
     :: HasProcessOnUpdate x [EntityAction]
     => APrism' EntityAction y
     -> (NonEmpty y -> Update x ())
     -> Update x ()
-anyMatch p act = do
+allMatch p act = do
     as <- uses (self.processOnUpdate) $ toListOf (traverse.clonePrism p)
     whenNotNull as act
 

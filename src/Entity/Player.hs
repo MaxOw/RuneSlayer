@@ -7,6 +7,7 @@ import Delude
 import Data.Generics.Product.Subtype (upcast)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import qualified Data.List as List
 import qualified Diagrams.TwoD.Transform as T
 
 import Entity
@@ -14,7 +15,7 @@ import Types.Debug
 import Types.Entity.Reactivity
 import Types.Entity.Player
 import Types.Entity.Effect
-import Types.Entity.Item (WeaponKind(..))
+import Types.Entity.Passive
 import Entity.Utils
 import Entity.Actions
 import Types.Entity.Timer
@@ -40,10 +41,9 @@ actOn x a = x & case a of
     EntityAction_PlayerAction      p -> handlePlayerAction p
     EntityAction_SetValue          v -> handleSetValue v
     -- Handle on update:
-    EntityAction_DropAllItems        -> handleOnUpdate a
-    EntityAction_AddItem           _ -> handleOnUpdate a
-    EntityAction_DropItem          _ -> handleOnUpdate a
-    EntityAction_OwnerDropItem     _ -> handleOnUpdate a
+    EntityAction_AddItem          {} -> handleOnUpdate a
+    EntityAction_RemoveItem       {} -> handleOnUpdate a
+
     EntityAction_ExecuteAttack       -> handleOnUpdate a
     EntityAction_SelfAttacked      _ -> handleOnUpdate a
     EntityAction_UseItem           _ -> handleOnUpdate a
@@ -96,11 +96,10 @@ update x ctx = runUpdate x ctx $ do
     playerIntegrateLocation
     separateCollision
     autoTarget
-    whenMatch _EntityAction_AddItem      addItems
-    whenMatch _EntityAction_DropAllItems dropAllItems
-    mapM_ processUpdateOnce =<< use (self.ff#updateOnce)
-    mapM_ processAction =<< use (self.processOnUpdate)
     runicActions
+    allMatch _EntityAction_AddItem (addItems . toList)
+    mapM_ processAction =<< use (self.processOnUpdate)
+    mapM_ processUpdateOnce =<< use (self.ff#updateOnce)
     self.processOnUpdate .= mempty
 
 runicActions :: Update Player ()
@@ -130,19 +129,32 @@ processUpdateOnce = \case
     UpdateOnce_Equipment -> updateEquipment
     where
     updateEquipment = do
-        eqAnim <- makeEquipmentAnimationVia equipmentRenderOrder
-        eqBehindAnim <- makeEquipmentAnimationVia equipmentBehindBodyRenderOrder
+        (eqBehindAnim, eqAnim) <- makeEquipmentAnimationVia equipmentRenderOrder
         bodyAnim <- makeBodyAnimation
-        self.animation .= eqBehindAnim <> bodyAnim <> eqAnim
+        projAnim <- makeProjectileAnimation
+        self.animation .= eqBehindAnim <> bodyAnim <> eqAnim <> projAnim
         updateStats
 
     makeEquipmentAnimationVia renderOrder = do
         eis <- uses (self.equipment) Equipment.slotsList
         let seis = map snd $ sortSelectVia fst renderOrder eis
         es <- catMaybes <$> mapM queryById seis
-        let as = mapMaybe (view (entity.oracleItemAnimation)) es
+        let (bs, fs) = List.partition isBehind es
         rs <- use $ context.resources
-        return $ mconcat $ mapMaybe (flip lookupAnimation rs) as
+        return (makeAnim rs bs, makeAnim rs fs)
+
+    makeProjectileAnimation = selectProjectile >>= \case
+        Nothing -> return mempty
+        Just pr -> do
+            mpe <- queryById pr
+            rs <- use $ context.resources
+            return $ fromMaybe mempty $ makeAnim rs . (:[]) <$> mpe
+
+    makeAnim rs
+        = mconcat . mapMaybe (flip lookupAnimation rs)
+        . mapMaybe (view (entity.oracleItemAnimation))
+
+    isBehind x = fromMaybe False $ x^.entity.oracleBehindBody
 
     makeBodyAnimation = do
         bns <- use (self.ff#playerInit.body)
@@ -173,32 +185,18 @@ updateDelayedActions = do
 
 performDelayedAction :: DelayedActionType -> Update Player ()
 performDelayedAction = \case
-    DelayedActionType_Attack         eid p -> attack eid p
-    DelayedActionType_FireProjectile loc v pid tid p ->
-        fireProjectile loc v pid tid p
+    DelayedActionType_Attack           eid p -> attack eid p
+    DelayedActionType_FireProjectile v tid p -> fireProjectile v tid p
     where
     attack eid p = addAction eid $ EntityAction_SelfAttacked p
-    fireProjectile loc v pid tid p = do
-        selectNextProjectile
-        removeProjectileFromHand pid
+    fireProjectile v tid p = whenJustM selectProjectile $ \pid -> do
+        loc <- use $ self.location
         addAction pid $ EntityAction_SelfFiredAsProjectile loc v tid p
 
-selectNextProjectile :: Update Player ()
-selectNextProjectile = whenNothingM_ getPrimaryOther $
-    whenJustM (getEquippedItem EquipmentSlot_Quiver) $ \q ->
-        whenJust (getFirstArrow q) $ \itemId -> do
-            addAction q . EntityAction_PassItem itemId =<< use (context.selfId)
-            self.equipment %= Equipment.insert EquipmentSlot_PrimaryOther itemId
+selectProjectile :: Update Player (Maybe EntityId)
+selectProjectile = getFirstArrow <$> getEquippedItem EquipmentSlot_PrimaryOther
     where
-    getFirstArrow x = join $ fmap (viaNonEmpty head) $ x^.entity.oracleContent
-
-removeProjectileFromHand :: EntityId -> Update Player ()
-removeProjectileFromHand pid = whenJustM getPrimaryOther $ \xi ->
-    when (xi == pid) (self.equipment %= Equipment.deleteId pid)
-
-getPrimaryOther :: Update Player (Maybe EntityId)
-getPrimaryOther = Equipment.lookupSlot EquipmentSlot_PrimaryOther
-    <$> use (self.equipment)
+    getFirstArrow x = viaNonEmpty head $ x^.traverse.entity.oracleContent.traverse
 
 addDelayedAction :: Duration -> DelayedActionType -> Update Player ()
 addDelayedAction d t = self.ff#delayedActions %= (DelayedAction d t:)
@@ -228,7 +226,7 @@ canExecuteAttack = (&&)
 getWeaponKind :: Update Player WeaponKind
 getWeaponKind = do
     mei <- getEquippedItem EquipmentSlot_PrimaryWeapon
-    let mwk = mei^?traverse.entity.oracleItemType.traverse.weaponKind.traverse
+    let mwk = mei^?traverse.entity.oraclePassiveType.traverse.weaponKind.traverse
     return $ fromMaybe WeaponKind_Slashing mwk
 
 executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
@@ -251,23 +249,14 @@ executeAttackAt targetEntity vectorToTarget = do
         addDelayedAction attackDelay $
             DelayedActionType_Attack (targetEntity^.entityId) attackPower
 
-    executeProjectileAttack = whenJustM getProjectile $ \eid -> do
-        loc <- use $ self.location
+    executeProjectileAttack = do
         attackPower <- getAttackPower
         attackDelay <- getAttackDelay
         addDelayedAction attackDelay $
             DelayedActionType_FireProjectile
-                loc
                 vectorToTarget
-                (eid^.entityId)          -- Projectile Id
                 (targetEntity^.entityId) -- Target Id
                 attackPower
-
-getProjectile :: Update Player (Maybe EntityWithId)
-getProjectile = getEquippedItem EquipmentSlot_PrimaryOther
-    -- TODO: Test if its a projectile
-    -- let mit = mei^?traverse.entity.oracleItemType.traverse
-    -- return $ (,) <$> mei <*> mit
 
 startAttackAnimation :: WeaponKind -> V2 Float -> Update Player ()
 startAttackAnimation wkind vectorToTarget = do
@@ -286,9 +275,7 @@ whenWeaponCanAttack wkind targetEntity act = do
     canFire <- canFireProjectile wkind
     when (dist < attackRange && canFire) act
     where
-    canFireProjectile WeaponKind_Projecting = do
-        whenNothingM_ getProjectile $ selectNextProjectile
-        isJust <$> getProjectile
+    canFireProjectile WeaponKind_Projecting = isJust <$> selectProjectile
     canFireProjectile _ = return True
 
 getAttackRange :: WeaponKind -> Update x Distance
@@ -321,7 +308,7 @@ playerIntegrateLocation = do
 autoTarget :: Update Player ()
 autoTarget = do
     ds <- queryInRange EntityKind_Dynamic (disM 8)
-    sid <- use $ context.selfId
+    sid <- useSelfId
     loc <- use $ self.location
     -- TODO: fix auto targeting reactivity list
     let ht = Set.fromList [ReactivCategory_Shadow]
@@ -350,11 +337,15 @@ autoTarget = do
 
 processAction :: EntityAction -> Update Player ()
 processAction = \case
-    EntityAction_DropItem      i -> dropItem i
-    EntityAction_OwnerDropItem i -> dropItemAction i
     EntityAction_UseItem       i -> useItem i
     EntityAction_SelfAttacked  d -> procAttacked d
+    EntityAction_RemoveItem    i -> removeItem i
     _ -> return ()
+
+removeItem :: EntityId -> Update Player ()
+removeItem i = do
+    self.equipment %= Equipment.deleteId i
+    flagUpdate UpdateOnce_Equipment
 
 procAttacked :: AttackPower -> Update Player ()
 procAttacked x = do
@@ -372,7 +363,7 @@ procAttacked x = do
         loc <- use $ self.location
         c <- use $ self.ff#playerInit.corpse
         ani <- use $ self.animation
-        addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Item c) $ def
+        addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Passive c) $ def
             & tagAsCamera .~ True
             & actions .~
             [ EntityAction_SetValue $ EntityValue_Location  loc
@@ -389,9 +380,8 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     , correctHeight renderAnim
     ]
     where
-    renderDebug     = renderComposition $ localDebug <> globalDebug
-
-    renderAnim = Animation.renderAnimation (x^.animationState) (x^.animation)
+    renderDebug = renderComposition $ localDebug <> globalDebug
+    renderAnim  = Animation.renderAnimation (x^.animationState) (x^.animation)
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)

@@ -13,8 +13,12 @@ import Types.MenuState
 import Types.Entity.Animation (AnimationKind)
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
+import Types.Equipment
+import Equipment (contentList)
+import GameState.Query (canFitIntoContainer)
 import InputState
 import GameState
+import GameState.Query
 import Focus
 
 import Skills.Runes (getRuneByName, isCorrectAnswer)
@@ -125,23 +129,25 @@ customModeHandler_runicMode rt kp = case keypressKey kp of
 
 handleActivation :: InputAction -> Game ()
 handleActivation = \case
-    SimpleMove        d -> activateAction (ActiveMove d)
-    SetMode           m -> setMode m
-    ToggleDebug       f -> toggleDebug f
-    DebugRunAnimation k -> debugRunAnimation k
-    ToggleViewPanel   p -> toggleViewPanel p
-    PickupAllItems      -> pickupAllItems
-    DropAllItems        -> dropAllItems
-    ExecuteAttack       -> executeAttack
-    SetAttackMode     m -> setAttackMode m
-    StartOffensiveMode  -> startOffensiveMode
-    StartDefensiveMode  -> startDefensiveMode
-    SelectItemToPickUp  -> selectItemToPickUp
-    SelectItemToDrop    -> selectItemToDrop
-    SelectItemToFocus   -> selectItemToFocus
-    UseFocusedItem      -> useFocusedItem
-    InputAction_Escape  -> inputActionEscape
-    FastQuit            -> Engine.closeWindow
+    SimpleMove        d  -> activateAction (ActiveMove d)
+    SetMode           m  -> setMode m
+    ToggleDebug       f  -> toggleDebug f
+    DebugRunAnimation k  -> debugRunAnimation k
+    ToggleViewPanel   p  -> toggleViewPanel p
+    PickupAllItems       -> pickupAllItems
+    DropAllItems         -> dropAllItems
+    ExecuteAttack        -> executeAttack
+    SetAttackMode     m  -> setAttackMode m
+    StartOffensiveMode   -> startOffensiveMode
+    StartDefensiveMode   -> startDefensiveMode
+    SelectItemToPickUp   -> selectItemToPickUp
+    SelectItemMoveTarget -> selectItemMoveTarget
+    SelectItemToDrop     -> selectItemToDrop
+    SelectItemToFocus    -> selectItemToFocus
+    UseFocusedItem       -> useFocusedItem
+    SelectAction         -> selectAction
+    InputAction_Escape   -> inputActionEscape
+    FastQuit             -> Engine.closeWindow
 
 handleDeactivation :: InputAction -> Game ()
 handleDeactivation = \case
@@ -152,17 +158,20 @@ handleDeactivation = \case
 -- We do that here:
 handleActionFinalizers :: InputAction -> Game ()
 handleActionFinalizers act = sequence_ $ map ($ act)
-    [ finalize_selectItemToFocus
+    [ finalize_clearInventoryState
     , finalize_clearInputString
     ]
 
-finalize_selectItemToFocus :: InputAction -> Game ()
-finalize_selectItemToFocus = \case
-    SelectItemToPickUp -> return ()
-    SelectItemToDrop   -> return ()
-    SelectItemToFocus  -> return ()
-    UseFocusedItem     -> return ()
-    _ -> unfocusItem
+finalize_clearInventoryState :: InputAction -> Game ()
+finalize_clearInventoryState = \case
+    SelectItemToPickUp   -> return ()
+    SelectItemToDrop     -> return ()
+    SelectItemToFocus    -> return ()
+    SelectItemMoveTarget -> return ()
+    UseFocusedItem       -> return ()
+    PickupAllItems       -> unfocusItem
+    DropAllItems         -> unfocusItem
+    _                    -> clearInventoryState
 
 finalize_clearInputString :: InputAction -> Game ()
 finalize_clearInputString _ = clearInputString
@@ -189,23 +198,62 @@ startDefensiveMode = do
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
     es <- fmap (view entityId) <$> focusItemsInRange
-    startSelect SelectPickup es
+    cs <- fmap (view entityId) <$> focusItemsInContainer
+    startSelect SelectKind_Pickup (es <> cs)
+
+selectItemMoveTarget :: Game ()
+selectItemMoveTarget = getFocusedItem >>= \case
+    Nothing -> putStrLn "No item selected!" -- systemMessage
+    Just fi -> lookupEntity fi >>= \case
+        Nothing -> return ()
+        Just fe -> startSelect SelectKind_MoveTo =<< getValidTargets fe
+    where
+    getValidTargets fe = do
+        let fs = toList $ fe^.entity.oracleFittingSlots.traverse
+        mb <- getBackpackTarget fe
+        mc <- getContainerTarget fe
+        -- TODO: remove current focus from the list of valid targets
+        -- ct <- getCurrentTarget fe
+        let dt = map ItemMoveTarget_EquipmentSlot fs
+              <> catMaybes [mb, mc, Just ItemMoveTarget_Ground]
+        return dt
+
+    getBackpackTarget = fitForTarget
+        (focusEquipmentSlot EquipmentSlot_Backpack)
+        ItemMoveTarget_Backpack
+
+    getContainerTarget = fitForTarget
+        getInventoryContainer
+        ItemMoveTarget_Container
+
+    fitForTarget getT mt fe = getT >>= \case
+        Nothing -> return Nothing
+        Just bi -> bool Nothing (Just mt) <$> canFitIntoContainer fe bi
 
 selectItemToDrop :: Game ()
 selectItemToDrop = do
     es <- fmap (view entityId) <$> focusItemsInInventory
-    startSelect SelectDrop es
+    cs <- fmap (view entityId) <$> focusItemsInContainer
+    startSelect SelectKind_Drop (es <> cs)
 
 selectItemToFocus :: Game ()
 selectItemToFocus = do
-    res <- fmap (view entityId) <$> focusItemsInRange
     ies <- fmap (view entityId) <$> focusItemsInInventory
-    startSelect SelectFocus $ res <> ies
+    ces <- fmap (view entityId) <$> focusItemsInContainer
+    res <- fmap (view entityId) <$> focusItemsInRange
+    startSelect SelectKind_Focus $ ies <> ces <> res
 
 useFocusedItem :: Game ()
 useFocusedItem = getFocusedItem >>= \case
     Nothing -> putStrLn "No item selected!" -- systemMessage "No item selected!"
     Just fi -> actOnFocusedEntity $ EntityAction_UseItem fi
+
+selectAction :: Game ()
+selectAction = do
+    mar <- focusActionsInRange
+    case over (traverse._1) (view entityId) mar of
+        [] -> return () -- systemMessage "There's nothing nearby."
+        ar -> startSelect SelectKind_Action ar
 
 --------------------------------------------------------------------------------
 
@@ -222,12 +270,15 @@ debugRunAnimation :: AnimationKind -> Game ()
 debugRunAnimation = actOnFocusedEntity . EntityAction_RunAnimation
 
 pickupAllItems :: Game ()
-pickupAllItems = withFocusId $ \fi -> do
+pickupAllItems = do
     es <- fmap (view entityId) <$> focusItemsInRange
-    mapM_ (flip actOnEntity $ EntityAction_SelfAddedBy fi) es
+    cs <- fmap (view entityId) <$> focusItemsInContainer
+    mapM_ pickupItem (es <> cs)
 
 dropAllItems :: Game ()
-dropAllItems = actOnFocusedEntity EntityAction_DropAllItems
+dropAllItems = do
+    mf <- focusEntity
+    mapM_ dropItem $ mf^.traverse.oracleEquipment.traverse.to contentList
 
 executeAttack :: Game ()
 executeAttack = actOnFocusedEntity EntityAction_ExecuteAttack

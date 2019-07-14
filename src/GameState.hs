@@ -9,6 +9,7 @@ module GameState
 
     , isDebugFlagOn
     , pickupItem, dropItem
+    , passItemTo, passItemToSlot
     ) where
 
 import Delude
@@ -23,14 +24,16 @@ import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
-import Types.Entity.Item
 import Types.Entity.Unit
+import Types.Equipment
 import Focus
 
 import EntityLike (toEntity)
-import Entity.Item (makeItem)
+import Entity.Passive (makePassive)
 import Entity.Unit (makeUnit)
 import Entity.Effect (makeEffect)
+import ResourceManager (lookupPassive)
+import InputState.Actions (inspectContent)
 
 import qualified EntityIndex
 
@@ -56,19 +59,21 @@ updateGameState = do
 handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case
     WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
-    WorldAction_GameOver -> startGameOver >> return Nothing
+    WorldAction_InspectContent tid -> inspectContent tid >> return Nothing
+    WorldAction_GameOver           -> startGameOver >> return Nothing
     where
     spawnEntity = \case
-        SpawnEntity_Item       n -> spawnItem n
+        SpawnEntity_Passive    n -> spawnPassive n
         SpawnEntity_Unit       n -> spawnUnit n
+
         SpawnEntity_Effect   l s -> spawnEffect l s
         SpawnEntity_Projectile p -> spawnProjectile p
 
-    spawnItem n = do
-        mit <- lookupItemType n
+    spawnPassive n = do
         rs  <- use $ userState.resources
+        let mit = lookupPassive n rs
         flip (maybe (pure Nothing)) mit $ \it -> do
-            let e = toEntity $ makeItem rs it
+            let e = toEntity $ makePassive rs it
             return $ Just e
 
     spawnUnit n = do
@@ -101,11 +106,6 @@ startGameOver = do
     screen :: Lens' (EngineState St) (Maybe GameOverScreen)
     screen = userState.gameState.ff#gameOverScreen
 
-lookupItemType :: ItemTypeName -> Game (Maybe ItemType)
-lookupItemType n = do
-    rs <- use $ userState.resources.itemsMap
-    return $ HashMap.lookup n rs
-
 lookupUnitType :: UnitTypeName -> Game (Maybe UnitType)
 lookupUnitType n = do
     rs <- use $ userState.resources.unitsMap
@@ -132,8 +132,14 @@ isDebugFlagOn :: DebugFlag -> Game Bool
 isDebugFlagOn x = uses (userState.debugFlags) (Set.member x)
 
 pickupItem :: EntityId -> Game ()
-pickupItem eid = withFocusId $ actOnEntity eid . EntityAction_SelfAddedBy
+pickupItem eid = withFocusId $ passItemTo eid
 
 dropItem :: EntityId -> Game ()
-dropItem = actOnFocusedEntity . EntityAction_DropItem
+dropItem e = actOnEntity e $ EntityAction_SelfPassTo Nothing Nothing
+
+passItemTo :: EntityId -> EntityId -> Game ()
+passItemTo e t = actOnEntity e $ EntityAction_SelfPassTo (Just t) Nothing
+
+passItemToSlot :: EntityId -> EntityId -> EquipmentSlot -> Game ()
+passItemToSlot e t s = actOnEntity e $ EntityAction_SelfPassTo (Just t) (Just s)
 

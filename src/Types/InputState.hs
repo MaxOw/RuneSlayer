@@ -10,8 +10,9 @@ import qualified Data.Map as PrefixMap
 import qualified Types.Entity.Animation as Animation
 import Types.Entity.Animation (AnimationKind)
 import Types.Entity.Common (EntityId)
-import Types.EntityAction (AttackMode(..))
+import Types.EntityAction (AttackMode(..), UseActionName)
 import Types.Debug (DebugFlag(..))
+import Types.Equipment (EquipmentSlot)
 import Engine.Events.Types
 -- import Engine (defaultModifierKeys)
 
@@ -32,9 +33,11 @@ data InputAction
    | StartOffensiveMode
    | StartDefensiveMode
    | SelectItemToPickUp
+   | SelectItemMoveTarget
    | SelectItemToDrop
    | SelectItemToFocus
    | UseFocusedItem
+   | SelectAction
    | InputAction_Escape
    | FastQuit
    deriving (Show)
@@ -56,10 +59,19 @@ data SelectValues a = SelectValues
    } deriving (Show, Generic)
 instance Default (SelectValues a)
 
+data ItemMoveTarget
+   = ItemMoveTarget_EquipmentSlot EquipmentSlot
+   | ItemMoveTarget_Backpack
+   | ItemMoveTarget_Container
+   | ItemMoveTarget_Ground
+   deriving (Eq, Ord, Show, Generic)
+
 data SelectKind
-   = SelectPickup (SelectValues EntityId)
-   | SelectDrop   (SelectValues EntityId)
-   | SelectFocus  (SelectValues EntityId)
+   = SelectKind_Pickup   (SelectValues EntityId)
+   | SelectKind_Drop     (SelectValues EntityId)
+   | SelectKind_Focus    (SelectValues EntityId)
+   | SelectKind_MoveTo   (SelectValues ItemMoveTarget)
+   | SelectKind_Action   (SelectValues (EntityId, UseActionName))
    deriving (Show, Generic)
 
 --------------------------------------------------------------------------------
@@ -132,6 +144,8 @@ data SelectState = SelectState
 
 data InventoryState = InventoryState
    { field_focusedItem :: Maybe EntityId
+   , field_container   :: Maybe EntityId
+   , field_moveStart   :: Maybe EntityId
    } deriving (Generic)
 
 -- data RunicState = RunicState
@@ -275,12 +289,12 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "td" (ToggleDebug DebugFlag_ShowDynamicBoundingBoxes)
         , InputStr "tc" (ToggleDebug DebugFlag_ShowCollisionShapes)
 
-        , InputStr "ac" (DebugRunAnimation Animation.Cast)
-        , InputStr "at" (DebugRunAnimation Animation.Thrust)
-        , InputStr "aw" (DebugRunAnimation Animation.Walk)
-        , InputStr "as" (DebugRunAnimation Animation.Slash)
-        , InputStr "af" (DebugRunAnimation Animation.Fire)
-        , InputStr "ad" (DebugRunAnimation Animation.Die)
+        , InputStr "Dac" (DebugRunAnimation Animation.Cast)
+        , InputStr "Dat" (DebugRunAnimation Animation.Thrust)
+        , InputStr "Daw" (DebugRunAnimation Animation.Walk)
+        , InputStr "Das" (DebugRunAnimation Animation.Slash)
+        , InputStr "Daf" (DebugRunAnimation Animation.Fire)
+        , InputStr "Dad" (DebugRunAnimation Animation.Die)
 
         , InputStr "q" FastQuit
 
@@ -295,6 +309,8 @@ defaultInputKeymap = buildInputKeymap
 
         , InputStr "f" StartOffensiveMode
         , InputStr "d" StartDefensiveMode
+
+        , InputStr "a" SelectAction
         ]
 
     , InputGroup (StatusMode Inventory)
@@ -303,6 +319,8 @@ defaultInputKeymap = buildInputKeymap
 
         , InputStr "pp" DropAllItems
         , InputStr "pi" SelectItemToDrop
+
+        , InputStr "m" SelectItemMoveTarget
 
         , InputStr "f" SelectItemToFocus
         , InputStr "u" UseFocusedItem

@@ -6,6 +6,7 @@ module EntityIndex
     , insert
     , addTag
     , lookupInRange
+    , lookupInRadius
     , lookupById
     , lookupByTag
     , lookupManyById
@@ -17,9 +18,10 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict     as Map
 import Text.Printf
 
-import Engine.Common.Types (minPoint, maxPoint)
+import Engine.Common.Types (minPoint, maxPoint, mkBBoxCenter)
 import Entity
-import Types.Entity.Common (EntityId (..), EntityKind (..))
+import Types.Entity.Common
+    (Location, Distance, EntityId (..), EntityKind (..), isWithinDistance)
 import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex
@@ -40,14 +42,12 @@ new conf = do
           & minCellSize   .~ 2
           & maxBucketSize .~ 4
     sTile    <- SpatialIndex.createGrid g
-    sItem    <- SpatialIndex.createQuadTree qt
-    sStatic  <- SpatialIndex.createQuadTree qt
+    sPassive <- SpatialIndex.createQuadTree qt
     sDynamic <- SpatialIndex.createQuadTree qt
     let f = \case
             EntityKind_Tile    -> sTile
-            EntityKind_Item    -> sItem
+            EntityKind_Passive -> sPassive
             EntityKind_Dynamic -> sDynamic
-            EntityKind_Static  -> sStatic
     lRef <- newIORef Nothing
     dRef <- newIORef mempty
     aRef <- newIORef mempty
@@ -273,14 +273,21 @@ lookupInRange k r eix = do
     where
     expandSizeByKind = case k of
         EntityKind_Tile    -> 0.5
-        EntityKind_Static  -> 4
-        EntityKind_Item    -> 0.5
+        EntityKind_Passive -> 4
         EntityKind_Dynamic -> 2
 
     -- expandRange :: Num x => x -> BBox x -> BBox x
     expandRange e bb = bb
         & minPoint %~ fmap (\x -> x-e)
         & maxPoint %~ fmap (\x -> x+e)
+
+lookupInRadius :: MonadQ m
+    => EntityKind -> Location -> Distance -> EntityIndex -> m [EntityWithId]
+lookupInRadius k loc d eix =
+    filter isInRadius <$> lookupInRange k queryRange eix
+    where
+    queryRange = mkBBoxCenter (loc^._Wrapped) (pure . (*2) $ d^._Wrapped)
+    isInRadius x = maybe False (isWithinDistance d loc) (x^.entity.oracleLocation)
 
 lookupManyById :: (Foldable t, MonadQ m)
     => t EntityId -> EntityIndex -> m [EntityWithId]

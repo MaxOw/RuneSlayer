@@ -10,7 +10,10 @@ module InputState
     , appendHist
     , getInputString, appendInputString, backspaceInputString, clearInputString
     , startSelect, appendSelect, backspaceSelect, endSelect
-    , unfocusItem, getFocusedItem
+    , getInventoryContainer
+    , clearInventoryState
+    , unfocusItem
+    , getFocusedItem
     , handleSelectKind
     , inputActionEscape
     , toggleViewPanel, isPanelVisible
@@ -26,22 +29,13 @@ import qualified Data.Map as PrefixMap
 
 import Engine (userState)
 import Types (Game)
+import Types.EntityAction
 import Types.Entity.Common (EntityId)
 import Types.InputState
+import Types.Equipment
+import InputState.Actions
 import GameState
-
---------------------------------------------------------------------------------
-
-zoomInputState :: InputStateM a -> Game a
-zoomInputState = zoom (userState.inputState)
-
---------------------------------------------------------------------------------
-
-getMode :: Game InputMode
-getMode = use (userState.inputState.mode)
-
-setMode :: InputMode -> Game ()
-setMode m = assign (userState.inputState.mode) m
+import Focus
 
 --------------------------------------------------------------------------------
 
@@ -154,15 +148,18 @@ startSelect f vs = do
 handleSelectKind :: SelectState -> Seq Char -> Game ()
 handleSelectKind s selseq = do
     case s^.selectKind of
-        SelectPickup v -> selectLookup selectPickup v
-        SelectDrop   v -> selectLookup selectDrop   v
-        SelectFocus  v -> selectLookup selectFocus  v
+        SelectKind_Pickup v -> selectLookup v selectPickup
+        SelectKind_Drop   v -> selectLookup v selectDrop
+        SelectKind_Focus  v -> selectLookup v selectFocus
+        SelectKind_MoveTo v -> selectLookup v selectMoveTarget
+        SelectKind_Action v -> selectLookup v selectAction
     unless (isPartialMatch smap selseq) endSelect
     where
     smap = s^.selectMap
-    selectLookup f v
-        | Vector.length vs == 1 = whenJust (Vector.indexM vs 0) $ \a -> do
-            f a >> endSelect
+    selectLookup :: SelectValues a -> (a -> Game ()) -> Game ()
+    selectLookup v f
+        | Vector.length vs == 1 =
+            whenJust (Vector.indexM vs 0) $ \a -> f a >> endSelect
         | otherwise = case PrefixMap.lookup (toList selseq) smap of
             Nothing -> return ()
             Just i -> case Vector.indexM vs i of
@@ -179,6 +176,24 @@ selectDrop eid = dropItem eid >> selectFocus eid
 
 selectFocus :: EntityId -> Game ()
 selectFocus = zoomInputState . assign (inventoryState.focusedItem) . Just
+
+selectMoveTarget :: ItemMoveTarget -> Game ()
+selectMoveTarget m = whenJustM getFocusedItem $ \e -> case m of
+    ItemMoveTarget_Ground          -> dropItem e
+    ItemMoveTarget_Container       -> passToContainer e
+    ItemMoveTarget_Backpack        -> passToBackpack e
+    ItemMoveTarget_EquipmentSlot s -> passToSlot e s
+    where
+    passToContainer e = whenJustM getInventoryContainer
+        $ passItemTo e . view entityId
+    passToBackpack e = whenJustM (focusEquipmentSlot EquipmentSlot_Backpack)
+        $ passItemTo e . view entityId
+
+    passToSlot e s = withFocusId $ \fi -> passItemToSlot e fi s
+
+selectAction :: (EntityId, UseActionName) -> Game ()
+selectAction (eid, eua)
+    = whenJustM (focusEntityId) $ actOnEntity eid . EntityAction_UseAction eua
 
 unfocusItem :: Game ()
 unfocusItem = zoomInputState $ inventoryState.focusedItem .= Nothing

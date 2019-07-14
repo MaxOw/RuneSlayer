@@ -11,11 +11,11 @@ import Engine.Common.Types
 import Types.Entity (Entity)
 import Types.Entity.Common
 import Types.Entity.TileSet
-import Types.Entity.StaticEntity
-import Entity.StaticEntity
+import Types.Entity.Passive
+import Entity.Passive
 import Entity.Tile (makeTile)
 import EntityLike (toEntity)
-import ResourceManager (Resources, lookupTileSet, lookupStaticEntity)
+import ResourceManager (Resources, lookupTileSet, lookupPassive)
 
 import qualified Entity.TileSet as TileSet
 
@@ -100,7 +100,7 @@ generateWorld rs conf = def
 
 placeStatics
     :: Resources -> Int -> V2 Int -> CoveringLayer -> RepaBool -> [Entity]
-placeStatics rs seed pp layer bm = mapMaybe (selectStatic seed sts) vsv
+placeStatics rs seed pp layer bm = mapMaybe (selectStatic rs seed sts) vsv
     where
     rnd = rndBool seed 20 (Repa.extent bm)
     psl :: Array V DIM2 (V2 Int, Bool)
@@ -108,8 +108,8 @@ placeStatics rs seed pp layer bm = mapMaybe (selectStatic seed sts) vsv
     vsv = map fst $ filter snd $ Repa.toList psl
     sts = map (requireStatic rs) $ layer^.ff#statics
 
-selectStatic :: Int -> [StaticEntityType] -> V2 Int -> Maybe Entity
-selectStatic seed ss p = flip placeStatic (pp+off) <$> s
+selectStatic :: Resources -> Int -> [PassiveType] -> V2 Int -> Maybe Entity
+selectStatic rs seed ss p = flip (placeStatic rs) (pp+off) <$> s
     where
     pp = fmap fromIntegral p
     ps = xor seed (hash p)
@@ -146,9 +146,9 @@ requireTileSet :: Resources -> TileSetName -> TileSet
 requireTileSet rs n = require "Unable to load tile set." $
     lookupTileSet n rs
 
-requireStatic :: Resources -> StaticEntityTypeName -> StaticEntityType
+requireStatic :: Resources -> PassiveTypeName -> PassiveType
 requireStatic rs n = require "Unable to load static entity." $
-    lookupStaticEntity n rs
+    lookupPassive n rs
 
 generateLandmass :: WorldGenConfig -> RepaBool
 generateLandmass conf
@@ -171,9 +171,9 @@ generateLayer conf i b
 
 --------------------------------------------------------------------------------
 
-placeStatic :: StaticEntityType -> V2 Float -> Entity
-placeStatic se (V2 x y) = toEntity $ makeStaticEntity se
-    & location .~ locM x y
+placeStatic :: Resources -> PassiveType -> V2 Float -> Entity
+placeStatic rs se (V2 x y) = toEntity $ makePassive rs se
+    & location .~ Just (locM x y)
 
 addOffset :: Source x a => V2 Int -> Array x DIM2 a -> Array D DIM2 (V2 Int, a)
 addOffset off s = Repa.traverse s id f

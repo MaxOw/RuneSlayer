@@ -31,8 +31,7 @@ instance FromJSON Stats where parseJSON  = genericParseJSON  customOptionsJSON
 
 data EntityKind
    = EntityKind_Tile
-   | EntityKind_Static
-   | EntityKind_Item
+   | EntityKind_Passive
    | EntityKind_Dynamic
    deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 instance Hashable EntityKind
@@ -140,6 +139,9 @@ isWithinDistance d a b = distance (a^._Wrapped) (b^._Wrapped) <= (d^._Wrapped)
 
 defaultPickupRange :: Distance
 defaultPickupRange = disM 1.5
+
+defaultActionRange :: Distance
+defaultActionRange = disM 1.5
 
 maxEffectSpawnDistance :: Distance
 maxEffectSpawnDistance = disM 20

@@ -81,7 +81,7 @@ Executable RuneSlayer
 
                 , aeson
                 , dhall == 1.24.0
-                , dhall-json
+                , dhall-json == 1.3.0
 
                 , linear
                 , Carnot == 0.1.18.10

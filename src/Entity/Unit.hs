@@ -38,7 +38,7 @@ update x ctx = runUpdate x ctx $ do
     updateActiveAnimation
     updateTimer
     integrateLocation
-    anyMatch _EntityAction_SelfAttacked procAttacked
+    allMatch _EntityAction_SelfAttacked procAttacked
     self.processOnUpdate .= mempty
 
 decideAction :: Update Unit ()
@@ -97,7 +97,7 @@ procAttacked as = do
         mco <- use $ self.unitType.corpse
         dir <- use $ self.animationState.current.direction
         whenJust mco $ \c ->
-            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Item c) $ def
+            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Passive c) $ def
                 & actions .~
                 [ EntityAction_SetValue $ EntityValue_Location  loc
                 , EntityAction_SetValue $ EntityValue_Direction dir

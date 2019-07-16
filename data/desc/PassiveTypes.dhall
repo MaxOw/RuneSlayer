@@ -3,8 +3,9 @@ let types      = ./Types.dhall
 let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
 let useEffect  = ./UseActionEffect.dhall
+let names      = ./PassiveNames.dhall
 
-let Entry           = ./PreludeEntryType.dhall
+let Entry           = types.Entry
 let PassiveTypeName = types.PassiveTypeName
 let Sprite          = types.Sprite
 let ContainerType   = types.ContainerType
@@ -13,8 +14,6 @@ let WeaponKind      = enums.WeaponKind
 let EquipmentSlot   = enums.EquipmentSlot
 let UseActionEffect = types.UseActionEffect
 let UseActionEntry  = Entry Text (List UseActionEffect)
-
-let makeName = PassiveTypeName.MakeName
 
 let defaultStats =
   { attack    = 0
@@ -39,18 +38,18 @@ let action =
     { mapKey = n, mapValue = v }
 
 let makeCorpse =
-  λ(name   : Text) →
+  λ(name   : PassiveTypeName) →
   λ(volume : Natural) →
   λ(sprite : Sprite) →
     defaultItemType //
-      { name        = makeName "Corpse of a ${name}"
+      { name        = name
       , volume      = volume
       , passiveKind = [ PassiveKind.BigItem ]
       , appearance  = appearance.simple sprite
       }
 
 let helmet = defaultItemType //
-  { name         = makeName "Helmet"
+  { name         = names.helmet
   , volume       = 1.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , appearance   = appearance.simple sprites.helmet
@@ -60,7 +59,7 @@ let helmet = defaultItemType //
   }
 
 let dagger = defaultItemType //
-  { name         = makeName "Dagger"
+  { name         = names.dagger
   , volume       = 0.3
   , passiveKind  = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , weaponKind   = Some WeaponKind.Slashing
@@ -71,7 +70,7 @@ let dagger = defaultItemType //
   }
 
 let spear = defaultItemType //
-  { name         = makeName "Spear"
+  { name         = names.spear
   , volume       = 0.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Thrusting
@@ -82,7 +81,7 @@ let spear = defaultItemType //
   }
 
 let bow = defaultItemType //
-  { name         = makeName "Bow"
+  { name         = names.bow
   , volume       = 0.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Projecting
@@ -93,7 +92,7 @@ let bow = defaultItemType //
   }
 
 let arrow = defaultItemType //
-  { name         = makeName "Arrow"
+  { name         = names.arrow
   , volume       = 1
   , passiveKind  = [ PassiveKind.Item, PassiveKind.Projectile, PassiveKind.Arrow ]
   , appearance   = appearance.simple sprites.arrow
@@ -102,7 +101,7 @@ let arrow = defaultItemType //
   }
 
 let quiver = defaultItemType //
-  { name         = makeName "Quiver"
+  { name         = names.quiver
   , volume       = 10
   , passiveKind  = [ PassiveKind.Item, PassiveKind.Container ]
   , appearance   = appearance.simple sprites.quiver
@@ -117,24 +116,24 @@ let quiver = defaultItemType //
   }
 
 let emptyFlask = defaultItemType //
-  { name        = makeName "Empty Flask"
+  { name        = names.emptyFlask
   , volume      = 0.1
   , passiveKind = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , appearance  = appearance.simple sprites.emptyFlask
   }
 
 let healthPotion = defaultItemType //
-  { name        = makeName "Health Potion"
+  { name        = names.healthPotion
   , volume      = 0.1
   , passiveKind = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , appearance  = appearance.simple sprites.healthPotion
   , useActions  =
-      [ action "Use" [ useEffect.heal 5, useEffect.transformInto emptyFlask.name ]
+      [ action "Use" [ useEffect.heal 5, useEffect.transformInto names.emptyFlask ]
       ]
   }
 
 let bag = defaultItemType //
-  { name          = makeName "Bag"
+  { name          = names.bag
   , volume        = 15
   , passiveKind   = [ PassiveKind.Item, PassiveKind.Container ]
   , appearance    = appearance.simple sprites.bag
@@ -147,13 +146,13 @@ let bag = defaultItemType //
   }
 
 let humanCorpse = defaultItemType //
-  { name          = makeName "Human Corpse"
+  { name          = names.humanCorpse
   , volume        = 70
   -- , passiveKind   = [ ]
   }
 
-let batCorpse    = makeCorpse "Bat"    30 sprites.batCorpse
-let spiderCorpse = makeCorpse "Spider" 80 sprites.spiderCorpse01
+let batCorpse    = makeCorpse names.batCorpse    30 sprites.batCorpse
+let spiderCorpse = makeCorpse names.spiderCorpse 80 sprites.spiderCorpse01
 
 --------------------------------------------------------------------------------
 
@@ -161,25 +160,21 @@ let defaultStaticType = defaultItemType //
   { zindex = 1002
   }
 
--- Dhall doesn't allow for mutually referencing let bindings,
--- so we heve to do this...
-let woodenChest_open_name = makeName "Open Wooden Chest"
-
 let woodenChest = defaultStaticType //
-  { name       = makeName "Wooden Chest"
+  { name       = names.woodenChest
   , volume     = 100
   , appearance = [ appearance.sprite sprites.woodenChest1 ]
   , useActions =
-    [ action "Open" [ useEffect.transformInto woodenChest_open_name ]
+    [ action "Open" [ useEffect.transformInto names.woodenChest_open ]
     ]
   }
 
 let woodenChest_open = defaultStaticType //
-  { name       = woodenChest_open_name
+  { name       = names.woodenChest_open
   , volume     = 100
   , appearance = [ appearance.sprite sprites.woodenChest1_open ]
   , useActions =
-    [ action "Close" [ useEffect.transformInto woodenChest.name ]
+    [ action "Close" [ useEffect.transformInto names.woodenChest ]
     , action "Inspect contents of" [ useEffect.inspectContent ]
     ]
   , containerType = Some
@@ -189,17 +184,55 @@ let woodenChest_open = defaultStaticType //
     }
   }
 
+let woodenDoor = defaultStaticType //
+  { name       = names.woodenDoor
+  , volume     = 80
+  , appearance = [ appearance.sprite sprites.woodenDoor ]
+  , useActions =
+    [ action "Open" [ useEffect.transformInto names.woodenDoor_open ]
+    ]
+  }
+
+let woodenDoor_open = defaultStaticType //
+  { name       = names.woodenDoor_open
+  , volume     = 80
+  , appearance = [ appearance.sprite sprites.woodenDoor_open ]
+  , useActions =
+    [ action "Close" [ useEffect.transformInto names.woodenDoor ]
+    ]
+  }
+
+
 let treeAppearance =
   [ appearance.sprite  sprites.treeTrunk
   , appearance.located [0.0, 2.0] sprites.treeFoliage
   ]
 
 let tree = defaultStaticType //
-  { name = makeName "Tree"
+  { name = names.tree
   , volume = 15000
   , appearance = treeAppearance
   , useActions = [ action "Cut down" [ useEffect.deleteSelf ] ]
   }
+
+let makeDeco =
+  λ(name   : PassiveTypeName) →
+  λ(sprite : Sprite) → defaultStaticType //
+  { name = name
+  , volume = 100
+  , appearance = [ appearance.sprite sprite ]
+  }
+
+let campfire = makeDeco names.campfire sprites.campfire // { zindex = 0 }
+let firepit  = makeDeco names.firepit  sprites.firepit
+
+let firewoodPileBig   = makeDeco names.firewoodPileBig   sprites.firewoodPileBig
+let firewoodPile      = makeDeco names.firewoodPile      sprites.firewoodPile
+let firewoodPileSmall = makeDeco names.firewoodPileSmall sprites.firewoodPileSmall
+let firewood          = makeDeco names.firewood          sprites.firewood
+let woodChoopingBlock = makeDeco names.woodChoopingBlock sprites.woodChoopingBlock
+let treeStump         = makeDeco names.treeStump         sprites.treeStump
+let barrel            = makeDeco names.barrel            sprites.barrel
 
 in
 { helmet           = helmet
@@ -217,5 +250,17 @@ in
 
 , woodenChest      = woodenChest
 , woodenChest_open = woodenChest_open
+, woodenDoor       = woodenDoor
+, woodenDoor_open  = woodenDoor_open
 , tree             = tree
+
+, firepit           = firepit
+, campfire          = campfire
+, firewoodPileBig   = firewoodPileBig
+, firewoodPile      = firewoodPile
+, firewoodPileSmall = firewoodPileSmall
+, firewood          = firewood
+, woodChoopingBlock = woodChoopingBlock
+, treeStump         = treeStump
+, barrel            = barrel
 }

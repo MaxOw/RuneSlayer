@@ -9,6 +9,8 @@ let makeTileSetPath = λ(x : Text) → makeImgsPath "tilesets/twosided/${x}"
 in
 { itemsAtlas1 = makeImgsPath "items1/items1"
 , envAtlas1   = makeImgsPath "environment/base_out_atlas"
+, envAtlas2   = makeImgsPath "environment/decoration_medieval/decorations-medieval"
+, doors       = makeImgsPath "environment/doors-animated"
 
 , tilesetDirtDry = makeTileSetPath "dirt"
 , tilesetDirtWet = makeTileSetPath "dirt2"

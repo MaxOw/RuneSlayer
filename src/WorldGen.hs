@@ -38,7 +38,7 @@ import WorldGen.Utils
 
 generateWorld :: Resources -> WorldGenConfig -> WorldGenOutput
 generateWorld rs conf = def
-    & entities      .~ Vector.fromList (tiles <> statics)
+    & entities      .~ Vector.fromList (tiles <> statics <> items)
     & overviewImage .~ Just (imgToImage fullImg)
 
 --------------------------------------------------------------------------------
@@ -96,6 +96,13 @@ generateWorld rs conf = def
 
     tiles = buildEntities pp $ downselectTileSets outRoles
 
+    items = mapMaybe fromPassive $ conf^.ff#items
+
+    fromPassive :: LocatedPassive -> Maybe Entity
+    fromPassive lp = make <$> lookupPassive (lp^.name) rs
+        where
+        make tn = toEntity $ makePassive rs tn & location .~ (Just $ lp^.location)
+
 --------------------------------------------------------------------------------
 
 placeStatics
@@ -109,8 +116,11 @@ placeStatics rs seed pp layer bm = mapMaybe (selectStatic rs seed sts) vsv
     sts = map (requireStatic rs) $ layer^.ff#statics
 
 selectStatic :: Resources -> Int -> [PassiveType] -> V2 Int -> Maybe Entity
-selectStatic rs seed ss p = flip (placeStatic rs) (pp+off) <$> s
+selectStatic rs seed ss p
+    | inClearance = Nothing
+    | otherwise = flip (placeStatic rs) (pp+off) <$> s
     where
+    inClearance = norm pp < 6
     pp = fmap fromIntegral p
     ps = xor seed (hash p)
     (s, off) = runRandom ps $ do

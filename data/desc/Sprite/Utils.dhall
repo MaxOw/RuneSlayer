@@ -42,11 +42,25 @@ let makeEnv =
   λ(h : Natural) →
     makeSprite paths.envAtlas1 // { part = Some (makeRect 16 x y w h) }
 
+let makeEnv2 =
+  λ(x : Natural) →
+  λ(y : Natural) →
+  λ(w : Natural) →
+  λ(h : Natural) →
+    makeSprite paths.envAtlas2 // { part = Some (makeRect 32 x y w h) }
+
+let makeDoor =
+  λ(x : Natural) →
+  λ(y : Natural) →
+    makeSprite paths.doors // { part = Some (makeRect 32 x y 2 2) }
+
 in
 { makePart         = makePart
 , makeRect         = makeRect
 , makeSprite       = makeSprite
 , makeItem         = makeItem
 , makeEnv          = makeEnv
+, makeEnv2         = makeEnv2
+, makeDoor         = makeDoor
 , selectSpritePart = selectSpritePart
 }

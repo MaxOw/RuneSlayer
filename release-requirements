@@ -62,15 +62,11 @@ Requirements for first release: v0.1
   -- The name Agent seems optimal since it should group entities that
   -- have individual (not necessary artificial) agency.
 
-* Static Entities.                                                           [ ]
+* Static Entities.                                                           [X]
   - Trees.                                                                   (#)
   - Chest.                                                                   (#)
-  - Cottage parts.                                                           ( )
-  - Building set.                                                            ( )
-  - Floor-plan to building map. (via building set)                           ( )
-  - Floor-plan generator. [v0.2?]                                            ( )
+  - Decorative elements for the initial campsite.                            (#)
 
-* Initial village.                                                           [ ]
 * Initial island.                                                            [ ]
 
 * Learning mechanics                                                         [ ]
@@ -99,4 +95,10 @@ Requirements for first release: v0.1
 * Enemy units:                                                               [ ]
   - Shadow Puppets (Skeletons)                                               ( )
   - Shadow Puppets (Zombies)                                                 ( )
+
+* Static Entities.                                                           [ ]
+  - Cottage parts.                                                           ( )
+  - Building set.                                                            ( )
+  - Floor-plan to building map. (via building set)                           ( )
+  - Floor-plan generator.                                                    ( )
 

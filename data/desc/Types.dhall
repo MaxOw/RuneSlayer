@@ -1,8 +1,13 @@
 let enums = ./Enums.dhall
+
 let Direction     = enums.Direction
 let AnimationKind = enums.AnimationKind
 
+let Entry = ./PreludeEntryType.dhall
+
 let Path = < MakePath : Text >
+
+let Location = List Double
 
 let Rect   = { offset : List Natural, size : List Natural }
 let Sprite =
@@ -42,7 +47,9 @@ let UseActionEffect =
   >
 
 in
-{ Path            = Path
+{ Entry           = Entry
+, Path            = Path
+, Location        = Location
 , Rect            = Rect
 , Sprite          = Sprite
 , LocatedSprite   = LocatedSprite

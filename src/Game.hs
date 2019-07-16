@@ -20,7 +20,6 @@ import Entity.Player (makePlayer)
 import Types.ResourceManager
 import Types.DirectedAction
 import Types.EntityAction
-import Types.Entity.Passive
 import Types.Entity.Unit
 import EntityLike
 import WorldGen
@@ -168,28 +167,11 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
 
 testInitialActions :: [DirectedAction]
 testInitialActions = map directAtWorld
-    [ mkPassive "Helmet"           1      0
-    , mkPassive "Health Potion"  (-1)     0.2
-    , mkPassive "Dagger"         (-3)     1.2
-    , mkPassive "Bow"            (-3)   (-1)
-    , mkPassive "Spear"          (-5)     1
-    , mkPassive "Bag"              0      1
-    , mkPassive "Arrow"          (-3)   (-2)
-    , mkPassive "Arrow"          (-3.1) (-2.1)
-    , mkPassive "Arrow"          (-3.2) (-2.2)
-    , mkPassive "Quiver"         (-4)   (-3)
-
-    , mkPassive "Wooden Chest"     0      4
-
-    , mkUnit "Bat"             11    8
+    [ mkUnit "Bat"             11    8
     , mkUnit "Bat"             10    8.3
     , mkUnit "Spider"        (-11)   8
     ]
     where
-    mkPassive n x y = WorldAction_SpawnEntity (mkSpawnPassive n) $ def
-        & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
-    mkSpawnPassive = SpawnEntity_Passive . PassiveTypeName
-
     mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Unit $ UnitTypeName n) $ def
         & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
 

@@ -84,13 +84,18 @@ selfPassTo mno mes = use (self.owner) >>= \mco -> when (mco /= mno) $ do
             rgid <- fromIntegral . hash <$> useSelfId
             let dloc = over _Wrapped (\v -> v + genDropOffset [fct + rgid]) loc
             self.location .= Just dloc
-        Nothing -> deleteSelf .= True
+        Nothing -> selfDelete
             -- This sould probably never happen...
             -- Make this an assert?
 
 removeSelfFromOwner :: Update Passive ()
 removeSelfFromOwner = whenJustM (use $ self.owner) $ \oi ->
     addAction oi . EntityAction_RemoveItem =<< useSelfId
+
+selfDelete :: Update Passive ()
+selfDelete = do
+    removeSelfFromOwner
+    deleteSelf .= True
 
 containerAddItems :: NonEmpty EntityId -> Update Passive ()
 containerAddItems ls = do
@@ -105,8 +110,7 @@ containerRemoveItems rs = do
 
 projectileFire :: (Location, V2D, EntityId, AttackPower) -> Update Passive ()
 projectileFire (loc, vectorToTarget, tid, attackPower) = do
-    removeSelfFromOwner
-    deleteSelf .= True
+    selfDelete
     let maxDist   = distanceInMeters 12
     let projSpeed = speedInMetersPerSecond 40
     let vel = velocityFromSpeed vectorToTarget projSpeed
@@ -132,7 +136,7 @@ performUseActionEffect :: EntityId -> UseActionEffect -> Update Passive ()
 performUseActionEffect t = \case
     UseActionEffect_TransformInto n -> transformInto n
     UseActionEffect_InspectContent  -> inspectContent
-    UseActionEffect_DeleteSelf      -> deleteSelf .= True
+    UseActionEffect_DeleteSelf      -> selfDelete
     UseActionEffect_Heal          h -> heal h
     where
     transformInto n = do
@@ -142,7 +146,7 @@ performUseActionEffect t = \case
                 self.passiveType .= tt
                 self.animation   .= makeStaticAnimation
                     (renderAppearance rs $ tt^.appearance)
-            Nothing -> deleteSelf .= True
+            Nothing -> selfDelete
 
     inspectContent = addWorldAction . WorldAction_InspectContent =<< useSelfId
 

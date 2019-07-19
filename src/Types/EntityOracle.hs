@@ -2,7 +2,7 @@
 module Types.EntityOracle where
 
 import Delude
-import Types.Entity.Player
+import Types.Entity.Agent
 import Types.Entity.Reactivity
 import Types.Equipment
 import Types.Entity.Common

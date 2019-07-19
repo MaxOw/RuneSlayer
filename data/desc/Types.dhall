@@ -38,6 +38,7 @@ let AnimationPart =
   }
 
 let PassiveTypeName = < MakeName : Text >
+let AnimationName   = < MakeName : Text >
 
 let UseActionEffect =
   < TransformInto  : { TransformInto  : PassiveTypeName }
@@ -57,5 +58,6 @@ in
 , Frame           = Frame
 , AnimationPart   = AnimationPart
 , PassiveTypeName = PassiveTypeName
+, AnimationName   = AnimationName
 , UseActionEffect = UseActionEffect
 }

@@ -24,15 +24,16 @@ import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
-import Types.Entity.Unit
+import Types.Entity.Agent
 import Types.Equipment
 import Focus
 
 import EntityLike (toEntity)
 import Entity.Passive (makePassive)
-import Entity.Unit (makeUnit)
+import Entity.Agent (makeAgent)
 import Entity.Effect (makeEffect)
 import ResourceManager (lookupPassive)
+import Types.ResourceManager (agentsMap)
 import InputState.Actions (inspectContent)
 
 import qualified EntityIndex
@@ -64,7 +65,7 @@ handleWorldAction = \case
     where
     spawnEntity = \case
         SpawnEntity_Passive    n -> spawnPassive n
-        SpawnEntity_Unit       n -> spawnUnit n
+        SpawnEntity_Agent      n -> spawnAgent n
 
         SpawnEntity_Effect   l s -> spawnEffect l s
         SpawnEntity_Projectile p -> spawnProjectile p
@@ -76,11 +77,11 @@ handleWorldAction = \case
             let e = toEntity $ makePassive rs it
             return $ Just e
 
-    spawnUnit n = do
-        mit <- lookupUnitType n
+    spawnAgent n = do
+        mit <- lookupAgentType n
         rs  <- use $ userState.resources
         flip (maybe (pure Nothing)) mit $ \it -> do
-            let e = toEntity $ makeUnit rs it
+            let e = toEntity $ makeAgent rs it
             return $ Just e
 
     spawnEffect l s = do
@@ -106,9 +107,9 @@ startGameOver = do
     screen :: Lens' (EngineState St) (Maybe GameOverScreen)
     screen = userState.gameState.ff#gameOverScreen
 
-lookupUnitType :: UnitTypeName -> Game (Maybe UnitType)
-lookupUnitType n = do
-    rs <- use $ userState.resources.unitsMap
+lookupAgentType :: AgentTypeName -> Game (Maybe AgentType)
+lookupAgentType n = do
+    rs <- use $ userState.resources.agentsMap
     return $ HashMap.lookup n rs
 
 addDirectedAction :: DirectedAction -> Game ()

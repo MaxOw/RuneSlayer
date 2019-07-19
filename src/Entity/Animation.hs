@@ -54,6 +54,7 @@ makeCustomAnimation rs ps = Animation $ maybe mempty (renderSprite rs) . amap
     selectFrame t = select t 0 . normalizeFrames
 
     select _ _ []     = Nothing
+    select _ _ (f:[]) = Just (f^.sprite)
     select t d (f:fs) = let d' = d + f^.duration in if Duration t < d'
         then Just (f^.sprite)
         else select t d' fs

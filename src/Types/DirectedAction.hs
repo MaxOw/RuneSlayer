@@ -3,16 +3,16 @@ module Types.DirectedAction where
 import Delude
 import Types.Entity.Common
 import Types.EntityAction
-import Types.Entity.Passive
-import Types.Entity.Unit
+import Types.Entity.Passive    (PassiveTypeName)
+import Types.Entity.Agent      (AgentTypeName)
 import Types.Entity.Projectile (Projectile)
-import Types.Entity.Effect (EffectKind)
+import Types.Entity.Effect     (EffectKind)
 
 --------------------------------------------------------------------------------
 
 data SpawnEntity
    = SpawnEntity_Passive PassiveTypeName
-   | SpawnEntity_Unit    UnitTypeName
+   | SpawnEntity_Agent   AgentTypeName
 
    | SpawnEntity_Effect Location EffectKind
    | SpawnEntity_Projectile Projectile

@@ -65,7 +65,7 @@ import Types.Entity.Timer
 import Types.Entity.Passive
 import Types.Entity.Projectile
 import Types.Entity.Appearance
-import Types.Entity.Player
+import Types.Entity.Agent
 import Types.Entity.Animation (AnimationState, AnimationKind)
 import Types.Entity.Reactivity (ReactivCategory)
 import Types.Entity.Effect (EffectKind)

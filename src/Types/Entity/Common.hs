@@ -11,8 +11,6 @@ import Data.Collider (CollisionShape)
 import qualified Prelude
 import Text.Printf
 
--- import Linear ((^+^), (^*))
-
 --------------------------------------------------------------------------------
 
 data EntityStatus
@@ -23,6 +21,7 @@ data Stats = Stats
    { field_attack    :: AttackPower
    , field_defence   :: Defence
    , field_maxHealth :: Health
+   , field_maxSpeed  :: Speed
    } deriving (Generic)
 
 instance Default  Stats

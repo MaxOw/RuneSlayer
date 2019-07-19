@@ -10,7 +10,7 @@ import qualified Engine.Layout.Alt as Alt
 
 import Types
 import Types.InputState
-import Types.Entity.Player (PlayerStatus)
+import Types.Entity.Agent (PlayerStatus)
 import InputState (getMode, isPanelVisible, getInputString)
 import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
 import Focus (focusEntity)

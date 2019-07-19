@@ -49,13 +49,11 @@ data EntityValue
    = EntityValue_Location  Location
    | EntityValue_Direction Direction
    | EntityValue_Animation Animation
-   | EntityValue_CenterOffset V2D
 instance Show EntityValue where
     show = \case
         EntityValue_Location     l -> "Set: " <> show l
         EntityValue_Direction    d -> "Set: " <> show d
         EntityValue_Animation    _ -> "Set: <Animation>"
-        EntityValue_CenterOffset o -> "Set: CenterOffset " <> show o
 
 data EntityAction
    = EntityAction_SetMoveVector V2D

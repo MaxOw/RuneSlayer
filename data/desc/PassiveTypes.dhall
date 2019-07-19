@@ -1,9 +1,11 @@
 let sprites    = ./Sprites.dhall
+let animations = ./AnimationNames.dhall
 let types      = ./Types.dhall
 let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
 let useEffect  = ./UseActionEffect.dhall
 let names      = ./PassiveNames.dhall
+let constants  = ./Constants.dhall
 
 let Entry           = types.Entry
 let PassiveTypeName = types.PassiveTypeName
@@ -15,11 +17,9 @@ let EquipmentSlot   = enums.EquipmentSlot
 let UseActionEffect = types.UseActionEffect
 let UseActionEntry  = Entry Text (List UseActionEffect)
 
-let defaultStats =
-  { attack    = 0
-  , defence   = 0
-  , maxHealth = 0
-  }
+--------------------------------------------------------------------------------
+
+let defaultStats = constants.defaultStats
 
 let defaultItemType =
   { passiveKind   = [] : List PassiveKind
@@ -48,13 +48,15 @@ let makeCorpse =
       , appearance  = appearance.simple sprite
       }
 
+--------------------------------------------------------------------------------
+
 let helmet = defaultItemType //
   { name         = names.helmet
   , volume       = 1.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , appearance   = appearance.simple sprites.helmet
   , fittingSlots = [ EquipmentSlot.Head ]
-  , animation    = Some "helmet"
+  , animation    = animations.helmet
   , stats        = defaultStats // { defence = 2 }
   }
 
@@ -65,7 +67,7 @@ let dagger = defaultItemType //
   , weaponKind   = Some WeaponKind.Slashing
   , appearance   = appearance.simple sprites.dagger
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
-  , animation    = Some "dagger"
+  , animation    = animations.dagger
   , stats        = defaultStats // { attack = 2 }
   }
 
@@ -76,7 +78,7 @@ let spear = defaultItemType //
   , weaponKind   = Some WeaponKind.Thrusting
   , appearance   = appearance.simple sprites.spear
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
-  , animation    = Some "spear"
+  , animation    = animations.spear
   , stats        = defaultStats // { attack = 5 }
   }
 
@@ -87,7 +89,7 @@ let bow = defaultItemType //
   , weaponKind   = Some WeaponKind.Projecting
   , appearance   = appearance.simple sprites.bow
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
-  , animation    = Some "bow"
+  , animation    = animations.bow
   , stats        = defaultStats // { attack = 3 }
   }
 
@@ -96,7 +98,7 @@ let arrow = defaultItemType //
   , volume       = 1
   , passiveKind  = [ PassiveKind.Item, PassiveKind.Projectile, PassiveKind.Arrow ]
   , appearance   = appearance.simple sprites.arrow
-  , animation    = Some "arrow"
+  , animation    = animations.arrow
   , stats        = defaultStats // { attack = 2 }
   }
 
@@ -106,7 +108,7 @@ let quiver = defaultItemType //
   , passiveKind  = [ PassiveKind.Item, PassiveKind.Container ]
   , appearance   = appearance.simple sprites.quiver
   , fittingSlots = [ EquipmentSlot.PrimaryOther ]
-  , animation    = Some "quiver"
+  , animation    = animations.quiver
   , behindBody   = Some True
   , containerType = Some
     { maxVolume  = 15
@@ -148,7 +150,7 @@ let bag = defaultItemType //
 let humanCorpse = defaultItemType //
   { name          = names.humanCorpse
   , volume        = 70
-  -- , passiveKind   = [ ]
+  , renderOffset  = [0.0, 0.8]
   }
 
 let batCorpse    = makeCorpse names.batCorpse    30 sprites.batCorpse
@@ -215,6 +217,8 @@ let tree = defaultStaticType //
   , useActions = [ action "Cut down" [ useEffect.deleteSelf ] ]
   }
 
+--------------------------------------------------------------------------------
+
 let makeDeco =
   λ(name   : PassiveTypeName) →
   λ(sprite : Sprite) → defaultStaticType //
@@ -233,6 +237,8 @@ let firewood          = makeDeco names.firewood          sprites.firewood
 let woodChoopingBlock = makeDeco names.woodChoopingBlock sprites.woodChoopingBlock
 let treeStump         = makeDeco names.treeStump         sprites.treeStump
 let barrel            = makeDeco names.barrel            sprites.barrel
+
+--------------------------------------------------------------------------------
 
 in
 { helmet           = helmet

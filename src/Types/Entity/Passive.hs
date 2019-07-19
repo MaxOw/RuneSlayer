@@ -52,6 +52,7 @@ data PassiveType = PassiveType
    , field_containerType :: Maybe ContainerType
    , field_useActions    :: Map UseActionName [UseActionEffect]
    , field_zindex        :: Word32
+   , field_renderOffset  :: Maybe V2D
    } deriving (Generic)
 
 data ContainerType = ContainerType
@@ -72,7 +73,6 @@ data Passive = Passive
    , field_direction       :: Maybe Direction
    , field_animationState  :: AnimationState
    , field_animation       :: Animation
-   , field_centerOffset    :: V2D -- This is such a duct-tape...
    } deriving (Generic)
 
 --------------------------------------------------------------------------------
@@ -114,12 +114,6 @@ useActions = ff#useActions
 behindBody :: Lens' PassiveType (Maybe Bool)
 behindBody = ff#behindBody
 
-stats :: Lens' PassiveType Stats
-stats = ff#stats
-
 showCount :: Lens' ContainerType Bool
 showCount = ff#showCount
-
-centerOffset :: Lens' Passive V2D
-centerOffset = ff#centerOffset
 

@@ -10,6 +10,7 @@ import qualified Data.List as List
 import Data.Hashable (hash)
 
 import Entity
+import Entity.HasField
 import Types.Entity.Passive
 import Types.Debug
 import Types.Equipment(EquipmentSlot)
@@ -48,7 +49,6 @@ actOn x a = x & case a of
         EntityValue_Location     v -> location     .~ Just v
         EntityValue_Direction    v -> direction    .~ Just v
         EntityValue_Animation    v -> animation    .~ v
-        EntityValue_CenterOffset v -> centerOffset .~ v
 
     setAnimationKind k _ = x
         & animationState.current.kind .~ k
@@ -176,12 +176,13 @@ fitIntoContainer ees = do
 
 render :: Passive -> RenderContext -> RenderAction
 render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
-    $ translate (x^.centerOffset) $ renderComposition
+    $ addRenderOffset $ renderComposition
     [ itemRenderAction
     , renderDebug
     ]
     where
     itemRenderAction = renderAnimation (x^.animationState) (x^.animation)
+    addRenderOffset = fromMaybe id $ fmap translate $ x^.passiveType.ff#renderOffset
 
     renderDebug
         = renderComposition $ map snd

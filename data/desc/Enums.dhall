@@ -25,6 +25,11 @@ let EquipmentSlot =
   | PrimaryOther
   >
 
+let AgentKind =
+  < Player
+  | Enemy
+  >
+
 let Direction =
   < North
   | West
@@ -53,6 +58,7 @@ in
 { PassiveKind   = PassiveKind
 , WeaponKind    = WeaponKind
 , EquipmentSlot = EquipmentSlot
+, AgentKind     = AgentKind
 , Direction     = Direction
 , AnimationKind = AnimationKind
 , Reactivity    = Reactivity

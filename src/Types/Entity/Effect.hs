@@ -7,7 +7,7 @@ import Types.Entity.ZIndex
 --------------------------------------------------------------------------------
 
 data EffectKind
-   = HitEffect AttackPower
+   = HitEffect Health
    deriving (Show)
 
 data Effect = Effect

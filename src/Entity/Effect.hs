@@ -26,7 +26,7 @@ render x _ctx = withZIndex x $ locate x $ correctHeight $ renderEffect (x^.kind)
     renderEffect = \case
         HitEffect a -> translateY (x^.era) $ renderHit a
         where
-        renderHit (AttackPower a) = T.scale (1/64) $ renderSimpleText d $ show (-a)
+        renderHit a = T.scale (1/64) $ renderSimpleText d $ show (-a^._Wrapped)
         d = def & color .~ Color.opaque Color.red
 
 oracle :: Effect -> EntityQuery a -> Maybe a

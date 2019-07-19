@@ -1,6 +1,6 @@
-module Entity.Player
-    ( Player, playerToEntity
-    , makePlayer
+module Entity.Agent
+    ( Agent, agentToEntity
+    , makeAgent
     ) where
 
 import Delude
@@ -11,9 +11,10 @@ import qualified Data.List as List
 import qualified Diagrams.TwoD.Transform as T
 
 import Entity
+import Entity.HasField
 import Types.Debug
 import Types.Entity.Reactivity
-import Types.Entity.Player
+import Types.Entity.Agent
 import Types.Entity.Effect
 import Types.Entity.Passive
 import Entity.Utils
@@ -31,8 +32,10 @@ import qualified Entity.Animation as Animation
 
 --------------------------------------------------------------------------------
 
-actOn :: Player -> EntityAction -> Player
+actOn :: Agent -> EntityAction -> Agent
 actOn x a = x & case a of
+    EntityAction_SelfMarkAsTarget    -> set isMarked True
+    EntityAction_SelfUnmarkAsTarget  -> set isMarked False
     -- Handle here:
     EntityAction_ToggleDebug       f -> toggleDebugFlag f
     EntityAction_RunAnimation      k -> setAnimationKind k
@@ -50,7 +53,7 @@ actOn x a = x & case a of
     _ -> id
     where
     selfHeal h _ = x & health %~
-        (\ch -> min (x^.ff#fullStats.maxHealth) (ch+h))
+        (\ch -> min (x^.fullStats.maxHealth) (ch+h))
 
     setAnimationKind k _ = x
         & animationState.current.kind .~ k
@@ -85,24 +88,77 @@ actOn x a = x & case a of
         EntityValue_Location     v -> x & location .~ v
         EntityValue_Direction    _ -> x
         EntityValue_Animation    _ -> x
-        EntityValue_CenterOffset _ -> x
 
-update :: Player -> EntityContext -> Q (Maybe Player, [DirectedAction])
+update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
-    runAttackMode
+    decideAction
+
     updateActiveAnimation
     updateTimer
     updateDelayedActions
-    playerIntegrateLocation
+    integrateLocationWhenWalking
     separateCollision
-    autoTarget
-    runicActions
+
     allMatch _EntityAction_AddItem (addItems . toList)
     mapM_ processAction =<< use (self.processOnUpdate)
-    mapM_ processUpdateOnce =<< use (self.ff#updateOnce)
+    mapM_ processUpdateOnce =<< use (self.updateOnce)
     self.processOnUpdate .= mempty
 
-runicActions :: Update Player ()
+decideAction :: Update Agent ()
+decideAction = useAgentKind >>= \case
+    AgentKind_Player -> playerActions
+    AgentKind_Enemy  -> whenJustM useUnitType enemyActions
+    where
+    useUnitType = use $ self.agentType.ff#unitType
+    playerActions = do
+        runAttackMode
+        autoTarget
+        runicActions
+
+    enemyActions actor = do
+        self.velocity .= 0
+        selectTarget actor
+        pursueOrAttackTarget actor
+        spreadOut actor
+
+    selectTarget actor = whenNothingM_ (use $ self.target) $ do
+        let aggroRange = actor^.ff#aggroRange
+        let hostiles = isHostileTo $ actor^.ff#hostileTowards
+        es <- queryInRange EntityKind_Dynamic aggroRange
+        let targetId = view entityId <$> listToMaybe (filter hostiles es)
+        self.target .= targetId
+
+    getTarget = bindMaybeM (use $ self.target) queryById
+    pursueOrAttackTarget actor = whenJustM getTarget $ \targetEntity -> do
+        let attackRange = actor^.ff#attackRange
+        let pursueRange = actor^.ff#pursueRange
+        dist <- fromMaybe pursueRange <$> distanceToEntity targetEntity
+        orientTowards targetEntity
+        if dist < attackRange
+        then attackTarget actor targetEntity
+        else if dist < pursueRange
+            then moveTowards targetEntity
+            else self.target .= Nothing
+
+    -- attackTarget :: EntityWithId -> Update Agent ()
+    attackTarget actor targetEntity = whenM (checkTimeUp Timer_Attack) $ do
+        attackPower <- getAttackPower
+        let attackSpeed = actor^.ff#attackSpeed
+        addAction targetEntity $ EntityAction_SelfAttacked attackPower
+        selectAnimation Animation.Slash
+        startTimer Timer_Attack attackSpeed
+
+    spreadOut actor = do
+        let disperseRange = distanceInMeters 0.5
+        es <- queryInRadius EntityKind_Dynamic disperseRange
+        let hostiles = isHostileTo $ actor^.ff#hostileTowards
+        let ts = filter (not . hostiles) es
+        vs <- catMaybes <$> mapM vectorToEntity ts
+        let v = sum $ map (negate . normalize) vs
+        s <- use $ self.maxSpeed
+        self.velocity += velocityFromSpeed v (s*0.3)
+
+runicActions :: Update Agent ()
 runicActions = do
     -- Detect hostiles
     ds <- queryInRange EntityKind_Dynamic hostileDetectionRange
@@ -124,7 +180,7 @@ runicActions = do
         self.status %= Set.delete EntityStatus_HostilesInRange
         return ()
 
-processUpdateOnce :: UpdateOnce -> Update Player ()
+processUpdateOnce :: UpdateOnce -> Update Agent ()
 processUpdateOnce = \case
     UpdateOnce_Equipment -> updateEquipment
     where
@@ -157,23 +213,24 @@ processUpdateOnce = \case
     isBehind x = fromMaybe False $ x^.entity.oracleBehindBody
 
     makeBodyAnimation = do
-        bns <- use (self.ff#playerInit.body)
+        bns <- use (self.agentType.bodyAnimation)
         rs <- use $ context.resources
         return $ mconcat $ mapMaybe (flip lookupAnimation rs) bns
 
-updateStats :: Update Player ()
+updateStats :: Update Agent ()
 updateStats = do
     eis <- uses (self.equipment) Equipment.contentList
     es  <- catMaybes <$> mapM queryById eis
     let ss = mapMaybe (view (entity.oracleStats)) es
-    bs <- use $ self.ff#baseStats
-    self.ff#fullStats .= Stats
+    bs <- use $ self.baseStats
+    self.fullStats .= Stats
         { field_attack    = bs^.ff#attack    + sumOf (traverse.ff#attack)    ss
         , field_defence   = bs^.ff#defence   + sumOf (traverse.ff#defence)   ss
         , field_maxHealth = bs^.ff#maxHealth + sumOf (traverse.ff#maxHealth) ss
+        , field_maxSpeed  = bs^.ff#maxSpeed  + sumOf (traverse.ff#maxSpeed)  ss
         }
 
-updateDelayedActions :: Update Player ()
+updateDelayedActions :: Update Agent ()
 updateDelayedActions = do
     as <- use $ self.ff#delayedActions
     us <- catMaybes <$> mapM upd as
@@ -183,7 +240,7 @@ updateDelayedActions = do
       | nt <= 0   -> performDelayedAction (a^.ff#action) >> return Nothing
       | otherwise -> return $ Just $ a & ff#timeLeft .~ nt
 
-performDelayedAction :: DelayedActionType -> Update Player ()
+performDelayedAction :: DelayedActionType -> Update Agent ()
 performDelayedAction = \case
     DelayedActionType_Attack           eid p -> attack eid p
     DelayedActionType_FireProjectile v tid p -> fireProjectile v tid p
@@ -193,20 +250,20 @@ performDelayedAction = \case
         loc <- use $ self.location
         addAction pid $ EntityAction_SelfFiredAsProjectile loc v tid p
 
-selectProjectile :: Update Player (Maybe EntityId)
+selectProjectile :: Update Agent (Maybe EntityId)
 selectProjectile = getFirstArrow <$> getEquippedItem EquipmentSlot_PrimaryOther
     where
     getFirstArrow x = viaNonEmpty head $ x^.traverse.entity.oracleContent.traverse
 
-addDelayedAction :: Duration -> DelayedActionType -> Update Player ()
+addDelayedAction :: Duration -> DelayedActionType -> Update Agent ()
 addDelayedAction d t = self.ff#delayedActions %= (DelayedAction d t:)
 
-runAttackMode :: Update Player ()
+runAttackMode :: Update Agent ()
 runAttackMode = use (self.ff#attackMode) >>= \case
     AttackMode_Manual -> whenMatch _EntityAction_ExecuteAttack executeAttack
     AttackMode_Auto   -> executeAttack
 
-executeAttack :: Update Player ()
+executeAttack :: Update Agent ()
 executeAttack = whenM canExecuteAttack $ do
     mt <- fmap join . mapM queryById =<< use (self.target)
     whenJust mt $ \te -> do
@@ -215,7 +272,7 @@ executeAttack = whenM canExecuteAttack $ do
             sloc <- use $ self.location
             executeAttackAt te $ loc^._Wrapped - sloc^._Wrapped
 
-canExecuteAttack :: Update Player Bool
+canExecuteAttack :: Update Agent Bool
 canExecuteAttack = (&&)
     <$> checkTimeUp Timer_Attack
     <*> anyOffensiveRuneLoaded
@@ -223,13 +280,13 @@ canExecuteAttack = (&&)
     anyOffensiveRuneLoaded
         = uses (self.ff#offensiveSlots) (any (>0) . listRunicSlots)
 
-getWeaponKind :: Update Player WeaponKind
+getWeaponKind :: Update Agent WeaponKind
 getWeaponKind = do
     mei <- getEquippedItem EquipmentSlot_PrimaryWeapon
     let mwk = mei^?traverse.entity.oraclePassiveType.traverse.weaponKind.traverse
     return $ fromMaybe WeaponKind_Slashing mwk
 
-executeAttackAt :: EntityWithId -> V2 Float -> Update Player ()
+executeAttackAt :: EntityWithId -> V2 Float -> Update Agent ()
 executeAttackAt targetEntity vectorToTarget = do
     wkind <- getWeaponKind
     whenWeaponCanAttack wkind targetEntity $ do
@@ -258,7 +315,7 @@ executeAttackAt targetEntity vectorToTarget = do
                 (targetEntity^.entityId) -- Target Id
                 attackPower
 
-startAttackAnimation :: WeaponKind -> V2 Float -> Update Player ()
+startAttackAnimation :: WeaponKind -> V2 Float -> Update Agent ()
 startAttackAnimation wkind vectorToTarget = do
     self.animationState.current.direction %= Animation.vecToDir vectorToTarget
     selectAnimation $ case wkind of
@@ -268,7 +325,7 @@ startAttackAnimation wkind vectorToTarget = do
 
 whenWeaponCanAttack
     :: HasEntity e Entity
-    => WeaponKind -> e -> Update Player () -> Update Player ()
+    => WeaponKind -> e -> Update Agent () -> Update Agent ()
 whenWeaponCanAttack wkind targetEntity act = do
     attackRange <- getAttackRange wkind
     dist <- fromMaybe attackRange <$> distanceToEntity targetEntity
@@ -284,15 +341,15 @@ getAttackRange = \case
     WeaponKind_Thrusting  -> return $ Distance 3
     WeaponKind_Projecting -> return $ Distance 8
 
-getAttackPower :: Update Player AttackPower
+getAttackPower :: Update Agent AttackPower
 getAttackPower = do
     updateStats
-    use (self.ff#fullStats.ff#attack)
+    use (self.fullStats.ff#attack)
 
-getDefence :: Update Player Defence
+getDefence :: Update Agent Defence
 getDefence = do
     updateStats
-    use (self.ff#fullStats.ff#defence)
+    use (self.fullStats.ff#defence)
 
 getAttackDelay :: Update x Duration
 getAttackDelay = return $ timeInSeconds 0.7
@@ -300,12 +357,12 @@ getAttackDelay = return $ timeInSeconds 0.7
 getAttackCooldown :: Update x Duration
 getAttackCooldown = return $ timeInSeconds 1.2
 
-playerIntegrateLocation :: Update Player ()
-playerIntegrateLocation = do
+integrateLocationWhenWalking :: Update Agent ()
+integrateLocationWhenWalking = do
     k <- use $ self.animationState.current.kind
     when (k == Animation.Walk) integrateLocation
 
-autoTarget :: Update Player ()
+autoTarget :: Update Agent ()
 autoTarget = do
     ds <- queryInRange EntityKind_Dynamic (disM 8)
     sid <- useSelfId
@@ -331,57 +388,70 @@ autoTarget = do
         oldDist <- maybeDistance currentTarget
         return $ fromMaybe2 True newDist oldDist (\a b -> a - b < (-d))
 
-    maybeDistance :: Maybe EntityId -> Update Player (Maybe Distance)
+    maybeDistance :: Maybe EntityId -> Update Agent (Maybe Distance)
     maybeDistance Nothing = return Nothing
     maybeDistance (Just eid) = bindMaybeM (queryById eid) distanceToEntity
 
-processAction :: EntityAction -> Update Player ()
+processAction :: EntityAction -> Update Agent ()
 processAction = \case
     EntityAction_UseItem       i -> useItem i
     EntityAction_SelfAttacked  d -> procAttacked d
     EntityAction_RemoveItem    i -> removeItem i
     _ -> return ()
 
-removeItem :: EntityId -> Update Player ()
+removeItem :: EntityId -> Update Agent ()
 removeItem i = do
     self.equipment %= Equipment.deleteId i
     flagUpdate UpdateOnce_Equipment
 
-procAttacked :: AttackPower -> Update Player ()
-procAttacked x = do
-    ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
-    self.ff#defensiveSlots %= dischargeRunicSlot
-    fdef <- getDefence
-    let ap = max 0 $ if ad then calcDefence x fdef else x
-    h <- self.health <%= max 0 . subtract (ap^._Wrapped.to Health)
-    addEffect $ HitEffect ap
-    when (h <= 0) doDie
+procAttacked :: AttackPower -> Update Agent ()
+procAttacked attackPower = do
+    -- ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
+    -- self.ff#defensiveSlots %= dischargeRunicSlot
+    applyAttackDamage
+    whenM shouldDie doDie
     where
-    calcDefence (AttackPower a) (Defence d) = AttackPower $ a - d
+    applyAttackDamage = do
+        fdef <- getDefence
+        let calcDef (AttackPower a) (Defence d) = Health $ a - d
+        let ap = max 0 $ calcDef attackPower fdef
+        self.health %= max 0 . subtract ap
+        addEffect $ HitEffect ap
+
     doDie = do
+        isPlayer <- (AgentKind_Player ==) <$> useAgentKind
+
         deleteSelf .= True
-        loc <- use $ self.location
-        c <- use $ self.ff#playerInit.corpse
-        ani <- use $ self.animation
-        addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Passive c) $ def
-            & tagAsCamera .~ True
-            & actions .~
-            [ EntityAction_SetValue $ EntityValue_Location  loc
-            , EntityAction_SetValue $ EntityValue_Animation ani
-            , EntityAction_SetValue $ EntityValue_CenterOffset (V2 0 0.8)
-            , EntityAction_RunAnimation Animation.Die ]
-        addWorldAction WorldAction_GameOver
+        whenJustM (use $ self.agentType.corpse) $ \c -> do
+            loc <- use $ self.location
+            ani <- use $ self.animation
+            dir <- use $ self.animationState.current.direction
+            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Passive c) $ def
+                & tagAsCamera .~ isPlayer
+                & actions .~
+                [ EntityAction_SetValue $ EntityValue_Location  loc
+                , EntityAction_SetValue $ EntityValue_Direction dir
+                , EntityAction_SetValue $ EntityValue_Animation ani
+                , EntityAction_RunAnimation Animation.Die ]
+
+        when isPlayer $ addWorldAction WorldAction_GameOver
+
+useAgentKind :: Update Agent AgentKind
+useAgentKind = use $ self.agentType.agentKind
 
 --------------------------------------------------------------------------------
 
-render :: Player -> RenderContext -> RenderAction
+render :: Agent -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
-    [ renderDebug
-    , correctHeight renderAnim
+    [ renderIf (x^.isMarked) renderTargetMark
+    , renderDebug
+    , addRenderOffset renderAnim
     ]
     where
     renderDebug = renderComposition $ localDebug <> globalDebug
     renderAnim  = Animation.renderAnimation (x^.animationState) (x^.animation)
+
+    addRenderOffset = fromMaybe id $ fmap translate $ x^.agentType.ff#renderOffset
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)
@@ -400,42 +470,40 @@ render x ctx = withZIndex x $ locate x $ renderComposition
         & shapeType   .~ SimpleCircle
         & color       .~ Color.withOpacity Color.red 0.3
 
-oracle :: Player -> EntityQuery a -> Maybe a
+oracle :: Agent -> EntityQuery a -> Maybe a
 oracle x = \case
-    EntityQuery_Name           -> Just "Player"
+    EntityQuery_Name           -> Just $ unAgentTypeName $ x^.agentType.name
     EntityQuery_Location       -> Just $ x^.location
     EntityQuery_Equipment      -> Just $ x^.equipment
     EntityQuery_CollisionShape -> locate x <$> x^.collisionShape
-    EntityQuery_Reactivity     -> Just $ x^.reactivity
+    EntityQuery_Reactivity     -> Just $ x^.agentType.reactivity
     EntityQuery_Status         -> Just $ x^.status
     EntityQuery_PlayerStatus   -> Just $ upcast x
     _                          -> Nothing
 
 --------------------------------------------------------------------------------
 
-playerToEntity :: Player -> Entity
-playerToEntity = makeEntity $ EntityParts
+agentToEntity :: Agent -> Entity
+agentToEntity = makeEntity $ EntityParts
    { makeActOn  = actOn
    , makeUpdate = update
    , makeRender = render
    , makeOracle = oracle
-   , makeSave   = Just . EntitySum_Player
+   , makeSave   = Just . EntitySum_Agent
    , makeKind   = const EntityKind_Dynamic
    }
 
-makePlayer :: Resources -> PlayerInit -> Player
-makePlayer rs p = def
-    & reactivity        .~ p^.reactivity
-    & maxSpeed          .~ p^.maxSpeed
-    & equipment         .~ Equipment.create playerSlots
-    & health            .~ p^.ff#stats.maxHealth
-    & ff#updateOnce     .~ Set.fromList [ UpdateOnce_Equipment ]
-    & ff#attackRange    .~ disM 2
+makeAgent :: Resources -> AgentType -> Agent
+makeAgent rs p = def
+    & equipment         .~ Equipment.create (p^.ff#equipmentSlots)
+    & updateOnce        .~ Set.fromList [ UpdateOnce_Equipment ]
+    & health            .~ p^.stats.maxHealth
+    & baseStats         .~ p^.stats
+    & agentType         .~ p
+
     & ff#offensiveSlots .~ initRunicSlots 4
     & ff#defensiveSlots .~ initRunicSlots 3
     & ff#runicLevel     .~ initKnownRunes
-    & ff#baseStats      .~ p^.ff#stats
-    & ff#playerInit     .~ p
     where
     initRunes = getRunesByLevel 1 (rs^.runeSet)
     initKnownRunes = addKnownRunes initRunes def

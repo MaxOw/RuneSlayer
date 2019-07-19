@@ -16,11 +16,11 @@ import Engine.Graphics.Scroller (newScroller)
 import Types.Config
 import Types.St
 import Types.Entity.Common
-import Entity.Player (makePlayer)
+import Entity.Agent (makeAgent)
+import Types.Entity.Agent
 import Types.ResourceManager
 import Types.DirectedAction
 import Types.EntityAction
-import Types.Entity.Unit
 import EntityLike
 import WorldGen
 import Skills.Runes (RuneSet, buildRuneSet)
@@ -66,7 +66,7 @@ initSt = do
         & overview   .~ rnd
         & config     .~ conf
     where
-    playerEntity rs pli = toEntity $ makePlayer rs pli
+    playerEntity rs pli = toEntity $ makeAgent rs pli
         & location .~ locM 0 0
         & collisionShape .~ Just (Collider.circle 0 0.3)
 
@@ -110,7 +110,7 @@ loadResources conf = case conf^.debugMode of
                 & spriteMap     .~ ss
                 & tileSetMap    .~ buildMap ts
                 & passiveMap    .~ buildMap ps
-                & unitsMap      .~ buildMap us
+                & agentsMap     .~ buildMap us
                 & runeSet       .~ rust
         let pr = fmap (Animation.makeAnimation res)
                $ HashMap.fromList
@@ -172,6 +172,6 @@ testInitialActions = map directAtWorld
     , mkUnit "Spider"        (-11)   8
     ]
     where
-    mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Unit $ UnitTypeName n) $ def
+    mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Agent $ AgentTypeName n) $ def
         & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
 

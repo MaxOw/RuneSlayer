@@ -114,9 +114,12 @@ let makeBatAnim =
 
 in
 { maleBodyLight      = makeCharAnim paths.maleBodyLight
-, maleHairPlainBrown = makeCharAnim paths.maleHairPlainBrown
 , malePantsTeal      = makeCharAnim paths.malePantsTeal
 , maleShirtWhite     = makeCharAnim paths.maleShirtWhite
+
+, maleHairBangsLongBrown = makeCharAnim paths.maleHairBangsLongBrown
+, maleHairPlainBrown     = makeCharAnim paths.maleHairPlainBrown
+, maleBeardBrown         = makeCharAnim paths.maleBeardBrown
 
 , helmet = makeCharAnim paths.helmetAnimation
 , dagger = makeCharAnim paths.daggerAnimation

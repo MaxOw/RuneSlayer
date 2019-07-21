@@ -108,6 +108,7 @@ decideAction :: Update Agent ()
 decideAction = useAgentKind >>= \case
     AgentKind_Player -> playerActions
     AgentKind_Enemy  -> whenJustM useUnitType enemyActions
+    AgentKind_NPC    -> npcActions
     where
     useUnitType = use $ self.agentType.ff#unitType
     playerActions = do
@@ -115,43 +116,46 @@ decideAction = useAgentKind >>= \case
         autoTarget
         runicActions
 
-    enemyActions actor = do
+    enemyActions enemy = do
         self.velocity .= 0
-        selectTarget actor
-        pursueOrAttackTarget actor
-        spreadOut actor
+        selectTarget enemy
+        pursueOrAttackTarget enemy
+        spreadOut enemy
 
-    selectTarget actor = whenNothingM_ (use $ self.target) $ do
-        let aggroRange = actor^.ff#aggroRange
-        let hostiles = isHostileTo $ actor^.ff#hostileTowards
+    npcActions = do
+        return ()
+
+    selectTarget enemy = whenNothingM_ (use $ self.target) $ do
+        let aggroRange = enemy^.ff#aggroRange
+        let hostiles = isHostileTo $ enemy^.ff#hostileTowards
         es <- queryInRange EntityKind_Dynamic aggroRange
         let targetId = view entityId <$> listToMaybe (filter hostiles es)
         self.target .= targetId
 
     getTarget = bindMaybeM (use $ self.target) queryById
-    pursueOrAttackTarget actor = whenJustM getTarget $ \targetEntity -> do
-        let attackRange = actor^.ff#attackRange
-        let pursueRange = actor^.ff#pursueRange
+    pursueOrAttackTarget enemy = whenJustM getTarget $ \targetEntity -> do
+        let attackRange = enemy^.ff#attackRange
+        let pursueRange = enemy^.ff#pursueRange
         dist <- fromMaybe pursueRange <$> distanceToEntity targetEntity
         orientTowards targetEntity
         if dist < attackRange
-        then attackTarget actor targetEntity
+        then attackTarget enemy targetEntity
         else if dist < pursueRange
             then moveTowards targetEntity
             else self.target .= Nothing
 
     -- attackTarget :: EntityWithId -> Update Agent ()
-    attackTarget actor targetEntity = whenM (checkTimeUp Timer_Attack) $ do
+    attackTarget enemy targetEntity = whenM (checkTimeUp Timer_Attack) $ do
         attackPower <- getAttackPower
-        let attackSpeed = actor^.ff#attackSpeed
+        let attackSpeed = enemy^.ff#attackSpeed
         addAction targetEntity $ EntityAction_SelfAttacked attackPower
         selectAnimation Animation.Slash
         startTimer Timer_Attack attackSpeed
 
-    spreadOut actor = do
+    spreadOut enemy = do
         let disperseRange = distanceInMeters 0.5
         es <- queryInRadius EntityKind_Dynamic disperseRange
-        let hostiles = isHostileTo $ actor^.ff#hostileTowards
+        let hostiles = isHostileTo $ enemy^.ff#hostileTowards
         let ts = filter (not . hostiles) es
         vs <- catMaybes <$> mapM vectorToEntity ts
         let v = sum $ map (negate . normalize) vs

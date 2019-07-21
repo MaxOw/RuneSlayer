@@ -11,24 +11,24 @@ import Types.Equipment (EquipmentSlot)
 
 data EntityDebugFlag
    = EntityDebugFlag_DrawPickupRange
-   deriving (Show)
+   deriving (Generic, Show)
 
 data AttackMode
    = AttackMode_Manual
    | AttackMode_Auto
-   deriving (Eq, Show, Enum, Bounded)
+   deriving (Generic, Eq, Show, Enum, Bounded)
 instance Default AttackMode where def = AttackMode_Manual
 
 data RuneType
    = RuneType_Offensive
    | RuneType_Defensive
-   deriving (Show)
+   deriving (Generic, Show)
 
 data PlayerAction
    = PlayerAction_SelectRune
    | PlayerAction_UpdateRune RuneType Bool
    | PlayerAction_SetAttackMode AttackMode
-   deriving (Show)
+   deriving (Generic, Show)
 
 newtype UseActionName = UseActionName { unUseActionName :: Text }
     deriving (Show, Eq, Ord, Generic, ToJSON, FromJSON, ToJSONKey, FromJSONKey)
@@ -49,6 +49,7 @@ data EntityValue
    = EntityValue_Location  Location
    | EntityValue_Direction Direction
    | EntityValue_Animation Animation
+   deriving (Generic)
 instance Show EntityValue where
     show = \case
         EntityValue_Location     l -> "Set: " <> show l
@@ -90,8 +91,15 @@ data EntityAction
    | EntityAction_SelfHeal Health
    -- tell entity to perform given [UseActionName] at [EntityId]
    | EntityAction_UseAction UseActionName EntityId
-   deriving (Show)
+   deriving (Show, Generic)
 makePrisms ''EntityAction
+
+instance FromJSON EntityDebugFlag where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON EntityValue  where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON AttackMode   where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON RuneType     where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON PlayerAction where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON EntityAction where parseJSON = genericParseJSON customOptionsJSON
 
 data DirectedEntityAction = DirectedEntityAction
    { field_entityId :: EntityId

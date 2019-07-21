@@ -50,6 +50,10 @@ newtype AnimationName = AnimationName Text
 newtype Animation = Animation
     { runAnimation :: AnimationFrameState -> RenderAction }
     deriving (Semigroup, Monoid)
+instance FromJSON Animation where
+    parseJSON _ = fail "Illegal Operation: Animation parsing."
+    -- TODO: Make EntityValue_Animation take [AnimationName] instead, so we
+    -- could remove this.
 
 data AnimationState = AnimationState
    { field_current     :: AnimationFrameState

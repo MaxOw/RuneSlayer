@@ -1,5 +1,5 @@
 let constants  = ./Constants.dhall
-let passives   = ./PassiveTypes.dhall
+let passives   = ./PassiveNames.dhall
 let enums      = ./Enums.dhall
 let animations = ./AnimationNames.dhall
 
@@ -10,9 +10,9 @@ let defaultStats = constants.defaultStats
 
 let defaultBody =
   [ animations.maleBodyLight
-  , animations.maleHairPlainBrown
   , animations.malePantsTeal
   , animations.maleShirtWhite
+  , animations.maleHairPlainBrown
   ]
 
 let defaultEquipmentSlots =
@@ -29,9 +29,9 @@ let defaultEquipmentSlots =
   ]
 
 in
-{ name        = "Player"
-, corpse      = passives.humanCorpse.name
-, reactivity  = { Life = 0.1 }
+{ name       = "Player"
+, corpse     = passives.humanCorpse
+, reactivity = constants.humanReactivity
 
 , bodyAnimation      = defaultBody
 , animateWhenStopped = False

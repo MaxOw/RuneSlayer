@@ -17,12 +17,11 @@ import Types.Config
 import Types.St
 import Types.Entity.Common
 import Entity.Agent (makeAgent)
-import Types.Entity.Agent
 import Types.ResourceManager
 import Types.DirectedAction
-import Types.EntityAction
 import EntityLike
 import WorldGen
+import Types.WorldGen (SpawnAgent)
 import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
@@ -55,13 +54,15 @@ initSt = do
     whenNothing_ (conf^.debugMode) $
         forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
 
+    let spawnActions = map spawnAgentToAction $ wgconf^.ff#units.traverse
+
     pli <- loadDhall "data/desc" "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
     liftIO . GLFW.showWindow =<< use (graphics.context)
     return $ st
         & gameState.focusId .~ Just pid
-        & gameState.actions .~ testInitialActions
+        & gameState.actions .~ spawnActions
         & resources  .~ rs
         & overview   .~ rnd
         & config     .~ conf
@@ -165,13 +166,8 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
     where
     mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
 
-testInitialActions :: [DirectedAction]
-testInitialActions = map directAtWorld
-    [ mkUnit "Bat"             11    8
-    , mkUnit "Bat"             10    8.3
-    , mkUnit "Spider"        (-11)   8
-    ]
-    where
-    mkUnit n x y = WorldAction_SpawnEntity (SpawnEntity_Agent $ AgentTypeName n) $ def
-        & actions .~ [ EntityAction_SetValue $ EntityValue_Location (locM x y) ]
+spawnAgentToAction :: SpawnAgent -> DirectedAction
+spawnAgentToAction a = directAtWorld
+    $ WorldAction_SpawnEntity (SpawnEntity_Agent $ a^.name) $ def
+        & actions .~ (fromMaybe [] $ a^.actions)
 

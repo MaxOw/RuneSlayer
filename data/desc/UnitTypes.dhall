@@ -2,6 +2,7 @@ let animations = ./AnimationNames.dhall
 let passives   = ./PassiveNames.dhall
 let enums      = ./Enums.dhall
 let constants  = ./Constants.dhall
+let names      = ./AgentNames.dhall
 
 let AgentKind     = enums.AgentKind
 let EquipmentSlot = enums.EquipmentSlot
@@ -17,17 +18,23 @@ let defaultUnitType =
   , hostileTowards = [ Reactivity.Life ]
   }
 
-let defaultEnemyAgent =
+let defaultAgent =
   { animateWhenStopped = False
-  , renderOffset = None (List Double)
-  , unitType = defaultUnitType
-  , agentKind = AgentKind.Enemy
-  , equipmentSlots = [] : List EquipmentSlot
+  , renderOffset       = None (List Double)
+  , equipmentSlots     = [] : List EquipmentSlot
   }
 
-in
-{ bat = defaultEnemyAgent //
-  { name       = "Bat"
+let defaultEnemyAgent = defaultAgent //
+  { unitType  = defaultUnitType
+  , agentKind = AgentKind.Enemy
+  }
+
+let defaultNPCAgent = defaultAgent //
+  { agentKind = AgentKind.NPC
+  }
+
+let bat = defaultEnemyAgent //
+  { name       = names.bat
   , corpse     = passives.batCorpse
   , reactivity = { Shadow = 1.0 }
 
@@ -50,8 +57,8 @@ in
   , renderOffset = Some [0.0, 0.8]
   }
 
-, spider = defaultEnemyAgent //
-  { name       = "Spider"
+let spider = defaultEnemyAgent //
+  { name       = names.spider
   , corpse     = passives.spiderCorpse
   , reactivity = { Shadow = 1.0 }
 
@@ -70,4 +77,30 @@ in
     , pursueRange = 10  -- meters
     }
   }
+
+let npcBertram = defaultNPCAgent //
+  { name       = names.npcBertram
+  , reactivity = constants.humanReactivity
+
+  , bodyAnimation =
+    [ animations.maleBodyLight
+    , animations.malePantsTeal
+    , animations.maleShirtWhite
+    , animations.maleBeardBrown
+    , animations.maleHairBangsLongBrown
+    ]
+
+  , stats = defaultStats //
+    { attack    = 100
+    , defence   = 100
+    , maxHealth = 2000
+    , maxSpeed  = constants.fastWalkingSpeed
+    }
+  }
+
+in
+{ bat        = bat
+, spider     = spider
+
+, npcBertram = npcBertram
 }

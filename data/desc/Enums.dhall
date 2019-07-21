@@ -28,6 +28,7 @@ let EquipmentSlot =
 let AgentKind =
   < Player
   | Enemy
+  | NPC
   >
 
 let Direction =

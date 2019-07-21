@@ -3,8 +3,6 @@ module Model
     ) where
 
 import Delude
-import Data.Hashable (hash)
-import qualified Data.HashMap.Strict as HashMap
 import Engine (userState)
 
 import Types (Game, Integrator, stepGameWire)
@@ -49,22 +47,6 @@ makeActiveMove d0 d1 = do
     m0 <- isActionActive (ActiveMove d0)
     m1 <- isActionActive (ActiveMove d1)
     return $ f m0 - f m1
-
-whenChanged_ :: (HasCallStack, Hashable a) => a -> (a -> Game ()) -> Game ()
-whenChanged_ newValue doAction = do
-    let cname = prettyCallStack callStack
-    let newHash = hash newValue
-    cmap <- use $ userState.gameState.changeCache
-    case HashMap.lookup cname cmap of
-        Nothing      -> valueChanged cname newHash
-        Just oldHash -> if oldHash /= newHash
-            then valueChanged cname newHash
-            else return ()
-    where
-    valueChanged cname newHash = do
-        -- putStrLn cname
-        userState.gameState.changeCache %= HashMap.insert cname newHash
-        doAction newValue
 
 -- updateRandomGen :: Game ()
 -- updateRandomGen = userState.randomGen %= snd . Random.split

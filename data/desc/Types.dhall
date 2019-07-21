@@ -38,6 +38,7 @@ let AnimationPart =
   }
 
 let PassiveTypeName = < MakeName : Text >
+let AgentTypeName   = < MakeName : Text >
 let AnimationName   = < MakeName : Text >
 
 let UseActionEffect =
@@ -45,6 +46,14 @@ let UseActionEffect =
   | InspectContent : { InspectContent : List {} }
   | DeleteSelf     : { DeleteSelf     : List {} }
   | Heal           : { Heal           : Natural }
+  >
+
+let EntityValue =
+  < Location       : { Location       : Location }
+  >
+
+let EntityAction =
+  < SetValue       : { SetValue       : EntityValue }
   >
 
 in
@@ -58,6 +67,9 @@ in
 , Frame           = Frame
 , AnimationPart   = AnimationPart
 , PassiveTypeName = PassiveTypeName
+, AgentTypeName   = AgentTypeName
 , AnimationName   = AnimationName
 , UseActionEffect = UseActionEffect
+, EntityValue     = EntityValue
+, EntityAction    = EntityAction
 }

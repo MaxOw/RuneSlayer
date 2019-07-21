@@ -1,9 +1,12 @@
 let types    = ./Types.dhall
 let tilesets = ./TileSets.dhall
 let item     = ./PassiveNames.dhall
+let agents   = ./AgentNames.dhall
+let actions  = ./EntityActions.dhall
 
 let Location        = types.Location
 let PassiveTypeName = types.PassiveTypeName
+let AgentTypeName   = types.AgentTypeName
 
 let grassLayer =
   { tileset = tilesets.grass.name
@@ -40,6 +43,20 @@ let items =
   , placeAt -3.7 -2.3 item.quiver
   ]
 
+let spawnAt =
+  λ(x : Double) →
+  λ(y : Double) →
+  λ(n : AgentTypeName) →
+  { name = n, actions = [ actions.setLocation [ x, y ] ] }
+
+let units =
+  [ spawnAt  11.0   8.0 agents.bat
+  , spawnAt  10.0   8.3 agents.bat
+  , spawnAt -11.0   8.0 agents.spider
+
+  , spawnAt   1.6   3.2 agents.npcBertram
+  ]
+
 in
 { size = [200, 200]
 , seed = 29
@@ -47,4 +64,5 @@ in
 , baseLandTileSet = tilesets.dirtWet.name
 , coveringLayers = [ grassLayer ]
 , items = items
+, units = units
 }

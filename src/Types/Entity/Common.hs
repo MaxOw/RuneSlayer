@@ -41,6 +41,7 @@ data EntityId = EntityId
    } deriving (Eq, Ord, Generic)
 instance Hashable EntityId
 instance HasEntityId EntityId EntityId where entityId = id
+instance FromJSON EntityId where parseJSON = genericParseJSON customOptionsJSON
 
 instance Show EntityId where
     show (EntityId x _) = "EID:" <> show x

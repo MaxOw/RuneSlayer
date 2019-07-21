@@ -96,7 +96,7 @@ generateWorld rs conf = def
 
     tiles = buildEntities pp $ downselectTileSets outRoles
 
-    items = mapMaybe fromPassive $ conf^.ff#items
+    items = mapMaybe fromPassive $ conf^.ff#items.traverse
 
     fromPassive :: LocatedPassive -> Maybe Entity
     fromPassive lp = make <$> lookupPassive (lp^.name) rs

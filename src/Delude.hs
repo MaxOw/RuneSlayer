@@ -24,6 +24,8 @@ module Delude
 
     , sortVia
     , sortSelectVia
+
+    , whenChanged_
     ) where
 
 import Relude         as All
@@ -60,6 +62,9 @@ import Engine (Mat4)
 import Engine.TH
 
 import HasField as All
+
+import Data.Hashable (hash)
+import System.IO.Unsafe (unsafePerformIO)
 
 -- import Linear       as All hiding (trace, identity, transpose)
 
@@ -163,4 +168,27 @@ sortSelectVia f ms
     . mapMaybe (\x -> (,x) <$> Map.lookup (f x) emap)
     where
     emap = Map.fromList $ zip ms [1 :: Int ..]
+
+--------------------------------------------------------------------------------
+
+{-# NOINLINE changeCacheRef #-}
+changeCacheRef :: IORef (HashMap String Int)
+changeCacheRef = unsafePerformIO $ newIORef mempty
+
+whenChanged_ :: (HasCallStack, Hashable a, MonadIO m) => a -> (a -> m ()) -> m ()
+whenChanged_ newValue doAction = do
+    let cname = prettyCallStack callStack
+    let newHash = hash newValue
+    cmap <- readIORef changeCacheRef
+    case HashMap.lookup cname cmap of
+        Nothing      -> valueChanged cname newHash
+        Just oldHash -> if oldHash /= newHash
+            then valueChanged cname newHash
+            else return ()
+    where
+    valueChanged cname newHash = do
+        -- putStrLn cname
+        atomicModifyIORef' changeCacheRef $ \c ->
+            (HashMap.insert cname newHash c, ())
+        doAction newValue
 

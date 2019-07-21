@@ -14,4 +14,5 @@ in
 , baseSprintingSpeed = 8.0 -- m/s
 
 , defaultStats = defaultStats
+, humanReactivity = { Life = 0.1 }
 }

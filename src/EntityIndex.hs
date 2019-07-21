@@ -96,10 +96,9 @@ update res handleWorldAction globalActions fct eix = do
     debugPrintActions actionsAtEntity
 
     -- Preform world actions
-    (toAddList, newEntitiesActionsList) <- unzip . catMaybes
-        <$> mapM handleAndInsert actionsAtWorld
+    newEntitiesActionsList <- concat <$> mapM handleAndInsert actionsAtWorld
 
-    let allActionsAtEntity = concat newEntitiesActionsList <> actionsAtEntity
+    let allActionsAtEntity = newEntitiesActionsList <> actionsAtEntity
 
     -- Map of entity action grouped by target entity id
     let directedActionsMap :: HashMap EntityId [EntityAction]
@@ -128,16 +127,12 @@ update res handleWorldAction globalActions fct eix = do
     -- Write acted on entities to index
     forM_ actOnResult $ \(i, e) -> VectorIndex.update i (Just e) (eix^.entities)
 
-    let toAddToIndexList =
-            map (\e -> (e^.entityId, Nothing, Just $ e^.entity))
-            toAddList
-
     -- Reindex changed entities
     toUpdateOnIndexList <- forM preChangeList $ \ewid -> do
         let i = ewid^.entityId
         newEwid <- liftIO $ lookupById i eix
         return (i, Just $ ewid^.entity, view entity <$> newEwid)
-    let toReindexList = toUpdateOnIndexList <> toAddToIndexList
+    let toReindexList = toUpdateOnIndexList
     mapM_ (reindex eix) toReindexList
 
     -- Update list of activated entities to be processed in next frame
@@ -178,12 +173,11 @@ update res handleWorldAction globalActions fct eix = do
     handleAndInsert w = do
         me <- handleWorldAction w
         case me of
-            Nothing -> return Nothing
+            Nothing -> return []
             Just (en, opts) -> do
                 i <- insert en eix
                 when (opts^.tagAsCamera) $ addTag EntityIndexTag_Camera i eix
-                let das = map (DirectedEntityAction i) (opts^.actions)
-                return $ Just (EntityWithId i en, das)
+                return $ map (DirectedEntityAction i) (opts^.actions)
 
     action = ff#action
 
@@ -198,16 +192,19 @@ reindex :: MonadIO m
 reindex eix (i, mo, mn) = case (mo, mn) of
     (Nothing, Nothing) -> return ()
     (Nothing, Just nv) -> addOnIndex nv
-    (Just ov, Nothing) -> deleteFromIndex ov >> printDebugDelete ov
+    (Just ov, Nothing) -> deleteFromIndex ov >> printDebug "Delete Entity: " ov
     (Just ov, Just nv) -> updateInIndex ov nv
     where
     addOnIndex nv = do
         let ki = FullMap.lookup (entityKind nv) (eix^.spatialIndex)
         let pos = getPosM nv
+        when (entityKind nv == EntityKind_Dynamic) $ do
+            printDebug "Add Entity: " nv
+            print pos
         whenJust pos $ \p -> SpatialIndex.insert p i ki
 
-    printDebugDelete ov = putStrLn
-        $ "Delete Entity: "
+    printDebug msg ov = putStrLn
+        $ msg
         <> show i <> ", "
         <> (show $ entityKind ov) <> ", "
         <> "Name: " <> (fromMaybe "" $ fmap toString $ ov^.oracleName)

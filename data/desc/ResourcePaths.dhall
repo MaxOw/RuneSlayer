@@ -17,12 +17,16 @@ in
 , tilesetGrass   = makeTileSetPath "grass"
 , tilesetWater   = makeTileSetPath "water"
 
-, maleBodyLight      = makeCharPath "body/male/light"
-, maleHairPlainBrown = makeCharPath "hair/male/plain/brown"
-, malePantsTeal      = makeCharPath "legs/pants/male/teal_pants_male"
-, maleShirtWhite     = makeCharPath "torso/shirts/longsleeve/male/white_longsleeve"
+, maleBodyLight  = makeCharPath "body/male/light"
+, malePantsTeal  = makeCharPath "legs/pants/male/teal_pants_male"
+, maleShirtWhite = makeCharPath "torso/shirts/longsleeve/male/white_longsleeve"
+
+, maleHairBangsLongBrown = makeCharPath "hair/male/bangslong/brown"
+, maleHairPlainBrown     = makeCharPath "hair/male/plain/brown"
+, maleBeardBrown         = makeCharPath "facial/male/beard/brown"
 
 , helmetAnimation = makeCharPath "head/helms/male/metal_helm_male"
+
 , daggerAnimation = makeCharPath "weapons/right hand/male/dagger_male"
 , spearAnimation  = makeCharPath "weapons/right hand/male/spear_male"
 , bowAnimation    = makeCharPath "weapons/right hand/either/bow"

@@ -33,6 +33,7 @@ newtype AgentTypeName = AgentTypeName { unAgentTypeName :: Text }
 data AgentKind
    = AgentKind_Player
    | AgentKind_Enemy
+   | AgentKind_NPC
    deriving (Eq, Generic)
 
 instance Default AgentKind where def = AgentKind_Enemy
@@ -42,7 +43,7 @@ data AgentType = AgentType
    , field_corpse             :: Maybe PassiveTypeName
    , field_reactivity         :: Map ReactivCategory ReactivValue
 
-   , field_bodyAnimation      :: [AnimationName] -- BodyDesc
+   , field_bodyAnimation      :: [AnimationName]
    , field_animateWhenStopped :: Bool
    , field_renderOffset       :: Maybe V2D
 

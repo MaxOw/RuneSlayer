@@ -84,6 +84,9 @@ renderGame _delta st = do
     es <- lookupInRange EntityKind_Dynamic viewRange $ st^.gameState.entities
     is <- lookupInRange EntityKind_Passive viewRange $ st^.gameState.entities
 
+    -- let esc = length es
+    -- whenChanged_ esc $ \x -> putStrLn $ "Number of Dynamics in range: " <> show x
+
     Engine.draw viewProjM $ renderComposition
         [ mempty
         , renderUnless hideScrollerDebug renderScroller

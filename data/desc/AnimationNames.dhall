@@ -7,18 +7,21 @@ let makeName = AnimationName.MakeName
 -- names, but for now we will write it manually.
 
 in
-{ maleBodyLight      = makeName "maleBodyLight"
-, maleHairPlainBrown = makeName "maleHairPlainBrown"
-, malePantsTeal      = makeName "malePantsTeal"
-, maleShirtWhite     = makeName "maleShirtWhite"
+{ maleBodyLight          = makeName "maleBodyLight"
+, malePantsTeal          = makeName "malePantsTeal"
+, maleShirtWhite         = makeName "maleShirtWhite"
 
-, helmet             = makeName "helmet"
-, dagger             = makeName "dagger"
-, spear              = makeName "spear"
-, bow                = makeName "bow"
-, arrow              = makeName "arrow"
-, quiver             = makeName "quiver"
+, maleHairBangsLongBrown = makeName "maleHairBangsLongBrown"
+, maleHairPlainBrown     = makeName "maleHairPlainBrown"
+, maleBeardBrown         = makeName "maleBeardBrown"
 
-, bat                = makeName "bat"
-, spider01           = makeName "spider01"
+, helmet                 = makeName "helmet"
+, dagger                 = makeName "dagger"
+, spear                  = makeName "spear"
+, bow                    = makeName "bow"
+, arrow                  = makeName "arrow"
+, quiver                 = makeName "quiver"
+
+, bat                    = makeName "bat"
+, spider01               = makeName "spider01"
 }

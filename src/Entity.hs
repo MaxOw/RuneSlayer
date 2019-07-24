@@ -6,7 +6,7 @@ module Entity
 
 import Delude
 import Types.Equipment (EquipmentSlot, Equipment)
-import Types.Entity.Passive (PassiveType)
+import Types.Entity.Passive (PassiveType, UseActionName)
 import Types.Entity.Reactivity (ReactivCategory, ReactivValue)
 import Types.Entity.Animation (AnimationName)
 import Types.Entity

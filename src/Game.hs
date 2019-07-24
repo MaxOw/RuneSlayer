@@ -21,7 +21,9 @@ import Types.ResourceManager
 import Types.DirectedAction
 import EntityLike
 import WorldGen
-import Types.WorldGen (SpawnAgent)
+import Types.WorldGen (Spawn)
+import Types.Entity.Agent (AgentTypeName)
+import Types.Entity.Passive (PassiveTypeName)
 import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
@@ -54,7 +56,8 @@ initSt = do
     whenNothing_ (conf^.debugMode) $
         forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
 
-    let spawnActions = map spawnAgentToAction $ wgconf^.ff#units.traverse
+    let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units.traverse
+    let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items.traverse
 
     pli <- loadDhall "data/desc" "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
@@ -62,7 +65,7 @@ initSt = do
     liftIO . GLFW.showWindow =<< use (graphics.context)
     return $ st
         & gameState.focusId .~ Just pid
-        & gameState.actions .~ spawnActions
+        & gameState.actions .~ spawnUnits <> spawnItems
         & resources  .~ rs
         & overview   .~ rnd
         & config     .~ conf
@@ -166,8 +169,13 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
     where
     mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
 
-spawnAgentToAction :: SpawnAgent -> DirectedAction
+spawnAgentToAction :: Spawn AgentTypeName -> DirectedAction
 spawnAgentToAction a = directAtWorld
     $ WorldAction_SpawnEntity (SpawnEntity_Agent $ a^.name) $ def
+        & actions .~ (fromMaybe [] $ a^.actions)
+
+spawnPassiveToAction :: Spawn PassiveTypeName -> DirectedAction
+spawnPassiveToAction a = directAtWorld
+    $ WorldAction_SpawnEntity (SpawnEntity_Passive $ a^.name) $ def
         & actions .~ (fromMaybe [] $ a^.actions)
 

@@ -14,7 +14,8 @@ module Entity.Actions
     , updateActiveAnimation
     , updateAnimationState
     , addEffect
-    , spawnProjectile
+    , spawnProjectile, spawnPassive
+    , addLoadoutEntry
     , updateTimer, startTimer, checkTimeUp
     , separateCollision
     , addItems
@@ -79,6 +80,7 @@ import Types.Equipment
 import Equipment (Equipment, contentList)
 import qualified Entity.Timer as Timer
 
+import Data.Hashable (hash)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import ResourceManager (Resources, renderSprite)
@@ -197,6 +199,36 @@ addEffect k = do
 spawnProjectile :: Projectile -> Update s ()
 spawnProjectile p =
     addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Projectile p) def
+
+spawnPassive :: PassiveTypeName -> SpawnEntityOpts -> Update x ()
+spawnPassive n = addWorldAction . WorldAction_SpawnEntity (SpawnEntity_Passive n)
+
+addLoadoutEntry :: LoadoutEntry -> Update x ()
+addLoadoutEntry e = whenRndSelect (e^.ff#probability) (e^.ff#selection) $ \n -> do
+    ct <- genCount (e^.ff#countRange)
+    sid <- useSelfId
+    replicateM_ ct $ spawnPassive n $ def & set actions
+        [ EntityAction_SelfPassTo (Just sid) (e^.ff#slot) ]
+    where
+    whenRndSelect mp s f = do
+        seed <- getFrameIdSeed
+        let p = fromMaybe (1/0) $ fmap unProbability mp
+        let i = runRandom seed uniform
+        when (i <= p) $ do
+            let ss = map (over _1 unProbability . selToPair) s
+            let ms = runRandom seed $ uniformSelectWeighted ss
+            whenJust ms f
+    selToPair s = (fromMaybe 1 $ s^.ff#probability, s^.name)
+    genCount = \case
+        Nothing       -> return 1
+        Just (mn, mx) -> do
+            seed <- getFrameIdSeed
+            return $ max 1 $ runRandom seed $ uniformRange (mn, mx)
+
+getFrameIdSeed :: Update x Int
+getFrameIdSeed = liftA2 (+)
+    (fromIntegral <$> use (context.frameCount))
+    (hash <$> useSelfId)
 
 updateTimer
     :: HasTimer s Timer

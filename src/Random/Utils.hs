@@ -38,7 +38,7 @@ randomFromSeed s f = runST $ do
     runReaderT (do {_ <- uniform :: RandomST Int; f})
     =<< MWC.initialize (Vector.fromList s)
 
-runRandom :: Int -> RandomST a -> a
+runRandom :: Integral i => i -> RandomST a -> a
 runRandom s = randomFromSeed [fromIntegral s]
 
 uniform :: MWC.Variate a => RandomST a
@@ -46,6 +46,25 @@ uniform = ReaderT MWC.uniform
 
 uniformRange :: MWC.Variate a => (a,a) -> RandomST a
 uniformRange r = ReaderT $ \gen -> MWC.uniformR r gen
+
+-- This is an inefficient O(n) weighted selection for one-off useage.
+-- If you need something more efficient (for multiple selection situations) use
+-- CondensedTable functionality from mwc-random package.
+uniformSelectWeighted :: [(Float, a)] -> RandomST (Maybe a)
+uniformSelectWeighted = sel . filter ((>0) . fst)
+    where
+    sel []       = return Nothing
+    sel [(_, a)] = return (Just a)
+    sel ls = do
+        let ss = sumOf (traverse._1) ls
+        r <- uniformRange (0, ss)
+        return $ go 0 r ls
+        where
+        go _ _ [] = Nothing
+        go _ _ [(_, a)] = Just a
+        go c r ((p,a):as)
+            | r < c+p   = Just a
+            | otherwise = go (c+p) r as
 
 randomDirection :: RandomST V2D
 randomDirection = do

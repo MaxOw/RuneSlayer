@@ -8,7 +8,6 @@ import Types.Equipment
 import Types.Entity.Common
 import Types.Entity.Passive
 import Types.Entity.Animation
-import Types.EntityAction (UseActionName)
 
 data EntityQuery a where
      EntityQuery_Name           :: EntityQuery Text

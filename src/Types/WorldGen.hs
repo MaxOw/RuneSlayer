@@ -3,7 +3,6 @@ module Types.WorldGen where
 import Delude
 import Engine.Common.Types (Size)
 import Types.Entity (Entity)
-import Types.Entity.Common (Location)
 import Types.Entity.TileSet (TileSetName)
 import Types.Entity.Passive (PassiveTypeName)
 import Types.Entity.Agent   (AgentTypeName)
@@ -16,13 +15,8 @@ data CoveringLayer = CoveringLayer
    , field_statics :: [ PassiveTypeName ]
    } deriving (Generic)
 
-data LocatedPassive = LocatedPassive
-   { field_name           :: PassiveTypeName
-   , field_location       :: Location
-   } deriving (Generic)
-
-data SpawnAgent = SpawnAgent
-   { field_name    :: AgentTypeName
+data Spawn n = Spawn
+   { field_name    :: n
    , field_actions :: Maybe [EntityAction]
    } deriving (Generic)
 
@@ -32,8 +26,8 @@ data WorldGenConfig = WorldGenConfig
    , field_baseTileSet     :: Maybe TileSetName
    , field_baseLandTileSet :: Maybe TileSetName
    , field_coveringLayers  :: [CoveringLayer]
-   , field_items           :: Maybe [LocatedPassive]
-   , field_units           :: Maybe [SpawnAgent]
+   , field_items           :: Maybe [Spawn PassiveTypeName]
+   , field_units           :: Maybe [Spawn AgentTypeName]
    } deriving (Generic)
 instance HasSize WorldGenConfig (Size Float)
 
@@ -62,9 +56,7 @@ instance FromJSON CoveringLayer where
     parseJSON = genericParseJSON  customOptionsJSON
 instance FromJSON WorldGenConfig where
     parseJSON = genericParseJSON  customOptionsJSON
-instance FromJSON LocatedPassive where
-    parseJSON = genericParseJSON  customOptionsJSON
-instance FromJSON SpawnAgent where
+instance FromJSON n => FromJSON (Spawn n) where
     parseJSON = genericParseJSON  customOptionsJSON
 
 instance Default WorldGenOutput

@@ -96,6 +96,7 @@ let npcBertram = defaultNPCAgent //
     , maxHealth = 2000
     , maxSpeed  = constants.fastWalkingSpeed
     }
+  , equipmentSlots = constants.defaultEquipmentSlots
   }
 
 in

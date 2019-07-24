@@ -37,6 +37,8 @@ actOn x a = x & case a of
     EntityAction_UseAction   {} -> handleOnUpdate a
     EntityAction_SetValue     v -> handleSetValue v
     EntityAction_RunAnimation k -> setAnimationKind k
+
+    EntityAction_AddLoadout   _ -> handleOnUpdate a
     _ -> id
 
     where
@@ -127,6 +129,7 @@ projectileFire (loc, vectorToTarget, tid, attackPower) = do
 processAction :: EntityAction -> Update Passive ()
 processAction = \case
     EntityAction_UseAction n t -> performUseAction t n
+    EntityAction_AddLoadout  l -> mapM_ addLoadoutEntry l
     _ -> return ()
     where
     performUseAction t = mapM_ (performUseActionEffect t) <=< getUseAction

@@ -5,7 +5,6 @@ import qualified Data.Set as Set
 import Engine (userState)
 import Entity
 import Types
-import Types.EntityAction (UseActionName)
 import Types.Entity.Common
 import Types.Entity.Passive
 import Equipment (EquipmentSlot(..), contentList)

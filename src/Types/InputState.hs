@@ -10,7 +10,8 @@ import qualified Data.Map as PrefixMap
 import qualified Types.Entity.Animation as Animation
 import Types.Entity.Animation (AnimationKind)
 import Types.Entity.Common (EntityId)
-import Types.EntityAction (AttackMode(..), UseActionName)
+import Types.Entity.PassiveType (UseActionName)
+import Types.EntityAction (AttackMode(..))
 import Types.Debug (DebugFlag(..))
 import Types.Equipment (EquipmentSlot)
 import Engine.Events.Types

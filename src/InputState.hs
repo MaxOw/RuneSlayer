@@ -31,6 +31,7 @@ import Engine (userState)
 import Types (Game)
 import Types.EntityAction
 import Types.Entity.Common (EntityId)
+import Types.Entity.PassiveType (UseActionName)
 import Types.InputState
 import Types.Equipment
 import InputState.Actions

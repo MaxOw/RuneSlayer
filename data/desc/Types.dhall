@@ -2,6 +2,7 @@ let enums = ./Enums.dhall
 
 let Direction     = enums.Direction
 let AnimationKind = enums.AnimationKind
+let EquipmentSlot = enums.EquipmentSlot
 
 let Entry = ./PreludeEntryType.dhall
 
@@ -48,12 +49,24 @@ let UseActionEffect =
   | Heal           : { Heal           : Natural }
   >
 
+let SelectionEntry =
+  λ(a : Type) →
+  { probability : Optional Double, name : a }
+
+let LoadoutEntry =
+  { probability  : Optional Double
+  , slot         : Optional EquipmentSlot
+  , countRange   : Optional (List Natural) -- TODO: Make a Range Type
+  , selection    : List (SelectionEntry PassiveTypeName)
+  }
+
 let EntityValue =
   < Location       : { Location       : Location }
   >
 
 let EntityAction =
   < SetValue       : { SetValue       : EntityValue }
+  | AddLoadout     : { AddLoadout     : List LoadoutEntry }
   >
 
 in
@@ -70,6 +83,8 @@ in
 , AgentTypeName   = AgentTypeName
 , AnimationName   = AnimationName
 , UseActionEffect = UseActionEffect
+, SelectionEntry  = SelectionEntry
+, LoadoutEntry    = LoadoutEntry
 , EntityValue     = EntityValue
 , EntityAction    = EntityAction
 }

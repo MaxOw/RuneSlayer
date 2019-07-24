@@ -4,6 +4,7 @@ module Types.EntityAction where
 import Delude
 import qualified Prelude
 import Types.Entity.Common
+import Types.Entity.PassiveType (LoadoutEntry, UseActionName)
 import Types.Entity.Animation (AnimationKind, Direction, Animation)
 import Types.Equipment (EquipmentSlot)
 
@@ -29,9 +30,6 @@ data PlayerAction
    | PlayerAction_UpdateRune RuneType Bool
    | PlayerAction_SetAttackMode AttackMode
    deriving (Generic, Show)
-
-newtype UseActionName = UseActionName { unUseActionName :: Text }
-    deriving (Show, Eq, Ord, Generic, ToJSON, FromJSON, ToJSONKey, FromJSONKey)
 
 data UseAction
    = UseAction_Open
@@ -91,6 +89,9 @@ data EntityAction
    | EntityAction_SelfHeal Health
    -- tell entity to perform given [UseActionName] at [EntityId]
    | EntityAction_UseAction UseActionName EntityId
+
+   -- tell entity to create and equip/contain given loadout.
+   | EntityAction_AddLoadout [LoadoutEntry]
    deriving (Show, Generic)
 makePrisms ''EntityAction
 

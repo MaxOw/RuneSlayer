@@ -89,6 +89,9 @@ newtype Volume   = Volume   { unVolume   :: Float }
 newtype Duration = Duration Float
     deriving (Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
 
+newtype Probability = Probability { unProbability :: Float }
+    deriving (Show, Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
+
 --------------------------------------------------------------------------------
 
 data EntityDebugFlags = EntityDebugFlags

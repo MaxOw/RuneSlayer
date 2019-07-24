@@ -50,6 +50,8 @@ actOn x a = x & case a of
     EntityAction_ExecuteAttack       -> handleOnUpdate a
     EntityAction_SelfAttacked      _ -> handleOnUpdate a
     EntityAction_UseItem           _ -> handleOnUpdate a
+
+    EntityAction_AddLoadout        _ -> handleOnUpdate a
     _ -> id
     where
     selfHeal h _ = x & health %~
@@ -401,6 +403,7 @@ processAction = \case
     EntityAction_UseItem       i -> useItem i
     EntityAction_SelfAttacked  d -> procAttacked d
     EntityAction_RemoveItem    i -> removeItem i
+    EntityAction_AddLoadout    l -> mapM_ addLoadoutEntry l
     _ -> return ()
 
 removeItem :: EntityId -> Update Agent ()
@@ -430,7 +433,7 @@ procAttacked attackPower = do
             loc <- use $ self.location
             ani <- use $ self.animation
             dir <- use $ self.animationState.current.direction
-            addWorldAction $ WorldAction_SpawnEntity (SpawnEntity_Passive c) $ def
+            spawnPassive c $ def
                 & tagAsCamera .~ isPlayer
                 & actions .~
                 [ EntityAction_SetValue $ EntityValue_Location  loc

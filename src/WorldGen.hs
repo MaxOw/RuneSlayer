@@ -38,7 +38,7 @@ import WorldGen.Utils
 
 generateWorld :: Resources -> WorldGenConfig -> WorldGenOutput
 generateWorld rs conf = def
-    & entities      .~ Vector.fromList (tiles <> statics <> items)
+    & entities      .~ Vector.fromList (tiles <> statics)
     & overviewImage .~ Just (imgToImage fullImg)
 
 --------------------------------------------------------------------------------
@@ -95,13 +95,6 @@ generateWorld rs conf = def
     outRoles = foldr (Repa.zipWith (<>)) baseRoles layerRoles
 
     tiles = buildEntities pp $ downselectTileSets outRoles
-
-    items = mapMaybe fromPassive $ conf^.ff#items.traverse
-
-    fromPassive :: LocatedPassive -> Maybe Entity
-    fromPassive lp = make <$> lookupPassive (lp^.name) rs
-        where
-        make tn = toEntity $ makePassive rs tn & location .~ (Just $ lp^.location)
 
 --------------------------------------------------------------------------------
 

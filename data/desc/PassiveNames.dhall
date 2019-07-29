@@ -1,7 +1,7 @@
 let types      = ./Types.dhall
 
 let PassiveTypeName = types.PassiveTypeName
-let makeName = PassiveTypeName.MakeName
+let makeName = PassiveTypeName.Make
 
 in
 { helmet           = makeName "Helmet"

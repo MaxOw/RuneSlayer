@@ -46,11 +46,18 @@ data PassiveWithLoadout
 -}
 
 data SelectionEntry a = SelectionEntry
+   -- (Optional) Probability/Weight that a given entry will be selected.
+   -- Nothing = 1.0
    { field_probability :: Maybe Probability
-   , field_name        :: a
-   } deriving (Generic, Show)
+   , field_entry       :: a
+   } deriving (Generic, Show, Functor, Foldable, Traversable)
 
-data LoadoutEntry = LoadoutEntry
+data Range a = Range
+   { field_rangeMin :: a
+   , field_rangeMax :: a
+   } deriving (Generic, Show, Functor)
+
+data LoadoutEntry a = LoadoutEntry
    -- (Optional) Probability that a given element will appear in a loadout.
    -- Nothing = Always
    { field_probability :: Maybe Probability
@@ -60,11 +67,11 @@ data LoadoutEntry = LoadoutEntry
    -- (Optional) Count of elements to be generated.
    -- (randomly selected from a range).
    -- Nothing = 1
-   , field_countRange  :: Maybe (Int, Int)
+   , field_countRange  :: Maybe (Range Natural) -- , Natural)
    -- Element for this entry will be chosen as one item from this list.
    -- Probabilities will be normalized to sum to one.
-   , field_selection   :: [SelectionEntry PassiveTypeName]
-   } deriving (Generic, Show)
+   , field_selection   :: [SelectionEntry a]
+   } deriving (Generic, Show, Functor, Foldable, Traversable)
 
 data PassiveType = PassiveType
    { field_name          :: PassiveTypeName
@@ -91,12 +98,19 @@ data ContainerType = ContainerType
 
 --------------------------------------------------------------------------------
 
-instance ToJSON LoadoutEntry where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON LoadoutEntry where parseJSON = genericParseJSON customOptionsJSON
+instance ToJSON a => ToJSON (LoadoutEntry a) where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON a => FromJSON (LoadoutEntry a) where
+    parseJSON = genericParseJSON customOptionsJSON
 
 instance ToJSON a => ToJSON (SelectionEntry a) where
     toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON a => FromJSON (SelectionEntry a) where
+    parseJSON = genericParseJSON customOptionsJSON
+
+instance ToJSON a => ToJSON (Range a) where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON a => FromJSON (Range a) where
     parseJSON = genericParseJSON customOptionsJSON
 
 instance ToJSON PassiveKind where toEncoding = genericToEncoding customOptionsJSON

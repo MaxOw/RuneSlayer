@@ -198,9 +198,7 @@ reindex eix (i, mo, mn) = case (mo, mn) of
     addOnIndex nv = do
         let ki = FullMap.lookup (entityKind nv) (eix^.spatialIndex)
         let pos = getPosM nv
-        when (entityKind nv == EntityKind_Dynamic) $ do
-            printDebug "Add Entity: " nv
-            print pos
+        when (entityKind nv == EntityKind_Dynamic) $ printDebug "Add Entity: " nv
         whenJust pos $ \p -> SpatialIndex.insert p i ki
 
     printDebug msg ov = putStrLn

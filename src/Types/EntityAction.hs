@@ -4,11 +4,16 @@ module Types.EntityAction where
 import Delude
 import qualified Prelude
 import Types.Entity.Common
-import Types.Entity.PassiveType (LoadoutEntry, UseActionName)
+import Types.Entity.PassiveType (LoadoutEntry, PassiveTypeName, UseActionName)
 import Types.Entity.Animation (AnimationKind, Direction, Animation)
 import Types.Equipment (EquipmentSlot)
 
 --------------------------------------------------------------------------------
+
+data Spawn n a = Spawn
+   { field_name    :: n
+   , field_actions :: [a]
+   } deriving (Generic, Show, Functor, Foldable, Traversable)
 
 data EntityDebugFlag
    = EntityDebugFlag_DrawPickupRange
@@ -91,7 +96,7 @@ data EntityAction
    | EntityAction_UseAction UseActionName EntityId
 
    -- tell entity to create and equip/contain given loadout.
-   | EntityAction_AddLoadout [LoadoutEntry]
+   | EntityAction_AddLoadout [LoadoutEntry (Spawn PassiveTypeName EntityAction)]
    deriving (Show, Generic)
 makePrisms ''EntityAction
 
@@ -101,6 +106,9 @@ instance FromJSON AttackMode   where parseJSON = genericParseJSON customOptionsJ
 instance FromJSON RuneType     where parseJSON = genericParseJSON customOptionsJSON
 instance FromJSON PlayerAction where parseJSON = genericParseJSON customOptionsJSON
 instance FromJSON EntityAction where parseJSON = genericParseJSON customOptionsJSON
+
+instance (FromJSON n, FromJSON a) => FromJSON (Spawn n a) where
+    parseJSON = genericParseJSON  customOptionsJSON
 
 data DirectedEntityAction = DirectedEntityAction
    { field_entityId :: EntityId

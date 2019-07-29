@@ -1,7 +1,7 @@
 let types      = ./Types.dhall
 
 let AgentTypeName = types.AgentTypeName
-let makeName = AgentTypeName.MakeName
+let makeName = AgentTypeName.Make
 
 in
 { bat        = makeName "Bat"

@@ -38,9 +38,10 @@ let AnimationPart =
   , frames    : List Frame
   }
 
-let PassiveTypeName = < MakeName : Text >
-let AgentTypeName   = < MakeName : Text >
-let AnimationName   = < MakeName : Text >
+let PassiveTypeName = < Make : Text >
+let AgentTypeName   = < Make : Text >
+let AnimationName   = < Make : Text >
+let Probability     = < Make : Double >
 
 let UseActionEffect =
   < TransformInto  : { TransformInto  : PassiveTypeName }
@@ -49,25 +50,46 @@ let UseActionEffect =
   | Heal           : { Heal           : Natural }
   >
 
-let SelectionEntry =
-  λ(a : Type) →
-  { probability : Optional Double, name : a }
+let Range = { rangeMin : Natural, rangeMax : Natural }
 
-let LoadoutEntry =
-  { probability  : Optional Double
-  , slot         : Optional EquipmentSlot
-  , countRange   : Optional (List Natural) -- TODO: Make a Range Type
-  , selection    : List (SelectionEntry PassiveTypeName)
+let Spawn
+  = λ(n : Type)
+  → λ(t : Type)
+  → { name    : n
+    , actions : List t
+    }
+
+let SelectionEntry
+  = λ(t : Type) →
+  { probability : Optional Probability
+  , entry       : Spawn PassiveTypeName t
   }
 
+let LoadoutEntry
+  = λ(t : Type) →
+  { probability : Optional Probability
+  , slot        : Optional EquipmentSlot
+  , countRange  : Optional Range
+  , selection   : List (SelectionEntry t)
+  }
+
+let LocationP = { x : Double, y : Double }
+
 let EntityValue =
-  < Location       : { Location       : Location }
+  < Location  : { _1 : LocationP }
+  | Direction : { _1 : Direction }
   >
 
-let EntityAction =
-  < SetValue       : { SetValue       : EntityValue }
-  | AddLoadout     : { AddLoadout     : List LoadoutEntry }
+let EntityActionF
+  = λ(t : Type) →
+  < SetValueF   : { _1 : EntityValue }
+  | AddLoadoutF : { _1 : List (LoadoutEntry t) }
   >
+
+let EntityAction
+  = ∀(t : Type)
+  → ∀(fix : EntityActionF t → t)
+  → t
 
 in
 { Entry           = Entry
@@ -82,9 +104,13 @@ in
 , PassiveTypeName = PassiveTypeName
 , AgentTypeName   = AgentTypeName
 , AnimationName   = AnimationName
+, Probability     = Probability
 , UseActionEffect = UseActionEffect
+, Range           = Range
+, Spawn           = Spawn
 , SelectionEntry  = SelectionEntry
 , LoadoutEntry    = LoadoutEntry
 , EntityValue     = EntityValue
+, EntityActionF   = EntityActionF
 , EntityAction    = EntityAction
 }

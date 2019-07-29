@@ -6,7 +6,7 @@ import Types.Entity (Entity)
 import Types.Entity.TileSet (TileSetName)
 import Types.Entity.Passive (PassiveTypeName)
 import Types.Entity.Agent   (AgentTypeName)
-import Types.EntityAction   (EntityAction)
+import Types.EntityAction   (EntityAction, Spawn)
 import Data.Vector (Vector)
 import Codec.Picture (DynamicImage)
 
@@ -15,19 +15,14 @@ data CoveringLayer = CoveringLayer
    , field_statics :: [ PassiveTypeName ]
    } deriving (Generic)
 
-data Spawn n = Spawn
-   { field_name    :: n
-   , field_actions :: Maybe [EntityAction]
-   } deriving (Generic)
-
 data WorldGenConfig = WorldGenConfig
    { field_size            :: Size Float
    , field_seed            :: Int
    , field_baseTileSet     :: Maybe TileSetName
    , field_baseLandTileSet :: Maybe TileSetName
    , field_coveringLayers  :: [CoveringLayer]
-   , field_items           :: Maybe [Spawn PassiveTypeName]
-   , field_units           :: Maybe [Spawn AgentTypeName]
+   , field_items           :: [Spawn PassiveTypeName EntityAction]
+   , field_units           :: [Spawn AgentTypeName   EntityAction]
    } deriving (Generic)
 instance HasSize WorldGenConfig (Size Float)
 
@@ -55,8 +50,6 @@ instance Default WorldGenConfig where
 instance FromJSON CoveringLayer where
     parseJSON = genericParseJSON  customOptionsJSON
 instance FromJSON WorldGenConfig where
-    parseJSON = genericParseJSON  customOptionsJSON
-instance FromJSON n => FromJSON (Spawn n) where
     parseJSON = genericParseJSON  customOptionsJSON
 
 instance Default WorldGenOutput

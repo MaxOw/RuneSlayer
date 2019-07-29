@@ -73,10 +73,10 @@ Requirements for first release: v0.1
   - Runic levels.                                                            (#)
   - Display runes status.                                                    ( )
 
-* Loadouts                                                                   [ ]
+* Loadouts                                                                   [X]
   - Loadout descriptions.                                                    (#)
   - AddLoadout Entity Action.                                                (#)
-  - Recursive loadouts.                                                      ( )
+  - Recursive loadouts.                                                      (#)
 
 * Add hint/help/tutorial windows.                                            [ ]
 * NPCs.                                                                      [ ]

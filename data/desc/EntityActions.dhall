@@ -1,62 +1,114 @@
 let types    = ./Types.dhall
 let enums    = ./Enums.dhall
 
-let Location        = types.Location
-let EntityValue     = types.EntityValue
-let EntityAction    = types.EntityAction
 let PassiveTypeName = types.PassiveTypeName
-let SelectionEntry  = types.SelectionEntry
+let AgentTypeName   = types.AgentTypeName
+let Probability     = types.Probability
 let LoadoutEntry    = types.LoadoutEntry
+let Range           = types.Range
+let EntityValue     = types.EntityValue
+let EntityActionF   = types.EntityActionF
+let EntityAction    = types.EntityAction
 
 let EquipmentSlot = enums.EquipmentSlot
+let Direction     = enums.Direction
 
-let setValue =
-  λ(x : EntityValue) →
-  EntityAction.SetValue { SetValue = x }
-
-let addLoadout =
-  λ(x : List LoadoutEntry) →
-  EntityAction.AddLoadout { AddLoadout = x }
-
-let valueLocation =
-  λ(x : Location) →
-  EntityValue.Location { Location = x }
-
-let setLocation =
-  λ(x : Double) →
-  λ(y : Double) →
-  setValue (valueLocation [x, y])
-
-let defaultLoadout =
-  { probability  = None Double
-  , slot         = None EquipmentSlot
-  , countRange   = None (List Natural)
-  , selection    = [] : List (SelectionEntry PassiveTypeName)
+let defaultLoadoutEntry =
+  { probability = None Probability
+  , slot        = None EquipmentSlot
+  , countRange  = None Range
   }
 
-let simpleLoadout =
-  λ(x : PassiveTypeName) → defaultLoadout //
-    { selection = [ { probability = None Double, name = x } ] }
+let MakeEntityAction
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → let E = EntityActionF t in
+    { SetValue   = λ(x : EntityValue)           → fix (E.SetValueF   { _1 = x })
+    , AddLoadout = λ(x : List (LoadoutEntry t)) → fix (E.AddLoadoutF { _1 = x })
+    }
 
-let countLoadout =
-  λ(c : Natural) →
-  λ(n : PassiveTypeName) →
-    simpleLoadout n // { countRange = Some [ c, c ] }
+let simpleLoadout
+  = λ(t : Type)
+  → λ(x : PassiveTypeName)
+  → defaultLoadoutEntry //
+    { selection = [
+      { probability = None Probability
+      , entry = { name = x, actions = [] : List t }
+      } ]
+    }
 
-let slotLoadout =
-  λ(s : EquipmentSlot) →
-  λ(n : PassiveTypeName) →
-    simpleLoadout n // { slot = Some s }
+let simpleLoadoutWith
+  = λ(t : Type)
+  → λ(x : PassiveTypeName)
+  → λ(a : List t)
+  → defaultLoadoutEntry //
+    { selection = [
+      { probability = None Probability
+      , entry = { name = x, actions = a }
+      } ]
+    }
 
-let loadout =
-  { simple  = simpleLoadout
-  , count   = countLoadout
-  , slot    = slotLoadout
-  , default = defaultLoadout
-  }
+let countExact
+  = λ(c : Natural)
+  → Some { rangeMin = c, rangeMax = c }
+
+let countLoadout
+  = λ(t : Type)
+  → λ(c : Natural)
+  → λ(n : PassiveTypeName)
+  → simpleLoadout t n // { countRange = countExact c }
+
+let addLoadout
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → λ(x : List (LoadoutEntry t))
+  → (MakeEntityAction t fix).AddLoadout x
+
+let addLoadoutCount
+  = λ(c : Natural)
+  → λ(i : PassiveTypeName)
+  → λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → addLoadout t fix [ countLoadout t c i ]
+
+let containerWithCountLoadout
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → λ(n : PassiveTypeName)
+  → λ(c : Natural)
+  → λ(i : PassiveTypeName)
+  → simpleLoadoutWith t n
+      [ addLoadout t fix [ countLoadout t c i ] ]
+
+let makeLoadout
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → { simple             = simpleLoadout t
+    , simpleWith         = simpleLoadoutWith t
+    , count              = countLoadout t
+    , containerWithCount = containerWithCountLoadout t fix
+    }
+
+let setLocation
+  = λ(x : Double)
+  → λ(y : Double)
+  → λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → let E = MakeEntityAction t fix in
+    E.SetValue (EntityValue.Location { _1 = { x = x, y = y } })
+
+let makeFix
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → let E = MakeEntityAction t fix in
+    { setLocation = λ(x : Double) → λ(y : Double) → setLocation x y t fix
+    , addLoadout  = E.AddLoadout
+    , loadout     = makeLoadout t fix
+    }
 
 in
-{ setLocation = setLocation
-, addLoadout  = addLoadout
-, loadout     = loadout
+{ setLocation     = setLocation
+, addLoadoutCount = addLoadoutCount
+, makeFix         = makeFix
 }
+

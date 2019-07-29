@@ -3,7 +3,7 @@ let passives   = ./PassiveNames.dhall
 let enums      = ./Enums.dhall
 let animations = ./AnimationNames.dhall
 
-let AgentKind     = enums.AgentKind
+let AgentKind = enums.AgentKind
 
 let defaultBody =
   [ animations.maleBodyLight

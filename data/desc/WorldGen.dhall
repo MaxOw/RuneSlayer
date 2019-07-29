@@ -1,18 +1,14 @@
-let types    = ./Types.dhall
 let enums    = ./Enums.dhall
-let tilesets = ./TileSets.dhall
+let types    = ./Types.dhall
 let item     = ./PassiveNames.dhall
 let agents   = ./AgentNames.dhall
+let tilesets = ./TileSets.dhall
 let actions  = ./EntityActions.dhall
 
-let Location        = types.Location
 let PassiveTypeName = types.PassiveTypeName
 let AgentTypeName   = types.AgentTypeName
+let EntityActionF   = types.EntityActionF
 let EntityAction    = types.EntityAction
-
-let EquipmentSlot   = enums.EquipmentSlot
-
-let loadout = actions.loadout
 
 let grassLayer =
   { tileset = tilesets.grass.name
@@ -30,8 +26,23 @@ let placeAt =
   λ(n : PassiveTypeName) →
     makeItem n [ actions.setLocation x y ]
 
+let chestLoadout
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → let actions = actions.makeFix t fix
+    let loadout = actions.loadout in
+    actions.addLoadout
+      [ loadout.simple item.bag
+      , loadout.count 3 item.healthPotion
+      , loadout.containerWithCount item.quiver 10 item.arrow
+      ]
+
 let items =
-  [ placeAt -0.3  5.3 item.woodenChest
+  [ makeItem item.woodenChest
+    [ actions.setLocation -0.3 5.3
+    , chestLoadout
+    ]
+
   , placeAt -0.2  3.2 item.campfire
   , placeAt -2.0  2.0 item.firewood
   , placeAt -2.3  3.0 item.firewoodPileSmall
@@ -46,7 +57,7 @@ let items =
 --, placeAt -5.0  1.0 item.spear
 --, placeAt  0.0  1.0 item.bag
 
-  , placeAt -3.0 -1.0 item.bow
+  , placeAt  1.3  4.8 item.bow
   -- , placeAt -3.0 -2.0 item.arrow
   -- , placeAt -3.1 -2.1 item.arrow
   -- , placeAt -3.2 -2.2 item.arrow
@@ -55,20 +66,33 @@ let items =
 
   , makeItem item.quiver
     [ actions.setLocation -3.7 -2.3
-    , actions.addLoadout [ loadout.count 10 item.arrow ]
+    , actions.addLoadoutCount 8 item.arrow
     ]
   ]
+
 
 let makeUnit =
   λ(n : AgentTypeName) →
   λ(a : List EntityAction) →
     { name = n, actions = a }
 
-let spawnAt =
-  λ(x : Double) →
-  λ(y : Double) →
-  λ(n : AgentTypeName) →
-    makeUnit n [ actions.setLocation x y ]
+let spawnAt
+  = λ(x : Double)
+  → λ(y : Double)
+  → λ(n : AgentTypeName)
+  → makeUnit n [ actions.setLocation x y ]
+
+let npcBertramLoadout
+  = λ(t : Type)
+  → λ(fix : EntityActionF t → t)
+  → let actions = actions.makeFix t fix
+    let loadout = actions.loadout in
+    actions.addLoadout
+      [ loadout.simple item.helmet
+      , loadout.simpleWith item.quiver
+        [ actions.addLoadout [ loadout.count 9 item.arrow ]
+        ]
+      ]
 
 let units =
   [ spawnAt  11.0   8.0 agents.bat
@@ -77,15 +101,15 @@ let units =
 
   , makeUnit agents.npcBertram
     [ actions.setLocation 1.6 3.2
-    , actions.addLoadout [ loadout.slot EquipmentSlot.Head item.helmet ]
+    , npcBertramLoadout
     ]
   ]
 
 in
-{ size = [200, 200]
-, seed = 29
-, baseTileSet = tilesets.water.name
-, baseLandTileSet = tilesets.dirtWet.name
+{ size = { width = 200.0, height = 200.0 }
+, seed = +29
+, baseTileSet = Some tilesets.water.name
+, baseLandTileSet = Some tilesets.dirtWet.name
 , coveringLayers = [ grassLayer ]
 , items = items
 , units = units

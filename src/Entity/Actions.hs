@@ -203,12 +203,12 @@ spawnProjectile p =
 spawnPassive :: PassiveTypeName -> SpawnEntityOpts -> Update x ()
 spawnPassive n = addWorldAction . WorldAction_SpawnEntity (SpawnEntity_Passive n)
 
-addLoadoutEntry :: LoadoutEntry -> Update x ()
-addLoadoutEntry e = whenRndSelect (e^.ff#probability) (e^.ff#selection) $ \n -> do
+addLoadoutEntry :: LoadoutEntry (Spawn PassiveTypeName EntityAction) -> Update x ()
+addLoadoutEntry e = whenRndSelect (e^.ff#probability) (e^.ff#selection) $ \x -> do
     ct <- genCount (e^.ff#countRange)
     sid <- useSelfId
-    replicateM_ ct $ spawnPassive n $ def & set actions
-        [ EntityAction_SelfPassTo (Just sid) (e^.ff#slot) ]
+    replicateM_ ct $ spawnPassive (x^.name) $ def & set actions
+        (EntityAction_SelfPassTo (Just sid) (e^.ff#slot) : x^.actions)
     where
     whenRndSelect mp s f = do
         seed <- getFrameIdSeed
@@ -218,10 +218,11 @@ addLoadoutEntry e = whenRndSelect (e^.ff#probability) (e^.ff#selection) $ \n -> 
             let ss = map (over _1 unProbability . selToPair) s
             let ms = runRandom seed $ uniformSelectWeighted ss
             whenJust ms f
-    selToPair s = (fromMaybe 1 $ s^.ff#probability, s^.name)
+    selToPair s = (fromMaybe 1 $ s^.ff#probability, s^.ff#entry)
     genCount = \case
-        Nothing       -> return 1
-        Just (mn, mx) -> do
+        Nothing -> return 1
+        Just rn -> do
+            let (Range mn mx) = fromIntegral <$> rn
             seed <- getFrameIdSeed
             return $ max 1 $ runRandom seed $ uniformRange (mn, mx)
 

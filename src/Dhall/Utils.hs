@@ -2,12 +2,28 @@ module Dhall.Utils where
 
 import Delude
 import qualified Data.Text.IO as Text
+import qualified Data.Text as Text
 import Dhall
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
 import Dhall.Parser (Src)
 import Dhall.JSON
 import Data.Aeson
+import Dhall.Instances ()
+
+--------------------------------------------------------------------------------
+
+inputAuto :: (MonadIO m, Interpret t) => Text -> m t
+inputAuto = liftIO . input (autoWith iopts)
+
+iopts :: InterpretOptions
+iopts = defaultInterpretOptions
+    { fieldModifier       = stripPrefix
+    , constructorModifier = stripPrefix }
+    where
+    stripPrefix x
+        | Text.take 1 x == "_" || Text.all (/='_') x = x
+        | otherwise = Text.drop 1 $ Text.dropWhile (/= '_') x
 
 --------------------------------------------------------------------------------
 

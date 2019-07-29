@@ -21,7 +21,7 @@ import Types.ResourceManager
 import Types.DirectedAction
 import EntityLike
 import WorldGen
-import Types.WorldGen (Spawn)
+import Types.EntityAction (Spawn, EntityAction)
 import Types.Entity.Agent (AgentTypeName)
 import Types.Entity.Passive (PassiveTypeName)
 import Skills.Runes (RuneSet, buildRuneSet)
@@ -34,12 +34,12 @@ import EntityIndex (EntityIndexTag(..))
 import qualified Graphics.UI.GLFW as GLFW
 
 import qualified Data.Collider as Collider
-import Dhall.Utils (dhallToMap, loadDhall)
+import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
 
 initSt :: Engine () St
 initSt = do
     conf   <- loadDhall "" "Config.dhall"
-    wgconf <- loadDhall "data/desc" "WorldGen.dhall"
+    wgconf <- inputAuto "./data/desc/WorldGen.dhall"
 
     scro <- newScroller $ def
         & bufferMargin .~ Engine.ScrollerMargin_Pixels (64 + 8)
@@ -56,8 +56,8 @@ initSt = do
     whenNothing_ (conf^.debugMode) $
         forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
 
-    let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units.traverse
-    let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items.traverse
+    let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units
+    let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items
 
     pli <- loadDhall "data/desc" "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
@@ -169,13 +169,13 @@ loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
     where
     mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
 
-spawnAgentToAction :: Spawn AgentTypeName -> DirectedAction
+spawnAgentToAction :: Spawn AgentTypeName EntityAction -> DirectedAction
 spawnAgentToAction a = directAtWorld
     $ WorldAction_SpawnEntity (SpawnEntity_Agent $ a^.name) $ def
-        & actions .~ (fromMaybe [] $ a^.actions)
+        & actions .~ a^.actions
 
-spawnPassiveToAction :: Spawn PassiveTypeName -> DirectedAction
+spawnPassiveToAction :: Spawn PassiveTypeName EntityAction -> DirectedAction
 spawnPassiveToAction a = directAtWorld
     $ WorldAction_SpawnEntity (SpawnEntity_Passive $ a^.name) $ def
-        & actions .~ (fromMaybe [] $ a^.actions)
+        & actions .~ a^.actions
 

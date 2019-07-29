@@ -169,6 +169,11 @@ let woodenChest = defaultStaticType //
   , useActions =
     [ action "Open" [ useEffect.transformInto names.woodenChest_open ]
     ]
+  , containerType = Some
+    { maxVolume  = 100
+    , allowKinds = [ PassiveKind.Item ]
+    , showCount  = False
+    }
   }
 
 let woodenChest_open = defaultStaticType //

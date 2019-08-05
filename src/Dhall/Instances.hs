@@ -23,8 +23,8 @@ import Types.WorldGen
 
 --------------------------------------------------------------------------------
 
-autoWithNewtype :: forall a t. Interpret a => (a -> t) -> Dhall.Type t
-autoWithNewtype f = fmap f $ union $ constructor "Make" (auto @a)
+autoWithNewtype :: forall a t. Interpret a => Text -> (a -> t) -> Dhall.Type t
+autoWithNewtype n f = fmap f $ union $ constructor ("Make" <> n) (auto @a)
 
 instance Interpret Int where autoWith = fmap fromIntegral . autoWith @Integer
 instance Interpret Float where autoWith = fmap realToFrac . autoWith @Double
@@ -35,9 +35,12 @@ instance Interpret t => Interpret (V2 t) where
         <*> field "y" (autoWith opts)
 
 instance Interpret Location where autoWith = fmap Location . autoWith @(V2 Float)
-instance Interpret Probability where autoWith _ = autoWithNewtype Probability
-instance Interpret PassiveTypeName where autoWith _ = autoWithNewtype PassiveTypeName
-instance Interpret AgentTypeName where autoWith _ = autoWithNewtype AgentTypeName
+instance Interpret Probability where
+    autoWith _ = autoWithNewtype "Probability" Probability
+instance Interpret PassiveTypeName where
+    autoWith _ = autoWithNewtype "PassiveTypeName" PassiveTypeName
+instance Interpret AgentTypeName where
+    autoWith _ = autoWithNewtype "AgentTypeName" AgentTypeName
 instance Interpret Direction
 
 instance Interpret a => Interpret (Size a) where

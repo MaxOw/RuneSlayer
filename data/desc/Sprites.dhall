@@ -11,6 +11,7 @@ in
 { healthPotion = makeSprite paths.healthPotion
 , emptyFlask   = makeSprite paths.emptyFlask
 
+, sword  = makeItem  0  0
 , bag    = makeItem  4  2
 , helmet = makeItem  1  1
 , dagger = makeItem 15  8

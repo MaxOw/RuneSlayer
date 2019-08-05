@@ -11,11 +11,8 @@ let Reactivity    = enums.Reactivity
 let defaultStats = constants.defaultStats
 
 let defaultUnitType =
-  { attackRange = 0 -- meter
-  , attackSpeed = 0 -- seconds
-  , aggroRange  = 0 -- meters
+  { attackSpeed = 0 -- seconds
   , pursueRange = 0 -- meters
-  , hostileTowards = [ Reactivity.Life ]
   }
 
 let defaultAgent =
@@ -27,9 +24,10 @@ let defaultAgent =
 let defaultEnemyAgent = defaultAgent //
   { unitType  = defaultUnitType
   , agentKind = AgentKind.Enemy
+  , hostileTowards = [ Reactivity.Life ]
   }
 
-let defaultNPCAgent = defaultAgent //
+let defaultHumanNPCAgent = constants.defaultHumanAgent //
   { agentKind = AgentKind.NPC
   }
 
@@ -38,19 +36,20 @@ let bat = defaultEnemyAgent //
   , corpse     = passives.batCorpse
   , reactivity = { Shadow = 1.0 }
 
+  , autoTargetRange = 5 -- meters
+
   , bodyAnimation      = [ animations.bat ]
   , animateWhenStopped = True
 
   , stats = defaultStats //
-    { attack    = 2
-    , maxHealth = 3
-    , maxSpeed  = constants.baseWalkingSpeed
+    { attack      = 2
+    , attackRange = 1 -- meter
+    , maxHealth   = 3
+    , maxSpeed    = constants.baseWalkingSpeed
     }
 
   , unitType = defaultUnitType //
-    { attackRange = 1  -- meter
-    , attackSpeed = 1  -- seconds
-    , aggroRange  = 5  -- meters
+    { attackSpeed = 1  -- seconds
     , pursueRange = 10 -- meters
     }
 
@@ -61,26 +60,26 @@ let spider = defaultEnemyAgent //
   { name       = names.spider
   , corpse     = passives.spiderCorpse
   , reactivity = { Shadow = 1.0 }
+  , autoTargetRange = 5 -- meters
 
   , bodyAnimation = [ animations.spider01 ]
 
   , stats = defaultStats //
-    { attack    = 5
-    , maxHealth = 10
-    , maxSpeed  = constants.slowWalkingSpeed
+    { attack      = 5
+    , attackRange = 1.2 -- meters
+    , defence     = 2
+    , maxHealth   = 10
+    , maxSpeed    = constants.slowWalkingSpeed
     }
 
   , unitType = defaultUnitType //
-    { attackRange = 1.2 -- meter
-    , attackSpeed = 1   -- seconds
-    , aggroRange  = 5   -- meters
+    { attackSpeed = 1   -- seconds
     , pursueRange = 10  -- meters
     }
   }
 
-let npcBertram = defaultNPCAgent //
+let npcBertram = defaultHumanNPCAgent //
   { name       = names.npcBertram
-  , reactivity = constants.humanReactivity
 
   , bodyAnimation =
     [ animations.maleBodyLight
@@ -91,10 +90,11 @@ let npcBertram = defaultNPCAgent //
     ]
 
   , stats = defaultStats //
-    { attack    = 100
-    , defence   = 100
-    , maxHealth = 2000
-    , maxSpeed  = constants.fastWalkingSpeed
+    { attack      = 100
+    , attackRange = 2 -- meters
+    , defence     = 1 -- 100
+    , maxHealth   = 10 -- 2000
+    , maxSpeed    = constants.fastWalkingSpeed
     }
   , equipmentSlots = constants.defaultEquipmentSlots
   }

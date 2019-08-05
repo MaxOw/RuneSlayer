@@ -33,6 +33,9 @@ in
 , arrowAnimation  = makeCharPath "weapons/left hand/either/arrow"
 , quiverAnimation = makeCharPath "behind_body/equipment/quiver"
 
+, oversizeSpearAnimation = makeCharPath "weapons/oversize/two hand/either/spear"
+, oversizeSwordAnimation = makeCharPath "weapons/oversize/right hand/male/longsword_male"
+
 , bat = makeUnitPath "bat"
 , spider01 = makeUnitPath "spiders/spider01"
 

@@ -107,10 +107,21 @@ let batDirs = [Direction.South, Direction.East, Direction.North, Direction.West]
 let makeBatAnim =
   λ(p : Path) →
     { CustomAnimation = concat AnimationPart
-      [ makePartsOver batDirs (Some AnimationKind.Walk) 32 1 0 3 (utils.makeSprite p)
-      , makePartsOver batDirs (Some AnimationKind.Die)  32 0 0 1 (utils.makeSprite p)
+      [ makePartsOver batDirs (Some AnimationKind.Die)  32 0 0 1 (utils.makeSprite p)
+      , makePartsOver batDirs (Any  AnimationKind)      32 1 0 3 (utils.makeSprite p)
       ]
     }
+
+let makeOversize =
+  λ(p : Path) →
+  λ(k : AnimationKind) →
+    { CustomAnimation = concat AnimationPart
+      [ makeParts (Some k) 192 0 0 7 (utils.makeSprite p)
+      ]
+    }
+
+let oversizeSpear = makeOversize paths.oversizeSpearAnimation AnimationKind.Thrust
+let oversizeSword = makeOversize paths.oversizeSwordAnimation AnimationKind.Slash
 
 in
 { maleBodyLight      = makeCharAnim paths.maleBodyLight
@@ -123,12 +134,13 @@ in
 
 , helmet = makeCharAnim paths.helmetAnimation
 , dagger = makeCharAnim paths.daggerAnimation
-, spear  = makeCharAnim paths.spearAnimation
 , bow    = makeCharAnim paths.bowAnimation
 , arrow  = makeCharAnim paths.arrowAnimation
 , quiver = makeCharAnim paths.quiverAnimation
 
--- , bat = simpleCustomAnim (map Natural Frame makeBatFrame [1, 2, 3])
+, spear  = oversizeSpear -- makeCharAnim paths.spearAnimation
+, sword  = oversizeSword
+
 , bat = makeBatAnim paths.bat
 , spider01 = makeSpiderAnim paths.spider01
 }

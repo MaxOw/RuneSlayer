@@ -1,12 +1,15 @@
+let passives   = ./PassiveNames.dhall
 let enums      = ./Enums.dhall
 
 let EquipmentSlot = enums.EquipmentSlot
+let Reactivity    = enums.Reactivity
 
 let defaultStats =
-  { attack    = 0
-  , defence   = 0
-  , maxHealth = 0
-  , maxSpeed  = 0
+  { attack      = 0
+  , attackRange = 0
+  , defence     = 0
+  , maxHealth   = 0
+  , maxSpeed    = 0
   }
 
 let defaultEquipmentSlots =
@@ -22,6 +25,18 @@ let defaultEquipmentSlots =
   , EquipmentSlot.PrimaryOther
   ]
 
+let defaultHumanAgent =
+  { corpse          = passives.humanCorpse
+  , reactivity      = { Life = 0.1 }
+  , hostileTowards  = [ Reactivity.Shadow ]
+  , autoTargetRange = 8 -- meters
+
+  , animateWhenStopped = False
+  , renderOffset       = [0.0, 0.8]
+
+  , equipmentSlots = defaultEquipmentSlots
+  }
+
 in
 { slowWalkingSpeed   = 1.0 -- m/s
 , baseWalkingSpeed   = 2.0 -- m/s
@@ -31,6 +46,5 @@ in
 
 , defaultStats          = defaultStats
 , defaultEquipmentSlots = defaultEquipmentSlots
-
-, humanReactivity = { Life = 0.1 }
+, defaultHumanAgent     = defaultHumanAgent
 }

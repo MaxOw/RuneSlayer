@@ -1,12 +1,13 @@
 let types      = ./Types.dhall
 
 let PassiveTypeName = types.PassiveTypeName
-let makeName = PassiveTypeName.Make
+let makeName = PassiveTypeName.MakePassiveTypeName
 
 in
 { helmet           = makeName "Helmet"
 , dagger           = makeName "Dagger"
 , spear            = makeName "Spear"
+, sword            = makeName "Sword"
 , bow              = makeName "Bow"
 , arrow            = makeName "Arrow"
 , quiver           = makeName "Quiver"

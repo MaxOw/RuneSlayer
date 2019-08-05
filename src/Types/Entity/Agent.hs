@@ -21,10 +21,7 @@ data UpdateOnce
 -- Record for params describing artificial actors (NPC's & Enemy units)
 data UnitType = UnitType
    { field_attackSpeed        :: Duration
-   , field_attackRange        :: Distance
-   , field_aggroRange         :: Distance
    , field_pursueRange        :: Distance
-   , field_hostileTowards     :: Set ReactivCategory
    } deriving (Generic)
 
 newtype AgentTypeName = AgentTypeName { unAgentTypeName :: Text }
@@ -42,6 +39,8 @@ data AgentType = AgentType
    { field_name               :: AgentTypeName
    , field_corpse             :: Maybe PassiveTypeName
    , field_reactivity         :: Map ReactivCategory ReactivValue
+   , field_autoTargetRange    :: Distance
+   , field_hostileTowards     :: Set ReactivCategory
 
    , field_bodyAnimation      :: [AnimationName]
    , field_animateWhenStopped :: Bool

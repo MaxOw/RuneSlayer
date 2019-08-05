@@ -12,22 +12,17 @@ let defaultBody =
   , animations.maleHairPlainBrown
   ]
 
-in
-{ name       = "Player"
-, corpse     = passives.humanCorpse
-, reactivity = constants.humanReactivity
-
-, bodyAnimation      = defaultBody
-, animateWhenStopped = False
-, renderOffset       = [0.0, 0.8]
+in constants.defaultHumanAgent //
+{ name          = "Player"
+, bodyAnimation = defaultBody
 
 , stats = constants.defaultStats //
-  { attack    = 1
-  , defence   = 1
-  , maxHealth = 10
-  , maxSpeed  = constants.fastWalkingSpeed
+  { attack      = 1
+  , attackRange = 2
+  , defence     = 1
+  , maxHealth   = 10
+  , maxSpeed    = constants.fastWalkingSpeed
   }
-, equipmentSlots = constants.defaultEquipmentSlots
 
 , agentKind = AgentKind.Player
 }

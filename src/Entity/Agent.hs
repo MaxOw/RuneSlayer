@@ -115,49 +115,47 @@ decideAction = useAgentKind >>= \case
     useUnitType = use $ self.agentType.ff#unitType
     playerActions = do
         runAttackMode
-        autoTarget
+        autoTargetMark
         runicActions
 
-    enemyActions enemy = do
+    enemyActions eunit = do
         self.velocity .= 0
-        selectTarget enemy
-        pursueOrAttackTarget enemy
-        spreadOut enemy
+        autoTarget
+        pursueOrAttackTarget eunit
+        spreadOut
 
     npcActions = do
-        return ()
+        self.velocity .= 0
+        autoTarget
+        whenJustM getTarget $ \targetEntity -> do
+            attackRange <- getAttackRange
+            dist <- fromMaybe (1/0) <$> distanceToEntity targetEntity
+            when (dist < attackRange) $ do
+                orientTowards targetEntity
+                executeAttack
 
-    selectTarget enemy = whenNothingM_ (use $ self.target) $ do
-        let aggroRange = enemy^.ff#aggroRange
-        let hostiles = isHostileTo $ enemy^.ff#hostileTowards
-        es <- queryInRange EntityKind_Dynamic aggroRange
-        let targetId = view entityId <$> listToMaybe (filter hostiles es)
-        self.target .= targetId
+    -- Get target or cleanup when current target is dead.
+    getTarget = use (self.target) >>= \case
+        Nothing -> return Nothing
+        Just ti -> do
+            eid <- queryById ti
+            self.target .= fmap (view entityId) eid
+            return eid
 
-    getTarget = bindMaybeM (use $ self.target) queryById
-    pursueOrAttackTarget enemy = whenJustM getTarget $ \targetEntity -> do
-        let attackRange = enemy^.ff#attackRange
-        let pursueRange = enemy^.ff#pursueRange
+    pursueOrAttackTarget eunit = whenJustM getTarget $ \targetEntity -> do
+        attackRange <- getAttackRange
+        let pursueRange = eunit^.ff#pursueRange
         dist <- fromMaybe pursueRange <$> distanceToEntity targetEntity
-        orientTowards targetEntity
         if dist < attackRange
-        then attackTarget enemy targetEntity
+        then executeAttack -- attackTarget eunit targetEntity
         else if dist < pursueRange
-            then moveTowards targetEntity
+            then orientTowards targetEntity >> moveTowards targetEntity
             else self.target .= Nothing
 
-    -- attackTarget :: EntityWithId -> Update Agent ()
-    attackTarget enemy targetEntity = whenM (checkTimeUp Timer_Attack) $ do
-        attackPower <- getAttackPower
-        let attackSpeed = enemy^.ff#attackSpeed
-        addAction targetEntity $ EntityAction_SelfAttacked attackPower
-        selectAnimation Animation.Slash
-        startTimer Timer_Attack attackSpeed
-
-    spreadOut enemy = do
+    spreadOut = do
         let disperseRange = distanceInMeters 0.5
         es <- queryInRadius EntityKind_Dynamic disperseRange
-        let hostiles = isHostileTo $ enemy^.ff#hostileTowards
+        hostiles <- isHostileTo <$> use (self.agentType.ff#hostileTowards)
         let ts = filter (not . hostiles) es
         vs <- catMaybes <$> mapM vectorToEntity ts
         let v = sum $ map (negate . normalize) vs
@@ -229,12 +227,27 @@ updateStats = do
     es  <- catMaybes <$> mapM queryById eis
     let ss = mapMaybe (view (entity.oracleStats)) es
     bs <- use $ self.baseStats
+    wr <- getWeaponAttackRange
+    ar <- calcAttackRange wr (sumOf (traverse.ff#attackRange) ss)
     self.fullStats .= Stats
-        { field_attack    = bs^.ff#attack    + sumOf (traverse.ff#attack)    ss
-        , field_defence   = bs^.ff#defence   + sumOf (traverse.ff#defence)   ss
-        , field_maxHealth = bs^.ff#maxHealth + sumOf (traverse.ff#maxHealth) ss
-        , field_maxSpeed  = bs^.ff#maxSpeed  + sumOf (traverse.ff#maxSpeed)  ss
+        { field_attack      = bs^.ff#attack    + sumOf (traverse.ff#attack)    ss
+        , field_defence     = bs^.ff#defence   + sumOf (traverse.ff#defence)   ss
+        , field_maxHealth   = bs^.ff#maxHealth + sumOf (traverse.ff#maxHealth) ss
+        , field_maxSpeed    = bs^.ff#maxSpeed  + sumOf (traverse.ff#maxSpeed)  ss
+        , field_attackRange = ar
         }
+    where
+    calcAttackRange wr ssr = getWeaponKind >>= \case
+        Nothing                    -> return $ wr + ssr
+        Just WeaponKind_Projecting -> return $ wr + ssr
+        Just _                     -> return $ wr
+
+    getWeaponAttackRange :: Update Agent Distance
+    getWeaponAttackRange = do
+        mei <- getEquippedItem EquipmentSlot_PrimaryWeapon
+        br <- use $ self.baseStats.ff#attackRange
+        let mwr = mei^?traverse.entity.oracleStats.traverse.ff#attackRange
+        return $ fromMaybe br mwr
 
 updateDelayedActions :: Update Agent ()
 updateDelayedActions = do
@@ -283,43 +296,35 @@ canExecuteAttack = (&&)
     <$> checkTimeUp Timer_Attack
     <*> anyOffensiveRuneLoaded
     where
-    anyOffensiveRuneLoaded
-        = uses (self.ff#offensiveSlots) (any (>0) . listRunicSlots)
+    anyOffensiveRuneLoaded = useAgentKind >>= \x -> if x == AgentKind_Player
+        then uses (self.ff#offensiveSlots) (any (>0) . listRunicSlots)
+        else return True
 
-getWeaponKind :: Update Agent WeaponKind
+getWeaponKind :: Update Agent (Maybe WeaponKind)
 getWeaponKind = do
     mei <- getEquippedItem EquipmentSlot_PrimaryWeapon
     let mwk = mei^?traverse.entity.oraclePassiveType.traverse.weaponKind.traverse
-    return $ fromMaybe WeaponKind_Slashing mwk
+    return mwk
 
 executeAttackAt :: EntityWithId -> V2 Float -> Update Agent ()
 executeAttackAt targetEntity vectorToTarget = do
-    wkind <- getWeaponKind
+    wkind <- fromMaybe WeaponKind_Slashing <$> getWeaponKind
     whenWeaponCanAttack wkind targetEntity $ do
+        orientTowards targetEntity
         startAttackAnimation wkind vectorToTarget
         executeAttackByKind wkind
         startTimer Timer_Attack =<< getAttackCooldown
         self.ff#offensiveSlots %= dischargeRunicSlot
     where
-    executeAttackByKind = \case
-        WeaponKind_Slashing   -> executeMeleAttack
-        WeaponKind_Thrusting  -> executeMeleAttack
-        WeaponKind_Projecting -> executeProjectileAttack
-
-    executeMeleAttack = do
-        attackPower <- getAttackPower
-        attackDelay <- getAttackDelay
-        addDelayedAction attackDelay $
-            DelayedActionType_Attack (targetEntity^.entityId) attackPower
-
-    executeProjectileAttack = do
-        attackPower <- getAttackPower
-        attackDelay <- getAttackDelay
-        addDelayedAction attackDelay $
-            DelayedActionType_FireProjectile
-                vectorToTarget
-                (targetEntity^.entityId) -- Target Id
-                attackPower
+    executeAttackByKind wkind = do
+        power <- getAttackPower
+        delay <- getAttackDelay
+        let tid = targetEntity^.entityId
+        addDelayedAction delay $ case wkind of
+            WeaponKind_Slashing   -> DelayedActionType_Attack tid power
+            WeaponKind_Thrusting  -> DelayedActionType_Attack tid power
+            WeaponKind_Projecting ->
+                DelayedActionType_FireProjectile vectorToTarget tid power
 
 startAttackAnimation :: WeaponKind -> V2 Float -> Update Agent ()
 startAttackAnimation wkind vectorToTarget = do
@@ -333,7 +338,7 @@ whenWeaponCanAttack
     :: HasEntity e Entity
     => WeaponKind -> e -> Update Agent () -> Update Agent ()
 whenWeaponCanAttack wkind targetEntity act = do
-    attackRange <- getAttackRange wkind
+    attackRange <- getAttackRange
     dist <- fromMaybe attackRange <$> distanceToEntity targetEntity
     canFire <- canFireProjectile wkind
     when (dist < attackRange && canFire) act
@@ -341,54 +346,63 @@ whenWeaponCanAttack wkind targetEntity act = do
     canFireProjectile WeaponKind_Projecting = isJust <$> selectProjectile
     canFireProjectile _ = return True
 
-getAttackRange :: WeaponKind -> Update x Distance
-getAttackRange = \case
-    WeaponKind_Slashing   -> return $ Distance 2
-    WeaponKind_Thrusting  -> return $ Distance 3
-    WeaponKind_Projecting -> return $ Distance 8
+getAttackRange :: Update Agent Distance
+getAttackRange = updateStats >> use (self.fullStats.ff#attackRange)
 
 getAttackPower :: Update Agent AttackPower
-getAttackPower = do
-    updateStats
-    use (self.fullStats.ff#attack)
+getAttackPower = updateStats >> use (self.fullStats.ff#attack)
 
 getDefence :: Update Agent Defence
-getDefence = do
-    updateStats
-    use (self.fullStats.ff#defence)
+getDefence = updateStats >> use (self.fullStats.ff#defence)
 
 getAttackDelay :: Update x Duration
 getAttackDelay = return $ timeInSeconds 0.7
 
-getAttackCooldown :: Update x Duration
-getAttackCooldown = return $ timeInSeconds 1.2
+getAttackCooldown :: Update Agent Duration
+getAttackCooldown = fromMaybe defaultCooldown
+    <$> preuse (self.agentType.ff#unitType.traverse.ff#attackSpeed)
+    where
+    defaultCooldown = timeInSeconds 1.2
 
 integrateLocationWhenWalking :: Update Agent ()
 integrateLocationWhenWalking = do
     k <- use $ self.animationState.current.kind
     when (k == Animation.Walk) integrateLocation
 
-autoTarget :: Update Agent ()
-autoTarget = do
-    ds <- queryInRange EntityKind_Dynamic (disM 8)
-    sid <- useSelfId
+getAggroTarget :: Update Agent (Maybe EntityWithId)
+getAggroTarget = do
+    trange <- use $ self.agentType.ff#autoTargetRange
+    ds <- queryInRange EntityKind_Dynamic trange
     loc <- use $ self.location
-    -- TODO: fix auto targeting reactivity list
-    let ht = Set.fromList [ReactivCategory_Shadow]
-    let hs = sortWith (distanceTo loc) $ filter (shouldTarget sid ht) ds
-    let newTarget = viaNonEmpty head (map (view entityId) hs)
+    ht <- use $ self.agentType.ff#hostileTowards
+    sid <- useSelfId
+    let hs = sortWith (distanceTo loc) $ filter (shouldTarget ht sid) ds
+    return $ viaNonEmpty head hs
+    where
+    shouldTarget ht sid x = x^.entityId /= sid && isHostileTo ht x
+    distanceTo loc e = fromMaybe (1/0) $
+        (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
+
+autoTarget :: Update Agent ()
+autoTarget = autoTargetWith $ \_ _ -> return ()
+
+autoTargetMark :: Update Agent ()
+autoTargetMark = autoTargetWith $ \currentTarget newTarget -> do
+    mapM_ (flip addAction EntityAction_SelfUnmarkAsTarget) currentTarget
+    mapM_ (flip addAction EntityAction_SelfMarkAsTarget) newTarget
+
+autoTargetWith
+    :: (Maybe EntityId -> Maybe EntityId -> Update Agent ())
+    -> Update Agent ()
+autoTargetWith func = do
+    newTarget <- fmap (view entityId) <$> getAggroTarget
     currentTarget <- use $ self.target
     when (newTarget /= currentTarget) $
       whenM (isCloserBy 0.1 newTarget currentTarget) $ do
         self.target .= newTarget
-        mapM_ (flip addAction EntityAction_SelfUnmarkAsTarget) currentTarget
-        mapM_ (flip addAction EntityAction_SelfMarkAsTarget) newTarget
+        func currentTarget newTarget
 
     where
-    shouldTarget sid ht x = x^.entityId /= sid && isHostileTo ht x
-    distanceTo loc e = fromMaybe 10000 $
-        (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
-
     isCloserBy d newTarget currentTarget = do
         newDist <- maybeDistance newTarget
         oldDist <- maybeDistance currentTarget

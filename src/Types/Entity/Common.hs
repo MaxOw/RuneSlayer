@@ -18,10 +18,11 @@ data EntityStatus
    deriving (Eq, Ord)
 
 data Stats = Stats
-   { field_attack    :: AttackPower
-   , field_defence   :: Defence
-   , field_maxHealth :: Health
-   , field_maxSpeed  :: Speed
+   { field_attack      :: AttackPower
+   , field_defence     :: Defence
+   , field_maxHealth   :: Health
+   , field_maxSpeed    :: Speed
+   , field_attackRange :: Distance
    } deriving (Generic)
 
 instance Default  Stats

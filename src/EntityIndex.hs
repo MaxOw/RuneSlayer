@@ -182,7 +182,9 @@ update res handleWorldAction globalActions fct eix = do
     action = ff#action
 
     ----------------------------------------------------------------------------
-    debugPrintActions = mapM_ prt . filter (noSetMoveVector . view action)
+    debugPrintActions
+        | fct > 3   = mapM_ prt . filter (noSetMoveVector . view action)
+        | otherwise = const (return ())
     prt x = putStrLn $ printf "%d: %s" fct (show @String x)
 
 reindex :: MonadIO m
@@ -198,7 +200,7 @@ reindex eix (i, mo, mn) = case (mo, mn) of
     addOnIndex nv = do
         let ki = FullMap.lookup (entityKind nv) (eix^.spatialIndex)
         let pos = getPosM nv
-        when (entityKind nv == EntityKind_Dynamic) $ printDebug "Add Entity: " nv
+        -- when (entityKind nv == EntityKind_Dynamic) $ printDebug "Add Entity: " nv
         whenJust pos $ \p -> SpatialIndex.insert p i ki
 
     printDebug msg ov = putStrLn

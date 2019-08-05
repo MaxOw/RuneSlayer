@@ -64,6 +64,9 @@ let items =
   -- , placeAt -3.3 -2.3 item.arrow
   -- , placeAt -3.7 -2.3 item.quiver
 
+  , placeAt  2.3  4.8 item.spear
+  , placeAt -1.3  0.8 item.sword
+
   , makeItem item.quiver
     [ actions.setLocation -3.7 -2.3
     , actions.addLoadoutCount 8 item.arrow
@@ -88,10 +91,11 @@ let npcBertramLoadout
   → let actions = actions.makeFix t fix
     let loadout = actions.loadout in
     actions.addLoadout
-      [ loadout.simple item.helmet
-      , loadout.simpleWith item.quiver
-        [ actions.addLoadout [ loadout.count 9 item.arrow ]
-        ]
+      [ loadout.simple item.sword
+      -- [ loadout.simple item.helmet
+      -- , loadout.simpleWith item.quiver
+        -- [ actions.addLoadout [ loadout.count 9 item.arrow ]
+        -- ]
       ]
 
 let units =
@@ -100,7 +104,7 @@ let units =
   , spawnAt -11.0   8.0 agents.spider
 
   , makeUnit agents.npcBertram
-    [ actions.setLocation 1.6 3.2
+    [ actions.setLocation 1.2 2.6
     , npcBertramLoadout
     ]
   ]

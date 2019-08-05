@@ -68,7 +68,7 @@ let dagger = defaultItemType //
   , appearance   = appearance.simple sprites.dagger
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = animations.dagger
-  , stats        = defaultStats // { attack = 2 }
+  , stats        = defaultStats // { attack = 2, attackRange = 2 }
   }
 
 let spear = defaultItemType //
@@ -79,7 +79,18 @@ let spear = defaultItemType //
   , appearance   = appearance.simple sprites.spear
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = animations.spear
-  , stats        = defaultStats // { attack = 5 }
+  , stats        = defaultStats // { attack = 5, attackRange = 3 }
+  }
+
+let sword = defaultItemType //
+  { name         = names.sword
+  , volume       = 0.5
+  , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
+  , weaponKind   = Some WeaponKind.Slashing
+  , appearance   = appearance.simple sprites.sword
+  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
+  , animation    = animations.sword
+  , stats        = defaultStats // { attack = 5, attackRange = 3 }
   }
 
 let bow = defaultItemType //
@@ -90,7 +101,7 @@ let bow = defaultItemType //
   , appearance   = appearance.simple sprites.bow
   , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
   , animation    = animations.bow
-  , stats        = defaultStats // { attack = 3 }
+  , stats        = defaultStats // { attack = 3, attackRange = 9 }
   }
 
 let arrow = defaultItemType //
@@ -249,6 +260,7 @@ in
 { helmet           = helmet
 , dagger           = dagger
 , spear            = spear
+, sword            = sword
 , bow              = bow
 , arrow            = arrow
 , quiver           = quiver

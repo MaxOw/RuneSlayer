@@ -38,10 +38,10 @@ let AnimationPart =
   , frames    : List Frame
   }
 
-let PassiveTypeName = < Make : Text >
-let AgentTypeName   = < Make : Text >
-let AnimationName   = < Make : Text >
-let Probability     = < Make : Double >
+let PassiveTypeName = < MakePassiveTypeName : Text >
+let AgentTypeName   = < MakeAgentTypeName   : Text >
+let AnimationName   = < MakeAnimationName   : Text >
+let Probability     = < MakeProbability     : Double >
 
 let UseActionEffect =
   < TransformInto  : { TransformInto  : PassiveTypeName }

@@ -79,8 +79,11 @@ Requirements for first release: v0.1
   - Recursive loadouts.                                                      (#)
 
 * Add hint/help/tutorial windows.                                            [ ]
+
 * NPCs.                                                                      [ ]
-* Communication with NPCs.                                                   [ ]
+  - Add NPC Agent Kind.                                                      (#)
+  - Make NPCs defend themselves.                                             (#)
+  - Communication with NPCs.                                                 ( )
 
 * Enemy units:                                                               [#]
   - Gore Bats                                                                (#)
@@ -91,6 +94,8 @@ Requirements for first release: v0.1
 * Merge actOn & update entity functions.                                     [ ]
 * Auto updates.                                                              [ ]
 * Sqlite powered, nix-like immutable data storage.                           [ ]
+* Make all dhall files Interpretable instead of going via JSON.              [ ]
+  - Put all resources into single DataIndex type loaded from Index.dhall     ( )
 
 * World generator.                                                           [ ]
   - Add WorldGen.dhall watcher/reloader.                                     ( )

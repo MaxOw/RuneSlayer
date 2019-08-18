@@ -5,6 +5,7 @@ let constants  = ./Constants.dhall
 let names      = ./AgentNames.dhall
 
 let AgentKind     = enums.AgentKind
+let ScriptName    = enums.ScriptName
 let EquipmentSlot = enums.EquipmentSlot
 let Reactivity    = enums.Reactivity
 
@@ -80,6 +81,7 @@ let spider = defaultEnemyAgent //
 
 let npcBertram = defaultHumanNPCAgent //
   { name       = names.npcBertram
+  , scriptName = ScriptName.Bertram
 
   , bodyAnimation =
     [ animations.maleBodyLight

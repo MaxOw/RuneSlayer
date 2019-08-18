@@ -1,18 +1,20 @@
-module GUI.Layout where
+module GUI.Layout (module GUI.Layout) where
 
 import Delude
 import Engine.Layout.Alt hiding (left)
-import Engine.FontsManager.Types (FontStyle)
 import Types.GUI
 import Types.EntityAction (AttackMode(..))
 import Types.GameState (GameOverScreen)
 import Text.Printf
 
+import GUI.Layout.Inventory as GUI.Layout
+import GUI.Layout.Common    as GUI.Layout
+
 import qualified Color
 
 --------------------------------------------------------------------------------
 
-layout_statusPanel :: StatusDesc -> Layout
+layout_statusPanel :: Status -> Layout
 layout_statusPanel s
     = container txt
     & padding.each   .~ 10 @@ px
@@ -29,7 +31,7 @@ layout_statusPanel s
 
 --------------------------------------------------------------------------------
 
-layout_healthStatus :: HealthStatusDesc -> Layout
+layout_healthStatus :: HealthStatus -> Layout
 layout_healthStatus s
     = container txt
     & padding.each .~ 10 @@ px
@@ -43,7 +45,7 @@ layout_healthStatus s
 
 --------------------------------------------------------------------------------
 
-layout_actionsMenu :: [ActionHintDesc] -> Layout
+layout_actionsMenu :: [ActionHint] -> Layout
 layout_actionsMenu ls = vrel hintLines
     & align .~ MiddleLeft
     & padding.each .~ basePadding
@@ -52,6 +54,39 @@ layout_actionsMenu ls = vrel hintLines
     toLine l = textline fs (l^.ff#actionHint <> " " <> l^.ff#actionName)
         & align .~ BottomLeft
     fs = makeFs 12 warningColor
+
+--------------------------------------------------------------------------------
+
+layout_storyDialog :: StoryDialog -> Layout
+layout_storyDialog s = border1 Color.gray cnt
+    & align .~ BottomCenter
+    & padding.bottom .~ 100 @@ px
+    & padding.left   .~ 100 @@ px
+    & padding.right  .~ 100 @@ px
+    & height .~ 0.4 @@ fill
+    where
+    cnt = composition
+        [ fillColorA bg
+        , ins
+        ]
+
+    ins = vrel
+        [ (40 @@ px  , tit)
+        , (1  @@ fill, con)
+        , (40 @@ px  , prc)
+        ] & padding.each .~ 8 @@ px
+          & padding.top  .~ 6 @@ px
+
+    nextPageText = "Press " <> s^.ff#nextPageKey <> " to proceed..."
+
+    tit = textline ft (s^.title)   & align .~ TopLeft
+    con = textline fc (s^.content) & align .~ TopLeft
+    prc = textline fp nextPageText & align .~ BottomRight
+
+    ft = makeFs 12 Color.darkgray
+    fc = makeFs 10 Color.gray
+    fp = makeFs 8 warningColor
+    bg = Color.withOpacity Color.black 0.6
 
 --------------------------------------------------------------------------------
 
@@ -69,13 +104,13 @@ layout_gameOverScreen gs = vrel
 
 --------------------------------------------------------------------------------
 
-layout_offensiveSlotsPanel :: SlotsPanelDesc -> Layout
+layout_offensiveSlotsPanel :: SlotsPanel -> Layout
 layout_offensiveSlotsPanel = layout_slotsPanel BottomLeft  Color.green
 
-layout_defensiveSlotsPanel :: SlotsPanelDesc -> Layout
+layout_defensiveSlotsPanel :: SlotsPanel -> Layout
 layout_defensiveSlotsPanel = layout_slotsPanel BottomRight Color.darkgray
 
-layout_slotsPanel :: BoxAlign -> Color -> SlotsPanelDesc -> Layout
+layout_slotsPanel :: BoxAlign -> Color -> SlotsPanel -> Layout
 layout_slotsPanel agn fcol desc = vseprel (8 @@ px)
     [ (1 @@ fill, question)
     , (30 @@ px, answer)
@@ -118,20 +153,4 @@ layout_slotsPanel agn fcol desc = vseprel (8 @@ px)
 
     fs = makeFs 10 Color.black
     bg = Color.withOpacity Color.lightgray 0.6
-
---------------------------------------------------------------------------------
-
-makeFs :: Int -> Color -> FontStyle
-makeFs s c = makeFontStyle ["Arial", "SourceHanSerif"] s
-    & color .~ Color.opaque c
-
-makeFsa :: Int -> Color -> Float -> FontStyle
-makeFsa s c a = makeFontStyle ["Arial", "SourceHanSerif"] s
-    & color .~ Color.withOpacity c a
-
-basePadding :: Sizing
-basePadding = 20 @@ px
-
-warningColor :: Color
-warningColor = Color.red
 

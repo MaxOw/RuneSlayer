@@ -17,6 +17,8 @@ module InputState
     , handleSelectKind
     , inputActionEscape
     , toggleViewPanel, isPanelVisible
+    , nextPage
+    , showActionKeySeqs
 
     , isPartialMatch
     ) where
@@ -77,10 +79,10 @@ getModeKeymap :: Game Keymap
 getModeKeymap = do
     currentInputMode <- getMode
     common <- use (userState.inputState.commonKeymap)
-    modeKeymap <- use (userState.inputState.inputKeymap)
-    return $ case (Map.lookup currentInputMode modeKeymap) of
+    modeKeymap <- use (userState.inputState.inputKeymap.ff#keymap)
+    return $ case Map.lookup currentInputMode modeKeymap of
         Nothing -> common
-        Just km -> PrefixMap.union common km -- left biased union
+        Just km -> PrefixMap.union km common -- left biased union
 
 -- Mach keymap for current input mode and keypress hist
 -- Clear hist on success or total failure but leave it be on partial match
@@ -214,17 +216,6 @@ dropR1 x = x
 
 endSelect :: Game ()
 endSelect = zoomInputState $ selectState .= Nothing
-
---------------------------------------------------------------------------------
-
-inputActionEscape :: Game ()
-inputActionEscape = zoomInputState $ do
-    hist .= empty
-    mode %= escapeMode
-    selectState .= Nothing
-    where
-    escapeMode = \case
-        _ -> NormalMode
 
 --------------------------------------------------------------------------------
 

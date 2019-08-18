@@ -34,7 +34,7 @@ import Entity.Agent (makeAgent)
 import Entity.Effect (makeEffect)
 import ResourceManager (lookupPassive)
 import Types.ResourceManager (agentsMap)
-import InputState.Actions (inspectContent)
+import InputState.Actions (inspectContent, showStoryDialog)
 
 import qualified EntityIndex
 
@@ -61,6 +61,7 @@ handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case
     WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
     WorldAction_InspectContent tid -> inspectContent tid >> return Nothing
+    WorldAction_StoryDialog     sd -> showStoryDialog sd >> return Nothing
     WorldAction_GameOver           -> startGameOver >> return Nothing
     where
     spawnEntity = \case

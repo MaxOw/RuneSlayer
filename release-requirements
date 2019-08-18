@@ -83,7 +83,9 @@ Requirements for first release: v0.1
 * NPCs.                                                                      [ ]
   - Add NPC Agent Kind.                                                      (#)
   - Make NPCs defend themselves.                                             (#)
-  - Communication with NPCs.                                                 ( )
+  - NPCs Story Dialogs.                                                      (#)
+  - Initiate communication with NPCs.                                        ( )
+  - AddRune EntityAction from NPC Script.                                    ( )
 
 * Enemy units:                                                               [#]
   - Gore Bats                                                                (#)
@@ -92,6 +94,7 @@ Requirements for first release: v0.1
 ## Version 0.2 #################################################################
 
 * Merge actOn & update entity functions.                                     [ ]
+* Unify AgentKind & Script                                                   [ ]
 * Auto updates.                                                              [ ]
 * Sqlite powered, nix-like immutable data storage.                           [ ]
 * Make all dhall files Interpretable instead of going via JSON.              [ ]

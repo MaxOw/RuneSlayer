@@ -8,9 +8,10 @@ import Types.Entity.ZIndex
 import Types.Entity.Animation
 import Types.Entity.Timer
 import Types.Entity.Passive
+import Types.Entity.Reactivity
+import Types.Entity.Script
 import Types.Equipment
 import Types.Skills.Runes (RunicLevel, RunicSlots, RuneName)
-import Types.Entity.Reactivity
 
 --------------------------------------------------------------------------------
 
@@ -51,6 +52,7 @@ data AgentType = AgentType
    , field_unitType           :: Maybe UnitType
 
    , field_agentKind          :: AgentKind
+   , field_scriptName         :: Maybe ScriptName
    } deriving (Generic)
 
 data DelayedActionType
@@ -90,6 +92,8 @@ data Agent = Agent
    , field_selectedRune       :: Maybe RuneName
 
    , field_agentType          :: AgentType
+   , field_script             :: Script
+
    , field_isMarked           :: Bool
    } deriving (Generic)
 instance HasMaxSpeed Agent Speed where
@@ -154,6 +158,12 @@ baseStats = ff#baseStats
 fullStats :: Lens' Agent Stats
 fullStats = ff#fullStats
 
+script :: Lens' Agent Script
+script = ff#script
+
 agentKind :: Lens' AgentType AgentKind
 agentKind = ff#agentKind
+
+scriptName :: Lens' AgentType (Maybe ScriptName)
+scriptName = ff#scriptName
 

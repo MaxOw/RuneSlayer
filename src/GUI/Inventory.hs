@@ -1,78 +1,128 @@
 module GUI.Inventory
     ( inventoryLayout
-    , groundPreviewPanelLayout
+    -- , groundPreviewPanelLayout
     ) where
 
 import Delude
 import qualified Data.Text as Text
 import qualified Data.Map as Map
 
-import Engine hiding (slots)
-import Engine.Layout.Types
-
-import Types
+import Types (Game, St)
 import Types.InputState
+import Engine (userState)
+import Engine.Layout.Alt hiding (left)
+
 import GameState.Query
-import Entity
 import Focus
-
-import Types.Equipment
-import qualified GUI.Style as Style
-import GUI.Common
+import Entity
 import qualified Equipment
-
---------------------------------------------------------------------------------
-
-data SelectFieldEntry = SelectFieldEntry
-   { field_prefix    :: Maybe String
-   , field_label     :: Maybe Text
-   , field_hint      :: Maybe String
-   , field_isFocused :: Bool
-   , field_content   :: Maybe EntityWithId
-   } deriving (Generic)
-
-instance Default SelectFieldEntry
+import Types.Equipment
+import GUI.Layout (layout_inventory)
+import Types.GUI as Layout
 
 --------------------------------------------------------------------------------
 
 inventoryLayout :: Game Layout
-inventoryLayout = menuBox opts . simpleLineupH <$> sequence
-    [ inventoryLeftLayout
-    , containersLayout ]
-    where
-    opts = def
-         & title .~ "Inventory"
-         & size .~ Size (0.8 @@ wpct) (0.8 @@ wpct)
-
-inventoryLeftLayout :: Game Layout
-inventoryLeftLayout = simpleBox def . simpleLineupV <$> sequence
-    [ equipmentLayout
-    , selectedItemDescriptionLayout
-    ]
+inventoryLayout = do
+    eq <- getEquipmentList
+    fi <- getFocusedItem
+    cs <- getContainers
+    st <- use userState
+    return $ layout_inventory $ def
+        & ff#equipment   .~ map (toSelectEntry st) eq
+        & ff#description .~ fmap toDescription fi
+        & ff#containers  .~ cs
 
 --------------------------------------------------------------------------------
 
-equipmentLayout :: Game Layout
-equipmentLayout = do
+getContainers :: Game [Container]
+getContainers = sequence
+    [ backpackContainer
+    , inspectedContainer
+    , itemsOnGround
+    ]
+
+getTargetHint :: ItemMoveTarget -> Game Text
+getTargetHint mt = maybe "" toText . flip hintForMoveTarget mt <$> use userState
+
+makeContainer :: Text -> ItemMoveTarget -> [EntityId] -> Game Container
+makeContainer tit tg is = do
+    th <- getTargetHint tg
+    es <- catMaybes <$> mapM lookupEntity is
     st <- use userState
-    withPadding . simpleLineupV . map (equipEntryLayout st) <$> equipmentList
+    let ct = map (toSelectEntrySimple st) es
+    return $ def
+        & title   .~ tit
+        & hint    .~ th
+        & content .~ ct
 
-equipEntryLayout :: St -> (EquipmentSlot, Maybe EntityWithId) -> Layout
-equipEntryLayout st (s, me) = selectFieldEntryLayout $ def
-    & label     .~ Just lb
+backpackContainer :: Game Container
+backpackContainer = focusEquipmentSlot EquipmentSlot_Backpack >>= \case
+    Nothing -> return def
+    Just e  -> do
+        let tit = "Content of the "<> showEntityName (e^.entity) <> ": "
+        let cs = e^..entity.oracleContent.traverse.traverse
+        makeContainer tit ItemMoveTarget_Backpack cs
+
+inspectedContainer :: Game Container
+inspectedContainer = do
+    st <- use userState
+    fmap (fromMaybe def) $ runMaybeT $ do
+        si <- MaybeT $ pure $ st^.inputState.inventoryState.ff#container
+        et <- MaybeT $ lookupEntity si
+        cs <- MaybeT $ pure $ et^.entity.oracleContent
+        let tit = (fromMaybe "Container" $ et^.entity.oracleName) <> ": "
+        MaybeT $ Just <$> makeContainer tit ItemMoveTarget_Container cs
+
+itemsOnGround :: Game Container
+itemsOnGround = do
+    let tit = "Items on the ground: "
+    es <- map (view entityId) <$> focusItemsInRange
+    makeContainer tit ItemMoveTarget_Ground es
+
+toSelectEntrySimple :: St -> EntityWithId -> Layout.SelectEntry
+toSelectEntrySimple st x = toSelectEntry st (Nothing, Just x)
+
+toSelectEntry
+    :: St
+    -> (Maybe EquipmentSlot, Maybe EntityWithId)
+    -> Layout.SelectEntry
+toSelectEntry st (mslot, meid) = def
+    & label     .~ slotName
     & prefix    .~ mpfx
-    & hint      .~ mh
+    & hint      .~ mhint
     & isFocused .~ fc
-    & content   .~ me
+    & content   .~ fmap showEntityName meid
     where
-    lb = Text.drop (length ("EquipmentList_" :: String)) $ show s
-    mpfx = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
-    mh = hintForEntityIdOrSlot st (view entityId <$> me) (Just s)
-    fc = nothingFalse me $ isItemFocused st
+    slotName = Text.stripPrefix "EquipmentSlot_" . show =<< mslot
+    mpfx     = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
+    mhint    = hintForEntityIdOrSlot st (view entityId <$> meid) mslot
+    fc       = fromMaybe False $ isItemFocused st <$> meid
 
-isItemFocused :: HasEntityId e EntityId => St -> e -> Bool
-isItemFocused st e = nothingFalse mfi (e^.entityId ==)
-    where mfi = st^.inputState.inventoryState.focusedItem
+toDescription :: EntityWithId -> Description
+toDescription e = def
+    & name .~ showEntityName e
+
+getEquipmentList :: Game [(Maybe EquipmentSlot, Maybe EntityWithId)]
+getEquipmentList = focusEntity >>= \case
+    Nothing -> return []
+    Just  e -> do
+        let sls = e^..oracleEquipment.traverse.slots.folded
+        let meq = e^.oracleEquipment
+        let lookupSlot s = Equipment.lookupSlot s =<< meq
+        forM sls $ \s -> do
+            let me = lookupSlot s
+            mewid <- join <$> traverse lookupEntity me
+            return (Just s, mewid)
+
+getFocusedItem :: Game (Maybe EntityWithId)
+getFocusedItem = do
+    st <- use userState
+    let fi = st^.inputState.inventoryState.focusedItem
+    join <$> traverse lookupEntity fi
+
+showEntityName :: HasEntity e Entity => e -> Text
+showEntityName (view entity -> e) = fromMaybe "???" (e^.oracleName)
 
 hintForEntityIdOrSlot
     :: St -> Maybe EntityId -> Maybe EquipmentSlot -> Maybe String
@@ -102,139 +152,13 @@ hintForMoveTarget st mt = case st^.inputState.selectState of
         SelectKind_MoveTo v -> Map.lookup mt (v^.hintMap)
         SelectKind_Action _ -> Nothing
 
-equipmentList :: Game [(EquipmentSlot, Maybe EntityWithId)]
-equipmentList = focusEntity >>= \case
-    Nothing -> return []
-    Just  e -> do
-        let sls = e^..oracleEquipment.traverse.slots.folded
-        let meq = e^.oracleEquipment
-        let lookupSlot s = Equipment.lookupSlot s =<< meq
-        forM sls $ \s -> do
-            let me = lookupSlot s
-            mewid <- join <$> traverse lookupEntity me
-            return (s, mewid)
+isItemFocused :: HasEntityId e EntityId => St -> e -> Bool
+isItemFocused st e = nothingFalse mfi (e^.entityId ==)
+    where mfi = st^.inputState.inventoryState.focusedItem
 
 --------------------------------------------------------------------------------
 
-selectedItemDescriptionLayout :: Game Layout
-selectedItemDescriptionLayout = do
-    st <- use userState
-    let fi = st^.inputState.inventoryState.focusedItem
-    sit <- join <$> traverse lookupEntity fi
-    case sit of
-        Nothing -> return layoutEmpty
-        Just e  -> itemDescriptionLayout e
-
-itemDescriptionLayout :: HasEntity e Entity => e -> Game Layout
-itemDescriptionLayout (view entity -> e)
-    = return $ simpleBox d $ withTitle "Selected item description:"
-    $ withPadding $ simpleText $ showEntityName e
-    where
-    d = def
-        & border.top.width .~ Style.baseBorderWidth
-        & border.top.color .~ Style.baseBorderColor
-
---------------------------------------------------------------------------------
-
-containersLayout :: Game Layout
-containersLayout = simpleBox def . simpleLineupV . catMaybes <$> sequence
-    [ Just <$> backpackContainerLayout
-    , inspectedContainerLayout
-    , Just <$> itemsOnGroundLayout
-    ]
-
-backpackContainerLayout :: Game Layout
-backpackContainerLayout = focusEquipmentSlot EquipmentSlot_Backpack >>= \case
-    Nothing -> return layoutEmpty
-    Just e  -> do
-        th <- getTargetHint ItemMoveTarget_Backpack
-        let tit = "Content of the "<> showEntityName (e^.entity) <> ": " <> th
-        let cs = e^..entity.oracleContent.traverse.traverse
-        st <- use userState
-        es <- catMaybes <$> mapM lookupEntity cs
-        return $ withTitle tit $ withPadding $ selectEntitiesLayout st es
-
-getTargetHint :: ItemMoveTarget -> Game Text
-getTargetHint mt = maybe "" toText . flip hintForMoveTarget mt <$> use userState
-
-inspectedContainerLayout :: Game (Maybe Layout)
-inspectedContainerLayout = do
-    st <- use userState
-    th <- getTargetHint ItemMoveTarget_Container
-    runMaybeT $ do
-        si <- MaybeT $ pure $ st^.inputState.inventoryState.ff#container
-        et <- MaybeT $ lookupEntity si
-        cs <- MaybeT $ pure $ et^.entity.oracleContent
-        let t = (fromMaybe "Container" $ et^.entity.oracleName) <> ": " <> th
-        MaybeT $ Just . containerLayout st t . catMaybes <$> mapM lookupEntity cs
-    where
-    containerLayout st t cs
-        = withTitle t
-        $ withPadding
-        $ selectEntitiesLayout st cs
-
-itemsOnGroundLayout :: Game Layout
-itemsOnGroundLayout = do
-    st <- use userState
-    es <- focusItemsInRange
-    th <- getTargetHint ItemMoveTarget_Ground
-    return
-        $ withTitle ("Items on the ground: " <> th)
-        $ withPadding
-        $ selectEntitiesLayout st es
-
-selectEntitiesLayout :: St -> [EntityWithId] -> Layout
-selectEntitiesLayout st = simpleLineupV . map f
-    where
-    mpfx = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
-    f e = selectFieldEntryLayout $ def
-        & prefix    .~ mpfx
-        & hint      .~ hintForEntityId st e
-        & isFocused .~ isItemFocused st e
-        & content   .~ Just e
-
-selectFieldEntryLayout :: SelectFieldEntry -> Layout
-selectFieldEntryLayout f = simpleBox boxDesc $ simpleLineupH
-    $ addLabel [ prefixLayout , entityLayout ]
-    where
-    prefixLayout = simpleBox prefixDesc prefixText
-    entityLayout = colorText entityColor $ case f^.content of
-        Nothing -> "None"
-        Just  e -> showEntityName (e^.entity)
-
-    addLabel = case f^.label of
-        Nothing -> id
-        Just lb -> ((simpleText lb):)
-
-    textHint = fromString $ fromMaybe "" $ f^.hint
-    prefixText = case f^.prefix of
-        Nothing -> colorText Style.textPrimaryColor textHint
-        Just pfx -> if Text.isPrefixOf (fromString pfx) textHint
-            then prefixTextHighlight pfx
-            else colorText Style.textSecondaryColor textHint
-    prefixTextHighlight pfx = colorTextList
-        [(Style.textHintHighlightColor, textPfx)
-        ,(Style.textHintColor         , textRest)]
-        where
-        textPfx = fromString pfx
-        textRest = fromMaybe "" $ Text.stripPrefix textPfx textHint
-
-    entityColor
-        | f^.isFocused           = Style.textFocusColor
-        | isNothing (f^.content) = Style.textSecondaryColor
-        | otherwise = case f^.prefix of
-            Nothing -> Style.textPrimaryColor
-            Just pfx -> if Text.isPrefixOf (fromString pfx) textHint
-                then Style.textPrimaryColor
-                else Style.textSecondaryColor
-
-    prefixDesc = def
-        & size.width .~ (30 @@ px)
-        & padding.left .~ 8
-    boxDesc = def & size.height .~ (30 @@ px)
-
---------------------------------------------------------------------------------
-
+{-
 groundPreviewPanelLayout :: Game Layout
 groundPreviewPanelLayout = do
     st <- use userState
@@ -248,8 +172,5 @@ groundPreviewPanelLayout = do
         & size.width       .~ 300 @@ px
         & size.height      .~ 200 @@ px
 
---------------------------------------------------------------------------------
-
-showEntityName :: Entity -> Text
-showEntityName e = fromMaybe "???" (e^.oracleName)
+-}
 

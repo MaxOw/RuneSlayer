@@ -17,6 +17,7 @@ import Types.Equipment
 import Equipment (contentList)
 import GameState.Query (canFitIntoContainer)
 import InputState
+import InputKeymap (keyToChar)
 import GameState
 import GameState.Query
 import Focus
@@ -146,8 +147,10 @@ handleActivation = \case
     SelectItemToFocus    -> selectItemToFocus
     UseFocusedItem       -> useFocusedItem
     SelectAction         -> selectAction
-    InputAction_Escape   -> inputActionEscape
     FastQuit             -> Engine.closeWindow
+    InputAction_NextPage -> nextPage
+    InputAction_Escape   -> inputActionEscape
+    InputAction_Nothing  -> return ()
 
 handleDeactivation :: InputAction -> Game ()
 handleDeactivation = \case

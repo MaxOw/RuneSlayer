@@ -34,7 +34,8 @@ let chestLoadout
     actions.addLoadout
       [ loadout.simple item.bag
       , loadout.count 3 item.healthPotion
-      , loadout.containerWithCount item.quiver 10 item.arrow
+      , loadout.containerWithCount item.quiver 15 item.arrow
+      , loadout.containerWithCount item.quiver 15 item.arrow
       ]
 
 let items =
@@ -51,7 +52,7 @@ let items =
   , placeAt  2.1  3.7 item.treeStump
 --, placeAt -5.0  4.0 item.woodenDoor
 
-  , placeAt  1.0  0.0 item.helmet
+--, placeAt  1.0  0.0 item.helmet
 --, placeAt -1.0  0.2 item.healthPotion
 --, placeAt -3.0  1.2 item.dagger
 --, placeAt -5.0  1.0 item.spear
@@ -64,6 +65,7 @@ let items =
   -- , placeAt -3.3 -2.3 item.arrow
   -- , placeAt -3.7 -2.3 item.quiver
 
+  {-
   , placeAt  2.3  4.8 item.spear
   , placeAt -1.3  0.8 item.sword
 
@@ -71,6 +73,7 @@ let items =
     [ actions.setLocation -3.7 -2.3
     , actions.addLoadoutCount 8 item.arrow
     ]
+  -}
   ]
 
 
@@ -102,6 +105,13 @@ let units =
   [ spawnAt  11.0   8.0 agents.bat
   , spawnAt  10.0   8.3 agents.bat
   , spawnAt -11.0   8.0 agents.spider
+  , spawnAt -13.0   9.0 agents.spider
+
+  , spawnAt  11.0  -8.0 agents.bat
+  , spawnAt  10.0  -8.3 agents.bat
+
+  , spawnAt -17.0  -8.0 agents.bat
+  , spawnAt -18.0  -8.3 agents.bat
 
   , makeUnit agents.npcBertram
     [ actions.setLocation 1.2 2.6

@@ -24,6 +24,7 @@ import WorldGen
 import Types.EntityAction (Spawn, EntityAction)
 import Types.Entity.Agent (AgentTypeName)
 import Types.Entity.Passive (PassiveTypeName)
+import Types.Entity.Script (StoryDialogName, StoryDialog)
 import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
@@ -34,12 +35,16 @@ import EntityIndex (EntityIndexTag(..))
 import qualified Graphics.UI.GLFW as GLFW
 
 import qualified Data.Collider as Collider
+
 import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
+
+descPath :: FilePath
+descPath = "data/desc"
 
 initSt :: Engine () St
 initSt = do
     conf   <- loadDhall "" "Config.dhall"
-    wgconf <- inputAuto "./data/desc/WorldGen.dhall"
+    wgconf <- inputAuto descPath "./WorldGen.dhall"
 
     scro <- newScroller $ def
         & bufferMargin .~ Engine.ScrollerMargin_Pixels (64 + 8)
@@ -59,7 +64,7 @@ initSt = do
     let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units
     let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items
 
-    pli <- loadDhall "data/desc" "Player.dhall"
+    pli <- loadDhall descPath "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
     liftIO . GLFW.showWindow =<< use (graphics.context)
@@ -79,10 +84,10 @@ initSt = do
 loadRuneSet :: Config -> Engine us RuneSet
 loadRuneSet conf = do
     let rsname = conf^.ff#runeSet
-    rus <- loadDhall "data/desc" "RuneSets.dhall"
+    rus <- loadDhall descPath "RuneSets.dhall"
     case Map.lookup rsname rus of
         Nothing -> error $ "Unable to load RuneSet: " <> rsname
-        Just rp -> buildRuneSet <$> loadDhall "data/desc" rp
+        Just rp -> buildRuneSet <$> loadDhall descPath rp
 
 makeRenderOverview :: WorldGenOutput -> Engine us RenderAction
 makeRenderOverview out = case out^.overviewImage of
@@ -97,8 +102,8 @@ loadResources conf = case conf^.debugMode of
         ts <- loadDhallList "TileSets.dhall"
         ps <- loadDhallList "PassiveTypes.dhall"
         return $ def
-               & tileSetMap    .~ buildMap ts
-                & passiveMap   .~ buildMap ps
+            & tileSetMap .~ buildMap ts
+            & passiveMap .~ buildMap ps
     Nothing -> do
         rs <- loadAllPaths
         ss <- loadDhallMap  "Sprites.dhall"
@@ -106,6 +111,9 @@ loadResources conf = case conf^.debugMode of
         ps <- loadDhallList "PassiveTypes.dhall"
         us <- loadDhallList "UnitTypes.dhall"
         as <- loadDhallMap  "Animations.dhall"
+
+        dialogs <- loadDialogs
+        -- mapM_ print dialogs
 
         rust <- loadRuneSet conf
 
@@ -115,6 +123,7 @@ loadResources conf = case conf^.debugMode of
                 & tileSetMap    .~ buildMap ts
                 & passiveMap    .~ buildMap ps
                 & agentsMap     .~ buildMap us
+                & dialogMap     .~ dialogs
                 & runeSet       .~ rust
         let pr = fmap (Animation.makeAnimation res)
                $ HashMap.fromList
@@ -123,19 +132,23 @@ loadResources conf = case conf^.debugMode of
         return $ res
             & animationsMap .~ pr
 
+loadDialogs :: Engine us (HashMap StoryDialogName StoryDialog)
+loadDialogs = do
+    HashMap.fromList <$> inputAuto descPath "./Script/StoryDialog.dhall"
+
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
 
 loadAllPaths :: Engine us [(Text, Img)]
 loadAllPaths = do
-    hm <- liftIO $ dhallToMap "data/desc" "ResourcePaths.dhall"
+    hm <- liftIO $ dhallToMap descPath "ResourcePaths.dhall"
     catMaybes <$> mapM loadResource (ordNub $ HashMap.elems hm)
 
 loadDhallList :: FromJSON a => FilePath -> Engine us [a]
-loadDhallList = fmap HashMap.elems . liftIO . dhallToMap "data/desc"
+loadDhallList = fmap HashMap.elems . liftIO . dhallToMap descPath
 
 loadDhallMap :: FromJSON a => FilePath -> Engine us (HashMap Text a)
-loadDhallMap = liftIO . dhallToMap "data/desc"
+loadDhallMap = liftIO . dhallToMap descPath
 
 endSt :: Engine St ()
 endSt = do

@@ -8,38 +8,79 @@ import Types.EntityAction (AttackMode)
 
 --------------------------------------------------------------------------------
 
-data StatusDesc = StatusDesc
+data Status = Status
    { field_hostilesInRange :: Bool
    , field_attackMode      :: AttackMode
    } deriving (Generic)
-instance Default StatusDesc
+instance Default Status
 
 --------------------------------------------------------------------------------
 
-data HealthStatusDesc = HealthStatusDesc
+data HealthStatus = HealthStatus
    { field_health    :: Health
    , field_maxHealth :: Health
    } deriving (Generic)
-instance Default HealthStatusDesc
+instance Default HealthStatus
 
 --------------------------------------------------------------------------------
 
-data ActionHintDesc = ActionHintDesc
+data ActionHint = ActionHint
    { field_actionName :: Text
    , field_actionHint :: Text
    } deriving (Generic)
-instance Default ActionHintDesc
+instance Default ActionHint
 
 --------------------------------------------------------------------------------
 
-data SlotDesc = SlotDesc
+data StoryDialog = StoryDialog
+   { field_title       :: Text
+   , field_content     :: Text
+   , field_nextPage    :: Bool
+   , field_nextPageKey :: Text
+   } deriving (Generic)
+instance Default StoryDialog
+
+--------------------------------------------------------------------------------
+
+data Slot = Slot
    { field_percent :: Float
    } deriving (Generic)
 
-data SlotsPanelDesc = SlotsPanelDesc
-   { field_slots      :: [SlotDesc]
+data SlotsPanel = SlotsPanel
+   { field_slots      :: [Slot]
    , field_showQuery  :: Bool
    , field_queryText  :: Text
    , field_answerText :: Text
    } deriving (Generic)
-instance Default SlotsPanelDesc
+instance Default SlotsPanel
+
+--------------------------------------------------------------------------------
+
+data SelectEntry = SelectEntry
+   { field_prefix    :: Maybe String
+   , field_label     :: Maybe Text
+   , field_hint      :: Maybe String
+   , field_isFocused :: Bool
+   , field_content   :: Maybe Text
+   } deriving (Generic)
+instance Default SelectEntry
+
+data Description = Description
+   { field_name :: Text
+   } deriving (Generic)
+instance Default Description
+
+data Container = Container
+   { field_title   :: Text
+   , field_hint    :: Text
+   , field_content :: [SelectEntry]
+   } deriving (Generic)
+instance Default Container
+
+data Inventory = Inventory
+   { field_equipment   :: [SelectEntry]
+   , field_description :: Maybe Description
+   , field_containers  :: [Container]
+   } deriving (Generic)
+instance Default Inventory
+

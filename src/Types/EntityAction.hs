@@ -22,7 +22,7 @@ data EntityDebugFlag
 data AttackMode
    = AttackMode_Manual
    | AttackMode_Auto
-   deriving (Generic, Eq, Show, Enum, Bounded)
+   deriving (Generic, Eq, Ord, Show, Enum, Bounded)
 instance Default AttackMode where def = AttackMode_Manual
 
 data RuneType

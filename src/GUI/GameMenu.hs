@@ -3,16 +3,16 @@ module GUI.GameMenu where
 import Delude
 import qualified Data.Set as Set
 import qualified Data.Map as Map
+import qualified Data.Zipper as Zipper
 
 import Engine
-import Engine.Layout.Types
 import qualified Engine.Layout.Alt as Alt
 
 import Types
 import Types.InputState
 import Types.Entity.PassiveType (UseActionName(..))
 import Types.Entity.Agent (PlayerStatus)
-import InputState (getMode, isPanelVisible, getInputString)
+import InputState (getMode, isPanelVisible, getInputString, showActionKeySeqs)
 import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
 import Focus (focusEntity)
 import GameState.Query
@@ -20,24 +20,22 @@ import Entity
 import Types.Entity.Common (EntityStatus(..))
 import GameState (getGameOverScreen)
 
-import Types.GUI
-import GUI.Common
+import qualified Types.GUI as Layout
 import GUI.Inventory
 import GUI.Layout
-import qualified GUI.Style as Style
 -- import qualified Color
 
 --------------------------------------------------------------------------------
 
-gameMenuLayout :: Game Layout
-gameMenuLayout = overlayLayouts <$> sequence
-    -- [ statusPanesLayout
-    [ overlayMenuLayout ]
+gameMenuLayout :: Game Alt.Layout
+gameMenuLayout = Alt.composition . catMaybes <$> sequence
+    [ Just <$> statusPanesLayout
+    , overlayMenuLayout ]
     where
     overlayMenuLayout = getMode >>= \case
         StatusMode m -> statusMenuLayout m
-        SpaceMode    -> spaceMenuLayout
-        _            -> return layoutEmpty
+     -- SpaceMode    -> spaceMenuLayout
+        _            -> return Nothing -- layoutEmpty
 
 --------------------------------------------------------------------------------
 
@@ -108,10 +106,10 @@ actionsMenu = do
                 Just . catMaybes <$> (mapM toDesc $ Map.assocs $ v^.hintMap)
             _ -> return Nothing
 
-    toDesc :: ((EntityId, UseActionName), [Char]) -> Game (Maybe ActionHintDesc)
+    toDesc :: ((EntityId, UseActionName), [Char]) -> Game (Maybe Layout.ActionHint)
     toDesc ((eid, a), h) = lookupEntity eid >>= \case
         Nothing -> return Nothing
-        Just  e -> return $ Just $ ActionHintDesc
+        Just  e -> return $ Just $ Layout.ActionHint
             { field_actionName = toName (e^.entity.oracleName) a
             , field_actionHint = toText h
             }
@@ -119,10 +117,21 @@ actionsMenu = do
     toName Nothing  a = show a
     toName (Just n) a = unUseActionName a <> " " <> n
 
+storyDialog :: Game (Maybe Alt.Layout)
+storyDialog = do
+    msd <- use $ userState.inputState.ff#storyDialog
+    ksq <- showActionKeySeqs InputAction_NextPage StoryDialogMode
+    case msd of
+        Nothing -> return Nothing
+        Just sd -> return $ Just $ layout_storyDialog $ def
+            & title   .~ sd^.title
+            & content .~ fromMaybe "" (Zipper.focus $ sd^.ff#dialogPages)
+            & ff#nextPageKey .~ ksq
+
 slotsPanelLayout
     :: (InputMode -> Bool)
     -> (PlayerStatus -> RunicSlots)
-    -> (SlotsPanelDesc -> Alt.Layout)
+    -> (Layout.SlotsPanel -> Alt.Layout)
     -> Game Alt.Layout
 slotsPanelLayout cndMode viewSlots layoutF = do
     ans <- getInputString
@@ -138,11 +147,12 @@ slotsPanelLayout cndMode viewSlots layoutF = do
         & ff#queryText  .~ fromMaybe "" (view (ff#query) <$> qt)
         & ff#answerText .~ ans
         where
-        ss = map SlotDesc $ listRunicSlots $ viewSlots ps
+        ss = map Layout.Slot $ listRunicSlots $ viewSlots ps
         qt = flip getRuneByName (ps^.ff#runicLevel) =<< ps^.ff#selectedRune
 
 --------------------------------------------------------------------------------
 
+{-
 spaceMenuLayout :: Game Layout
 spaceMenuLayout = return $ layoutBox desc []
     where
@@ -154,11 +164,12 @@ spaceMenuLayout = return $ layoutBox desc []
         & border.top.color .~ Style.baseBorderColor
         & padding.each     .~ Style.basePadding
         & color            .~ Style.baseBackgroundColor
+-}
 
 --------------------------------------------------------------------------------
 
-statusMenuLayout :: StatusMenu -> Game Layout
+statusMenuLayout :: StatusMenu -> Game (Maybe Alt.Layout)
 statusMenuLayout m = case m of
-    StatusMenu_Inventory -> inventoryLayout
-    -- _ -> return emptyLayout
+    StatusMenu_Inventory   -> Just <$> inventoryLayout
+    StatusMenu_StoryDialog -> storyDialog
 

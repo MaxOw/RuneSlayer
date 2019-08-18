@@ -31,6 +31,16 @@ let AgentKind =
   | NPC
   >
 
+let ScriptName =
+  < Bertram
+  | Nop
+  >
+
+let DialogName =
+  < BertramWelcome
+  | BertramWaiting
+  >
+
 let Direction =
   < North
   | West
@@ -60,6 +70,8 @@ in
 , WeaponKind    = WeaponKind
 , EquipmentSlot = EquipmentSlot
 , AgentKind     = AgentKind
+, ScriptName    = ScriptName
+, DialogName    = DialogName
 , Direction     = Direction
 , AnimationKind = AnimationKind
 , Reactivity    = Reactivity

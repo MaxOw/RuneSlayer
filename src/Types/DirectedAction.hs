@@ -7,6 +7,7 @@ import Types.Entity.Passive    (PassiveTypeName)
 import Types.Entity.Agent      (AgentTypeName)
 import Types.Entity.Projectile (Projectile)
 import Types.Entity.Effect     (EffectKind)
+import Types.Entity.Script     (StoryDialog)
 
 --------------------------------------------------------------------------------
 
@@ -27,6 +28,7 @@ data WorldAction
    = WorldAction_SpawnEntity SpawnEntity SpawnEntityOpts
    -- Open inventory/contents inspection window of [EntityId] for player
    | WorldAction_InspectContent EntityId
+   | WorldAction_StoryDialog StoryDialog
    | WorldAction_GameOver
 
 --------------------------------------------------------------------------------

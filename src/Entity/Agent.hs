@@ -10,20 +10,23 @@ import qualified Data.Set as Set
 import qualified Data.List as List
 import qualified Diagrams.TwoD.Transform as T
 
-import Entity
-import Entity.HasField
 import Types.Debug
 import Types.Entity.Reactivity
 import Types.Entity.Agent
 import Types.Entity.Effect
 import Types.Entity.Passive
+import Types.Entity.Timer
+import Types.Equipment
+
+import Entity
+import Entity.HasField
 import Entity.Utils
 import Entity.Actions
-import Types.Entity.Timer
-import ResourceManager (Resources, lookupAnimation)
-import Types.Equipment
-import qualified Equipment
+import Entity.Script
+
 import Skills.Runes
+import ResourceManager (Resources, lookupAnimation)
+import qualified Equipment
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
@@ -93,7 +96,9 @@ actOn x a = x & case a of
 
 update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
+    setupScript
     decideAction
+    stepScript
 
     updateActiveAnimation
     updateTimer

@@ -8,7 +8,6 @@ import Delude hiding (context)
 import qualified Linear.Matrix as Matrix
 import qualified Engine
 import Engine (graphics, context, RenderAction)
-import Engine.Layout.Render (makeRenderLayout)
 -- import Engine.Debug (logOnce)
 import Graphics.GL
 
@@ -98,12 +97,7 @@ renderGame _delta st = do
         -- , setZIndexAtLeast 20000 $ st^.ff#overview
         ]
 
-    whenJustM focusEntity $ \_ -> do
-        menuProjM <- orthoProjection $ def
-            & set scale (st^.gameState.menuScale)
-        Engine.drawLayout =<< statusPanesLayout
-        Engine.draw menuProjM =<< makeRenderLayout =<< gameMenuLayout
-
+    whenJustM focusEntity $ const $ Engine.drawLayout =<< gameMenuLayout
     whenJustM gameOverScreenLayout Engine.drawLayout
 
     Engine.swapBuffers

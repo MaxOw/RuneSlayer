@@ -28,7 +28,7 @@ data WorldAction
    = WorldAction_SpawnEntity SpawnEntity SpawnEntityOpts
    -- Open inventory/contents inspection window of [EntityId] for player
    | WorldAction_InspectContent EntityId
-   | WorldAction_StoryDialog StoryDialog
+   | WorldAction_StoryDialog EntityId StoryDialog
    | WorldAction_GameOver
 
 --------------------------------------------------------------------------------

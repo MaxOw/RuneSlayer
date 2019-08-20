@@ -1,12 +1,12 @@
 
 let makeHiraganaEntry =
   λ(l : Natural) →
-  λ(n : Text) →
+  λ(q : Text) →
   λ(r : Text) →
-    { name    = n
+    { name    = "hiragana_${r}"
     , kind    = "hiragana"
     , level   = l
-    , query   = "Reading of ${n}?"
+    , query   = "Reading of ${q}?"
     , answers = [r]
     -- , validation = "Exact"
     }

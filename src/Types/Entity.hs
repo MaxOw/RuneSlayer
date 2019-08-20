@@ -9,6 +9,7 @@ module Types.Entity
     ) where
 
 import Delude
+import Data.Time.Clock (UTCTime)
 
 import Types.Debug (DebugFlag)
 import Types.DirectedAction as All
@@ -41,10 +42,11 @@ instance MonadQ (StateT us Q) where liftQ = lift
 type RangeBBox = BBox Float
 
 data EntityContext = EntityContext
-   { field_entities   :: EntityIndex
-   , field_selfId     :: EntityId
-   , field_frameCount :: Word32
-   , field_resources  :: Resources
+   { field_entities       :: EntityIndex
+   , field_selfId         :: EntityId
+   , field_frameCount     :: Word32
+   , field_frameTimestamp :: UTCTime
+   , field_resources      :: Resources
    } deriving (Generic)
 instance HasResources EntityContext Resources
 

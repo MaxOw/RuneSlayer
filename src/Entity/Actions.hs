@@ -39,7 +39,7 @@ module Entity.Actions
 
     -- Queries
     , queryInRange, queryInRadius
-    , queryById
+    , queryById, queryByTag, queryPlayer
     , shouldDie
     , useSelfId
 
@@ -522,6 +522,9 @@ queryById eid = EntityIndex.lookupById eid =<< use (context.entities)
 
 queryByTag :: EntityIndexTag -> Update s (Maybe EntityWithId)
 queryByTag t = EntityIndex.lookupByTag t =<< use (context.entities)
+
+queryPlayer :: Update s (Maybe EntityWithId)
+queryPlayer = queryByTag EntityIndexTag_Player
 
 shouldDie :: HasHealth x Health => Update x Bool
 shouldDie = uses (self.health._Wrapped) (<=0)

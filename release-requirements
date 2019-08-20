@@ -71,6 +71,7 @@ Requirements for first release: v0.1
   - Offensive runes.                                                         (#)
   - Defensive runes.                                                         (#)
   - Runic levels.                                                            (#)
+  - Merge offensive/defensive slots into one (Runic Points: RP ala MP).      ( )
   - Display runes status.                                                    ( )
 
 * Loadouts                                                                   [X]
@@ -79,13 +80,14 @@ Requirements for first release: v0.1
   - Recursive loadouts.                                                      (#)
 
 * Add hint/help/tutorial windows.                                            [ ]
+* Add System Messages.                                                       [ ]
 
 * NPCs.                                                                      [ ]
   - Add NPC Agent Kind.                                                      (#)
   - Make NPCs defend themselves.                                             (#)
   - NPCs Story Dialogs.                                                      (#)
   - Initiate communication with NPCs.                                        ( )
-  - AddRune EntityAction from NPC Script.                                    ( )
+  - AddRune EntityAction from NPC Script.                                    (#)
 
 * Enemy units:                                                               [#]
   - Gore Bats                                                                (#)

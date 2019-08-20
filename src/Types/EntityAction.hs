@@ -7,6 +7,7 @@ import Types.Entity.Common
 import Types.Entity.PassiveType (LoadoutEntry, PassiveTypeName, UseActionName)
 import Types.Entity.Animation (AnimationKind, Direction, Animation)
 import Types.Equipment (EquipmentSlot)
+import Types.Skills.Runes (RuneSet)
 
 --------------------------------------------------------------------------------
 
@@ -32,6 +33,7 @@ data RuneType
 
 data PlayerAction
    = PlayerAction_SelectRune
+   | PlayerAction_AddRunes RuneSet
    | PlayerAction_UpdateRune RuneType Bool
    | PlayerAction_SetAttackMode AttackMode
    deriving (Generic, Show)
@@ -41,12 +43,6 @@ data UseAction
    | UseAction_InspectContents
    | UseAction_Close
    deriving (Eq, Ord, Show, Generic)
-instance ToJSON UseAction where
-    toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON UseAction where
-    parseJSON = genericParseJSON customOptionsJSON
-instance ToJSONKey   UseAction where toJSONKey   = defaultToJSONKey
-instance FromJSONKey UseAction where fromJSONKey = defaultFromJSONKey
 
 data EntityValue
    = EntityValue_Location  Location
@@ -58,6 +54,10 @@ instance Show EntityValue where
         EntityValue_Location     l -> "Set: " <> show l
         EntityValue_Direction    d -> "Set: " <> show d
         EntityValue_Animation    _ -> "Set: <Animation>"
+
+data DialogAction
+   = DialogAction_NextPage -- ^ Move dialog progression to next page.
+   deriving (Show, Generic)
 
 data EntityAction
    = EntityAction_SetMoveVector V2D
@@ -97,18 +97,11 @@ data EntityAction
 
    -- tell entity to create and equip/contain given loadout.
    | EntityAction_AddLoadout [LoadoutEntry (Spawn PassiveTypeName EntityAction)]
+
+   -- send entity DialogAction (actions used when communicating with NPCs)
+   | EntityAction_Dialog DialogAction
    deriving (Show, Generic)
 makePrisms ''EntityAction
-
-instance FromJSON EntityDebugFlag where parseJSON = genericParseJSON customOptionsJSON
-instance FromJSON EntityValue  where parseJSON = genericParseJSON customOptionsJSON
-instance FromJSON AttackMode   where parseJSON = genericParseJSON customOptionsJSON
-instance FromJSON RuneType     where parseJSON = genericParseJSON customOptionsJSON
-instance FromJSON PlayerAction where parseJSON = genericParseJSON customOptionsJSON
-instance FromJSON EntityAction where parseJSON = genericParseJSON customOptionsJSON
-
-instance (FromJSON n, FromJSON a) => FromJSON (Spawn n a) where
-    parseJSON = genericParseJSON  customOptionsJSON
 
 data DirectedEntityAction = DirectedEntityAction
    { field_entityId :: EntityId
@@ -117,5 +110,4 @@ data DirectedEntityAction = DirectedEntityAction
 instance HasEntityId DirectedEntityAction EntityId
 
 instance Show DirectedEntityAction where
-    show (DirectedEntityAction i a) =
-        show i <> " => " <> show a -- <> "."
+    show (DirectedEntityAction i a) = show i <> " => " <> show a

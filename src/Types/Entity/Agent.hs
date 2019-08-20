@@ -113,21 +113,6 @@ data PlayerStatus = PlayerStatus
    , field_fullStats          :: Stats
    } deriving (Generic)
 
-{-
-playerSlots :: Set EquipmentSlot
-playerSlots = Set.fromList
-    [ EquipmentSlot_Backpack
-    -- , EquipmentSlot_Bundle
-    , EquipmentSlot_Belt
-    , EquipmentSlot_Head
-    , EquipmentSlot_Torso
-    , EquipmentSlot_Hands
-    , EquipmentSlot_Legs
-    , EquipmentSlot_Feet
-    , EquipmentSlot_PrimaryWeapon
-    , EquipmentSlot_PrimaryOther  ]
--}
-
 --------------------------------------------------------------------------------
 
 instance ToJSON   UnitType where toEncoding = genericToEncoding customOptionsJSON

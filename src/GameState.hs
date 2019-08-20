@@ -61,7 +61,7 @@ handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case
     WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
     WorldAction_InspectContent tid -> inspectContent tid >> return Nothing
-    WorldAction_StoryDialog     sd -> showStoryDialog sd >> return Nothing
+    WorldAction_StoryDialog eid sd -> showStoryDialog eid sd >> return Nothing
     WorldAction_GameOver           -> startGameOver >> return Nothing
     where
     spawnEntity = \case

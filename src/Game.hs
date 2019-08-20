@@ -67,6 +67,7 @@ initSt = do
     pli <- loadDhall descPath "Player.dhall"
     pid <- EntityIndex.insert (playerEntity rs pli) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
+    EntityIndex.addTag EntityIndexTag_Player pid eix
     liftIO . GLFW.showWindow =<< use (graphics.context)
     return $ st
         & gameState.focusId .~ Just pid

@@ -47,9 +47,4 @@ instance Default WorldGenConfig where
         , field_units           = def
         }
 
-instance FromJSON CoveringLayer where
-    parseJSON = genericParseJSON  customOptionsJSON
-instance FromJSON WorldGenConfig where
-    parseJSON = genericParseJSON  customOptionsJSON
-
 instance Default WorldGenOutput

@@ -26,6 +26,8 @@ module Delude
     , sortSelectVia
 
     , whenChanged_
+
+    , nextStop, precStop
     ) where
 
 import Relude         as All
@@ -191,4 +193,12 @@ whenChanged_ newValue doAction = do
         atomicModifyIORef' changeCacheRef $ \c ->
             (HashMap.insert cname newHash c, ())
         doAction newValue
+
+--------------------------------------------------------------------------------
+
+nextStop :: (Eq a, Bounded a, Enum a) => a -> a
+nextStop a = if a == maxBound then a else succ a
+
+precStop :: (Eq a, Bounded a, Enum a) => a -> a
+precStop a = if a == minBound then a else pred a
 

@@ -44,7 +44,7 @@ actOn x a = x & case a of
     EntityAction_RunAnimation      k -> setAnimationKind k
     EntityAction_SetMoveVector     v -> setMoveVector v
     EntityAction_SelfHeal          h -> selfHeal h
-    EntityAction_PlayerAction      p -> handlePlayerAction p
+    EntityAction_PlayerAction      _ -> handleOnUpdate a
     EntityAction_SetValue          v -> handleSetValue v
     -- Handle on update:
     EntityAction_AddItem          {} -> handleOnUpdate a
@@ -55,6 +55,7 @@ actOn x a = x & case a of
     EntityAction_UseItem           _ -> handleOnUpdate a
 
     EntityAction_AddLoadout        _ -> handleOnUpdate a
+    EntityAction_Dialog            _ -> handleOnUpdate a
     _ -> id
     where
     selfHeal h _ = x & health %~
@@ -64,30 +65,6 @@ actOn x a = x & case a of
         & animationState.current.kind .~ k
         & animationState.current.era  .~ 0
         & animationState.progression  .~ Animation.defaultTransition
-
-    handlePlayerAction = \case
-        PlayerAction_SelectRune        -> selectCurrentRune
-        PlayerAction_UpdateRune   rt r -> updateCurrentRune rt r
-        PlayerAction_SetAttackMode  am -> setAttackMode am
-
-    currentTime = undefined
-    selectCurrentRune = case x^.ff#selectedRune of
-        Nothing -> ff#selectedRune .~ selectRune currentTime (x^.ff#runicLevel)
-        Just  _ -> id
-
-    updateCurrentRune rt r _ = x
-        & ff#selectedRune .~ Nothing
-        & loadSlot rt r
-        & updateRuneUsage r
-    loadSlot RuneType_Offensive True = ff#offensiveSlots %~ fillRunicSlot
-    loadSlot RuneType_Defensive True = ff#defensiveSlots %~ fillRunicSlot
-    loadSlot _ _ = id
-
-    updateRuneUsage r = case x^.ff#selectedRune of
-        Nothing -> id
-        Just sn -> over (ff#runicLevel) $ updateUsage sn (RuneUsage r)
-
-    setAttackMode     = set (ff#attackMode)
 
     handleSetValue ev _ = case ev of
         EntityValue_Location     v -> x & location .~ v
@@ -423,7 +400,42 @@ processAction = \case
     EntityAction_SelfAttacked  d -> procAttacked d
     EntityAction_RemoveItem    i -> removeItem i
     EntityAction_AddLoadout    l -> mapM_ addLoadoutEntry l
+    EntityAction_Dialog        d -> updateScript d
+    EntityAction_PlayerAction  a -> processPlayerAction a
     _ -> return ()
+
+processPlayerAction :: PlayerAction -> Update Agent ()
+processPlayerAction = \case
+    PlayerAction_AddRunes        r -> addRunes r
+    PlayerAction_SelectRune        -> selectCurrentRune
+    PlayerAction_UpdateRune   rt r -> updateCurrentRune rt r
+    PlayerAction_SetAttackMode  am -> setAttackMode am
+    where
+    addRunes r = do
+        -- systemMessage "New runes learned!"
+        self.ff#runicLevel %= addKnownRunes r
+
+    selectCurrentRune = use (self.ff#selectedRune) >>= \case
+        Just  _ -> return ()
+        Nothing -> do
+            rlvl <- use $ self.ff#runicLevel
+            currentTime <- use $ context.ff#frameTimestamp
+            self.ff#selectedRune .= selectRune currentTime rlvl
+
+    updateCurrentRune rt r = do
+        updateRuneUsage r
+        loadSlot rt r
+        self.ff#selectedRune .= Nothing
+
+    loadSlot RuneType_Offensive True = self.ff#offensiveSlots %= fillRunicSlot
+    loadSlot RuneType_Defensive True = self.ff#defensiveSlots %= fillRunicSlot
+    loadSlot _ _ = return ()
+
+    updateRuneUsage r = use (self.ff#selectedRune) >>= \case
+        Nothing -> return ()
+        Just sn -> self.ff#runicLevel %= updateUsage sn (RuneUsage r)
+
+    setAttackMode = assign (self.ff#attackMode)
 
 removeItem :: EntityId -> Update Agent ()
 removeItem i = do
@@ -520,7 +532,7 @@ agentToEntity = makeEntity $ EntityParts
    }
 
 makeAgent :: Resources -> AgentType -> Agent
-makeAgent rs p = def
+makeAgent _rs p = def
     & equipment         .~ Equipment.create (p^.ff#equipmentSlots)
     & updateOnce        .~ Set.fromList [ UpdateOnce_Equipment ]
     & health            .~ p^.stats.maxHealth
@@ -529,8 +541,3 @@ makeAgent rs p = def
 
     & ff#offensiveSlots .~ initRunicSlots 4
     & ff#defensiveSlots .~ initRunicSlots 3
-    & ff#runicLevel     .~ initKnownRunes
-    where
-    initRunes = getRunesByLevel 1 (rs^.runeSet)
-    initKnownRunes = addKnownRunes initRunes def
-

@@ -14,7 +14,8 @@ module Skills.Runes
 
     , buildRuneSet
     -- , getRunesByKind
-    , getRunesByLevel
+    , runeSetByLevel
+    , runeSetByName
     -- , getRunesByKindAndLevel
     {-
     , getNextRune
@@ -143,8 +144,11 @@ buildRuneSet = IxSet.fromList
 -- getRunesByKind :: RuneKind -> RuneSet -> [Rune]
 -- getRunesByKind v s = IxSet.toList $ IxSet.getEQ v s
 
-getRunesByLevel :: RunePowerLevel -> RuneSet -> RuneSet
-getRunesByLevel = IxSet.getEQ
+runeSetByLevel :: RunePowerLevel -> RuneSet -> RuneSet
+runeSetByLevel = IxSet.getEQ
+
+runeSetByName :: RuneName -> RuneSet -> RuneSet
+runeSetByName = IxSet.getEQ
 
 -- getRunesByKindAndLevel :: RuneKind -> RunePowerLevel -> RuneSet -> [Rune]
 -- getRunesByKindAndLevel k l s = IxSet.toList $ IxSet.getEQ l $ IxSet.getEQ k s

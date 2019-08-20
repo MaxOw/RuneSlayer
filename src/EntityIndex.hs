@@ -13,6 +13,7 @@ module EntityIndex
     ) where
 
 import Delude
+import Data.Time.Clock (getCurrentTime)
 import qualified Data.HashSet as HashSet
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict     as Map
@@ -79,14 +80,17 @@ update res handleWorldAction globalActions fct eix = do
     -- List of entities in need of processing O(n)
     toProcList <- liftIO $ lookupManyById toProcIdList eix
 
+    cft <- liftIO getCurrentTime
+
     -- List of results after applying update function on each entity toProc O(n)
     -- [(EntityId, (Maybe Entity, [DirectedEntityAction]))]
     updateResult <- forM toProcList $ \(EntityWithId k v) ->
         let ctx = EntityContext
-                { field_entities   = eix
-                , field_selfId     = k
-                , field_frameCount = fct
-                , field_resources  = res }
+                { field_entities       = eix
+                , field_selfId         = k
+                , field_frameCount     = fct
+                , field_frameTimestamp = cft
+                , field_resources      = res }
         in (k,) <$> liftIO (runQ (entityUpdate v ctx))
 
     -- List of directed actions resulting from update + global ones

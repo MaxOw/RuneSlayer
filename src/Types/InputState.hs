@@ -68,8 +68,10 @@ instance Default InventoryState
 
 data StoryDialogState = StoryDialogState
     { field_title       :: Text
+    , field_entityId    :: EntityId
     , field_dialogPages :: Zipper Text
     } deriving (Generic)
+instance HasEntityId StoryDialogState EntityId
 
 data InputState = InputState
    { field_mode           :: InputMode

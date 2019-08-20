@@ -3,8 +3,8 @@ module InputState.Actions where
 import Delude
 import qualified Data.Zipper as Zipper
 
-import Engine (userState, EngineState)
-import Types (Game, St)
+import Engine (userState)
+import Types (Game)
 import Types.Entity (EntityWithId)
 import Types.Entity.Script (StoryDialog)
 import Types.Entity.Common (EntityId)
@@ -42,30 +42,16 @@ getInventoryContainer = do
 
 --------------------------------------------------------------------------------
 
-showStoryDialog :: StoryDialog -> Game ()
-showStoryDialog sd = do
+showStoryDialog :: EntityId -> StoryDialog -> Game ()
+showStoryDialog eid sd = do
     setMode StoryDialogMode
     zoomInputState $ ff#storyDialog .= Just sds
     where
     sds = StoryDialogState
         { field_title       = sd^.title
+        , field_entityId    = eid
         , field_dialogPages = Zipper.fromList $ sd^.ff#dialogPages
         }
-
-nextPage :: Game ()
-nextPage = getMode >>= \case
-    StatusMode StatusMenu_StoryDialog -> storyNextPage
-    _                                 -> return ()
-    where
-    storyNextPage = whenJustM (use storyDialog) $ \sd ->
-        if Zipper.isRightmost $ sd^.ff#dialogPages
-        then storyDialog .= Nothing >> inputActionEscape
-        else storyDialog.traverse.ff#dialogPages %= Zipper.right
-
-    storyDialog :: Lens' (EngineState St) (Maybe StoryDialogState)
-    storyDialog = userState.inputState.ff#storyDialog
-
---------------------------------------------------------------------------------
 
 showActionKeySeqs :: InputAction -> InputMode -> Game Text
 showActionKeySeqs a m = uses (userState.inputState.inputKeymap)

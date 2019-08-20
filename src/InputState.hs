@@ -28,9 +28,10 @@ import qualified Data.Vector as Vector
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
+import qualified Data.Zipper as Zipper
 
-import Engine (userState)
-import Types (Game)
+import Engine (userState, EngineState)
+import Types (Game, St)
 import Types.EntityAction
 import Types.Entity.Common (EntityId)
 import Types.Entity.PassiveType (UseActionName)
@@ -226,4 +227,18 @@ isPanelVisible :: PanelName -> Game Bool
 isPanelVisible pname = zoomInputState $ uses visiblePanels (Set.member pname)
 
 --------------------------------------------------------------------------------
+
+nextPage :: Game ()
+nextPage = getMode >>= \case
+    StatusMode StatusMenu_StoryDialog -> storyNextPage
+    _                                 -> return ()
+    where
+    storyNextPage = whenJustM (use storyDialog) $ \sd -> do
+        actOnEntity (sd^.entityId) $ EntityAction_Dialog DialogAction_NextPage
+        if Zipper.isRightmost $ sd^.ff#dialogPages
+        then storyDialog .= Nothing >> inputActionEscape
+        else storyDialog.traverse.ff#dialogPages %= Zipper.right
+
+    storyDialog :: Lens' (EngineState St) (Maybe StoryDialogState)
+    storyDialog = userState.inputState.ff#storyDialog
 

@@ -6,9 +6,10 @@ module Entity
 
 import Delude
 import Types.Equipment (EquipmentSlot, Equipment)
-import Types.Entity.Passive (PassiveType, UseActionName)
+import Types.Entity.Passive (PassiveType, InteractionName)
 import Types.Entity.Reactivity (ReactivCategory, ReactivValue)
 import Types.Entity.Animation (AnimationName)
+import Types.Entity.Agent (AgentType)
 import Types.Entity
 import Types.Entity.Common
 
@@ -37,6 +38,7 @@ MakeOracleGetter(Name           , Text)
 MakeOracleGetter(Location       , Location)
 MakeOracleGetter(Equipment      , Equipment)
 MakeOracleGetter(PassiveType    , PassiveType)
+MakeOracleGetter(AgentType      , AgentType)
 MakeOracleGetter(Content        , [EntityId])
 MakeOracleGetter(Volume         , Volume)
 MakeOracleGetter(MaxVolume      , Volume)
@@ -47,5 +49,5 @@ MakeOracleGetter(ItemAnimation  , AnimationName)
 MakeOracleGetter(BehindBody     , Bool)
 MakeOracleGetter(Status         , Set EntityStatus)
 MakeOracleGetter(Stats          , Stats)
-MakeOracleGetter(UseActions     , [UseActionName])
+MakeOracleGetter(Interactions   , [InteractionName])
 MakeOracleGetter(Owner          , EntityId)

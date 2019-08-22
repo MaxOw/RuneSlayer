@@ -43,7 +43,7 @@ let AgentTypeName   = < MakeAgentTypeName   : Text >
 let AnimationName   = < MakeAnimationName   : Text >
 let Probability     = < MakeProbability     : Double >
 
-let UseActionEffect =
+let InteractionEffect =
   < TransformInto  : { TransformInto  : PassiveTypeName }
   | InspectContent : { InspectContent : List {} }
   | DeleteSelf     : { DeleteSelf     : List {} }
@@ -92,25 +92,25 @@ let EntityAction
   → t
 
 in
-{ Entry           = Entry
-, Path            = Path
-, Location        = Location
-, Rect            = Rect
-, Sprite          = Sprite
-, LocatedSprite   = LocatedSprite
-, ContainerType   = ContainerType
-, Frame           = Frame
-, AnimationPart   = AnimationPart
-, PassiveTypeName = PassiveTypeName
-, AgentTypeName   = AgentTypeName
-, AnimationName   = AnimationName
-, Probability     = Probability
-, UseActionEffect = UseActionEffect
-, Range           = Range
-, Spawn           = Spawn
-, SelectionEntry  = SelectionEntry
-, LoadoutEntry    = LoadoutEntry
-, EntityValue     = EntityValue
-, EntityActionF   = EntityActionF
-, EntityAction    = EntityAction
+{ Entry             = Entry
+, Path              = Path
+, Location          = Location
+, Rect              = Rect
+, Sprite            = Sprite
+, LocatedSprite     = LocatedSprite
+, ContainerType     = ContainerType
+, Frame             = Frame
+, AnimationPart     = AnimationPart
+, PassiveTypeName   = PassiveTypeName
+, AgentTypeName     = AgentTypeName
+, AnimationName     = AnimationName
+, Probability       = Probability
+, InteractionEffect = InteractionEffect
+, Range             = Range
+, Spawn             = Spawn
+, SelectionEntry    = SelectionEntry
+, LoadoutEntry      = LoadoutEntry
+, EntityValue       = EntityValue
+, EntityActionF     = EntityActionF
+, EntityAction      = EntityAction
 }

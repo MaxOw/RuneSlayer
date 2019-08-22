@@ -14,6 +14,7 @@ data EntityQuery a where
      EntityQuery_Location       :: EntityQuery Location
      EntityQuery_Equipment      :: EntityQuery Equipment
      EntityQuery_PassiveType    :: EntityQuery PassiveType
+     EntityQuery_AgentType      :: EntityQuery AgentType
      EntityQuery_Content        :: EntityQuery [EntityId]
      EntityQuery_Volume         :: EntityQuery Volume
      EntityQuery_MaxVolume      :: EntityQuery Volume
@@ -25,5 +26,5 @@ data EntityQuery a where
      EntityQuery_Status         :: EntityQuery (Set EntityStatus)
      EntityQuery_PlayerStatus   :: EntityQuery PlayerStatus
      EntityQuery_Stats          :: EntityQuery Stats
-     EntityQuery_UseActions     :: EntityQuery [UseActionName]
+     EntityQuery_Interactions   :: EntityQuery [InteractionName]
      EntityQuery_Owner          :: EntityQuery EntityId

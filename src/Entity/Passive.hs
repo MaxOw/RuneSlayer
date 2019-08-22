@@ -34,7 +34,7 @@ actOn x a = x & case a of
 
     EntityAction_SelfFiredAsProjectile {} -> selfFireProjectile
 
-    EntityAction_UseAction   {} -> handleOnUpdate a
+    EntityAction_Interact    {} -> handleOnUpdate a
     EntityAction_SetValue     v -> handleSetValue v
     EntityAction_RunAnimation k -> setAnimationKind k
 
@@ -128,19 +128,19 @@ projectileFire (loc, vectorToTarget, tid, attackPower) = do
 
 processAction :: EntityAction -> Update Passive ()
 processAction = \case
-    EntityAction_UseAction n t -> performUseAction t n
+    EntityAction_Interact  n t -> performInteraction t n
     EntityAction_AddLoadout  l -> mapM_ addLoadoutEntry l
     _ -> return ()
     where
-    performUseAction t = mapM_ (performUseActionEffect t) <=< getUseAction
-    getUseAction a = use $ self.passiveType.useActions.at(a).traverse
+    performInteraction t = mapM_ (performInteractionEffect t) <=< getInteraction
+    getInteraction a = use $ self.passiveType.interactions.at(a).traverse
 
-performUseActionEffect :: EntityId -> UseActionEffect -> Update Passive ()
-performUseActionEffect t = \case
-    UseActionEffect_TransformInto n -> transformInto n
-    UseActionEffect_InspectContent  -> inspectContent
-    UseActionEffect_DeleteSelf      -> selfDelete
-    UseActionEffect_Heal          h -> heal h
+performInteractionEffect :: EntityId -> InteractionEffect -> Update Passive ()
+performInteractionEffect t = \case
+    InteractionEffect_TransformInto n -> transformInto n
+    InteractionEffect_InspectContent  -> inspectContent
+    InteractionEffect_DeleteSelf      -> selfDelete
+    InteractionEffect_Heal          h -> heal h
     where
     transformInto n = do
         rs <- use $ context.resources
@@ -208,7 +208,7 @@ oracle x = \case
     EntityQuery_ItemAnimation -> x^.passiveType.animation
     EntityQuery_BehindBody    -> x^.passiveType.behindBody
     EntityQuery_Stats         -> Just $ x^.passiveType.stats
-    EntityQuery_UseActions    -> Just $ Map.keys $ x^.passiveType.useActions
+    EntityQuery_Interactions  -> Just $ Map.keys $ x^.passiveType.interactions
     EntityQuery_Owner         -> x^.owner
     _                         -> Nothing
     where

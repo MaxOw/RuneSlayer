@@ -5,7 +5,7 @@ import Delude
 import qualified Data.Set as Set
 import qualified Types.Entity.Animation as Animation
 import Types.Entity.Common (EntityId)
-import Types.Entity.PassiveType (UseActionName)
+import Types.Entity.PassiveType (InteractionName)
 import Types.EntityAction (AttackMode(..))
 import Types.Debug (DebugFlag(..))
 import Types.Equipment (EquipmentSlot)
@@ -41,7 +41,7 @@ data SelectKind
    | SelectKind_Drop     (SelectValues EntityId)
    | SelectKind_Focus    (SelectValues EntityId)
    | SelectKind_MoveTo   (SelectValues ItemMoveTarget)
-   | SelectKind_Action   (SelectValues (EntityId, UseActionName))
+   | SelectKind_Action   (SelectValues (EntityId, InteractionName))
    deriving (Show, Generic)
 
 --------------------------------------------------------------------------------
@@ -165,6 +165,8 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "d" StartDefensiveMode
 
         , InputStr "a" SelectAction
+        -- , InputStr "au" SelectAction
+        -- , InputStr "at" TalkToNPC
         ]
 
     , InputGroup InventoryMode

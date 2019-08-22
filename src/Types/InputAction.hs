@@ -58,6 +58,7 @@ data InputAction
    | SelectItemToFocus
    | UseFocusedItem
    | SelectAction
+   | TalkToNPC
    | FastQuit
    | InputAction_NextPage
    | InputAction_Escape

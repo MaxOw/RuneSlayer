@@ -116,8 +116,8 @@ lookupAgentType n = do
 addDirectedAction :: DirectedAction -> Game ()
 addDirectedAction a = userState.gameState.actions %= (a:)
 
-actOnEntity :: EntityId -> EntityAction -> Game ()
-actOnEntity eid = addDirectedAction . directAtEntity eid
+actOnEntity :: HasEntityId e EntityId => e -> EntityAction -> Game ()
+actOnEntity (view entityId -> eid) = addDirectedAction . directAtEntity eid
 
 actOnFocusedEntity :: EntityAction -> Game ()
 actOnFocusedEntity act = withFocusId $ \fi -> actOnEntity fi act

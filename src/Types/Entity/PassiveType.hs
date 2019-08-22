@@ -28,14 +28,14 @@ data PassiveKind
 newtype PassiveTypeName = PassiveTypeName { unPassiveTypeName :: Text }
     deriving (Show, Eq, Hashable, Generic, ToJSON, FromJSON)
 
-newtype UseActionName = UseActionName { unUseActionName :: Text }
+newtype InteractionName = InteractionName { unInteractionName :: Text }
     deriving (Show, Eq, Ord, Generic, ToJSON, FromJSON, ToJSONKey, FromJSONKey)
 
-data UseActionEffect
-   = UseActionEffect_TransformInto PassiveTypeName
-   | UseActionEffect_InspectContent
-   | UseActionEffect_DeleteSelf
-   | UseActionEffect_Heal Health
+data InteractionEffect
+   = InteractionEffect_TransformInto PassiveTypeName
+   | InteractionEffect_InspectContent
+   | InteractionEffect_DeleteSelf
+   | InteractionEffect_Heal Health
    deriving (Generic, Show)
 
 {-
@@ -85,7 +85,7 @@ data PassiveType = PassiveType
    , field_behindBody    :: Maybe Bool
    , field_fittingSlots  :: Set EquipmentSlot
    , field_containerType :: Maybe ContainerType
-   , field_useActions    :: Map UseActionName [UseActionEffect]
+   , field_interactions  :: Map InteractionName [InteractionEffect]
    , field_zindex        :: Word32
    , field_renderOffset  :: Maybe V2D
    } deriving (Generic)
@@ -122,8 +122,10 @@ instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSO
 makeWrapped ''PassiveTypeName
 instance Default PassiveTypeName
 
-instance ToJSON UseActionEffect where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON UseActionEffect where parseJSON = genericParseJSON customOptionsJSON
+instance ToJSON InteractionEffect where
+    toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON InteractionEffect where
+    parseJSON = genericParseJSON customOptionsJSON
 
 instance Default PassiveType
 instance ToJSON PassiveType where toEncoding = genericToEncoding customOptionsJSON

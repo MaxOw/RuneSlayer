@@ -3,19 +3,19 @@ let animations = ./AnimationNames.dhall
 let types      = ./Types.dhall
 let enums      = ./Enums.dhall
 let appearance = ./Appearance.dhall
-let useEffect  = ./UseActionEffect.dhall
+let useEffect  = ./InteractionEffect.dhall
 let names      = ./PassiveNames.dhall
 let constants  = ./Constants.dhall
 
-let Entry           = types.Entry
-let PassiveTypeName = types.PassiveTypeName
-let Sprite          = types.Sprite
-let ContainerType   = types.ContainerType
-let PassiveKind     = enums.PassiveKind
-let WeaponKind      = enums.WeaponKind
-let EquipmentSlot   = enums.EquipmentSlot
-let UseActionEffect = types.UseActionEffect
-let UseActionEntry  = Entry Text (List UseActionEffect)
+let Entry             = types.Entry
+let PassiveTypeName   = types.PassiveTypeName
+let Sprite            = types.Sprite
+let ContainerType     = types.ContainerType
+let PassiveKind       = enums.PassiveKind
+let WeaponKind        = enums.WeaponKind
+let EquipmentSlot     = enums.EquipmentSlot
+let InteractionEffect = types.InteractionEffect
+let InteractionEntry  = Entry Text (List InteractionEffect)
 
 --------------------------------------------------------------------------------
 
@@ -28,13 +28,13 @@ let defaultItemType =
   , fittingSlots  = [] : List EquipmentSlot
   , containerType = None ContainerType
   , stats         = defaultStats
-  , useActions    = [] : List UseActionEntry
+  , interactions  = [] : List InteractionEntry
   , zindex        = 0
   }
 
 let action =
   λ(n : Text) →
-  λ(v : List UseActionEffect) →
+  λ(v : List InteractionEffect) →
     { mapKey = n, mapValue = v }
 
 let makeCorpse =
@@ -140,7 +140,7 @@ let healthPotion = defaultItemType //
   , volume      = 0.1
   , passiveKind = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , appearance  = appearance.simple sprites.healthPotion
-  , useActions  =
+  , interactions  =
       [ action "Use" [ useEffect.heal 5, useEffect.transformInto names.emptyFlask ]
       ]
   }
@@ -177,7 +177,7 @@ let woodenChest = defaultStaticType //
   { name       = names.woodenChest
   , volume     = 100
   , appearance = [ appearance.sprite sprites.woodenChest1 ]
-  , useActions =
+  , interactions =
     [ action "Open" [ useEffect.transformInto names.woodenChest_open ]
     ]
   , containerType = Some
@@ -191,7 +191,7 @@ let woodenChest_open = defaultStaticType //
   { name       = names.woodenChest_open
   , volume     = 100
   , appearance = [ appearance.sprite sprites.woodenChest1_open ]
-  , useActions =
+  , interactions =
     [ action "Close" [ useEffect.transformInto names.woodenChest ]
     , action "Inspect contents of" [ useEffect.inspectContent ]
     ]
@@ -206,7 +206,7 @@ let woodenDoor = defaultStaticType //
   { name       = names.woodenDoor
   , volume     = 80
   , appearance = [ appearance.sprite sprites.woodenDoor ]
-  , useActions =
+  , interactions =
     [ action "Open" [ useEffect.transformInto names.woodenDoor_open ]
     ]
   }
@@ -215,7 +215,7 @@ let woodenDoor_open = defaultStaticType //
   { name       = names.woodenDoor_open
   , volume     = 80
   , appearance = [ appearance.sprite sprites.woodenDoor_open ]
-  , useActions =
+  , interactions =
     [ action "Close" [ useEffect.transformInto names.woodenDoor ]
     ]
   }
@@ -230,7 +230,7 @@ let tree = defaultStaticType //
   { name = names.tree
   , volume = 15000
   , appearance = treeAppearance
-  , useActions = [ action "Cut down" [ useEffect.deleteSelf ] ]
+  , interactions = [ action "Cut down" [ useEffect.deleteSelf ] ]
   }
 
 --------------------------------------------------------------------------------

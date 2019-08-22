@@ -147,6 +147,7 @@ handleActivation = \case
     SelectItemToFocus    -> selectItemToFocus
     UseFocusedItem       -> useFocusedItem
     SelectAction         -> selectAction
+    TalkToNPC            -> talkToNPC
     FastQuit             -> Engine.closeWindow
     InputAction_NextPage -> nextPage
     InputAction_Escape   -> inputActionEscape
@@ -257,6 +258,11 @@ selectAction = do
     case over (traverse._1) (view entityId) mar of
         [] -> return () -- systemMessage "There's nothing nearby."
         ar -> startSelect SelectKind_Action ar
+
+talkToNPC :: Game ()
+talkToNPC = do
+    whenJustM (viaNonEmpty head <$> focusNPCsInRange) $ \eid -> do
+        actOnEntity eid $ EntityAction_Dialog DialogAction_Start
 
 --------------------------------------------------------------------------------
 

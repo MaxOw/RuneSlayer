@@ -40,8 +40,13 @@ stepScript = use (self.script) >>= \case
 updateBertram
     :: DialogAction -> ScriptStateBertram -> Update Agent ScriptStateBertram
 updateBertram a s = case a of
+    DialogAction_Start    -> startConversation
     DialogAction_NextPage -> progressConversation
     where
+    startConversation = do
+        startStoryDialog StoryDialogName_BertramWaiting
+        return s
+
     progressConversation = case s^.ff#storyStatus of
         StoryStatus_Wait -> return s
         StoryStatus_InitialRunes -> do
@@ -61,10 +66,13 @@ stepBertram s = do
         _ -> return s
     where
     startWelcomeSequence = do
-        sid <- useSelfId
-        whenJustM (getStoryDialog StoryDialogName_BertramWelcome) $
-            addWorldAction . WorldAction_StoryDialog sid
+        startStoryDialog StoryDialogName_BertramWelcome
         return $ s & ff#storyStatus .~ StoryStatus_Welcome
 
+startStoryDialog :: StoryDialogName -> Update Agent ()
+startStoryDialog n = do
+    sid <- useSelfId
+    whenJustM (getStoryDialog n) $ addWorldAction . WorldAction_StoryDialog sid
+    where
     getStoryDialog = uses (context.resources.dialogMap) . HashMap.lookup
 

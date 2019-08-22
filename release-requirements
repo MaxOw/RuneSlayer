@@ -82,11 +82,11 @@ Requirements for first release: v0.1
 * Add hint/help/tutorial windows.                                            [ ]
 * Add System Messages.                                                       [ ]
 
-* NPCs.                                                                      [ ]
+* NPCs.                                                                      [X]
   - Add NPC Agent Kind.                                                      (#)
   - Make NPCs defend themselves.                                             (#)
   - NPCs Story Dialogs.                                                      (#)
-  - Initiate communication with NPCs.                                        ( )
+  - Initiate communication with NPCs.                                        (#)
   - AddRune EntityAction from NPC Script.                                    (#)
 
 * Enemy units:                                                               [#]

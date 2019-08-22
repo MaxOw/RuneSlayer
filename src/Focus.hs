@@ -7,6 +7,7 @@ import Entity
 import Types
 import Types.Entity.Common
 import Types.Entity.Passive
+import Types.Entity.Agent (AgentKind (..), agentKind)
 import Equipment (EquipmentSlot(..), contentList)
 import qualified Equipment
 import EntityIndex
@@ -40,27 +41,32 @@ focusEntityId = use (userState.gameState.focusId)
 withFocusId :: (EntityId -> Game ()) -> Game ()
 withFocusId = whenJustM focusEntityId
 
+focusEntityKindInRange :: EntityKind -> Distance -> Game [EntityWithId]
+focusEntityKindInRange k d = focusLocation >>= \case
+    Nothing -> return []
+    Just lc -> lookupInRadius k lc d =<< use (userState.gameState.entities)
+
 -- Get items within pickup range of a focused entity
 focusItemsInRange :: Game [EntityWithId]
-focusItemsInRange = focusLocation >>= \case
-    Nothing -> return []
-    Just lc -> do
-        eix <- use $ userState.gameState.entities
-        es <- lookupInRadius EntityKind_Passive lc defaultPickupRange eix
-        return $ filter isItem es
+focusItemsInRange = filter isItem
+    <$> focusEntityKindInRange EntityKind_Passive defaultPickupRange
     where
     isItem x = Set.member PassiveKind_Item
         $ x^.entity.oraclePassiveType.traverse.passiveKind
 
-focusActionsInRange :: Game [(EntityWithId, UseActionName)]
-focusActionsInRange = focusLocation >>= \case
-    Nothing -> return []
-    Just lc -> do
-        eix <- use $ userState.gameState.entities
-        es <- lookupInRadius EntityKind_Passive lc defaultActionRange eix
-        return $ concatMap f es
+focusActionsInRange :: Game [(EntityWithId, InteractionName)]
+focusActionsInRange = concatMap f <$> allInRange
     where
-    f x = map (x,) $ x^.entity.oracleUseActions.traverse
+    allInRange = (++)
+        <$> focusEntityKindInRange EntityKind_Passive defaultActionRange
+        <*> focusEntityKindInRange EntityKind_Dynamic defaultActionRange
+    f x = map (x,) $ x^.entity.oracleInteractions.traverse
+
+focusNPCsInRange :: Game [EntityWithId]
+focusNPCsInRange = filter isNPC
+    <$> focusEntityKindInRange EntityKind_Dynamic defaultActionRange
+    where
+    isNPC x = x^?entity.oracleAgentType.traverse.agentKind == Just AgentKind_NPC
 
 focusItemsInInventory :: Game [EntityWithId]
 focusItemsInInventory = do

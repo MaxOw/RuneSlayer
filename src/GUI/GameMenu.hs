@@ -10,7 +10,7 @@ import qualified Engine.Layout.Alt as Alt
 
 import Types
 import Types.InputState
-import Types.Entity.PassiveType (UseActionName(..))
+import Types.Entity.PassiveType (InteractionName(..))
 import Types.Entity.Agent (PlayerStatus)
 import InputState (getMode, isPanelVisible, getInputString, showActionKeySeqs)
 import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
@@ -106,7 +106,7 @@ actionsMenu = do
                 Just . catMaybes <$> (mapM toDesc $ Map.assocs $ v^.hintMap)
             _ -> return Nothing
 
-    toDesc :: ((EntityId, UseActionName), [Char]) -> Game (Maybe Layout.ActionHint)
+    toDesc :: ((EntityId, InteractionName), [Char]) -> Game (Maybe Layout.ActionHint)
     toDesc ((eid, a), h) = lookupEntity eid >>= \case
         Nothing -> return Nothing
         Just  e -> return $ Just $ Layout.ActionHint
@@ -115,7 +115,7 @@ actionsMenu = do
             }
 
     toName Nothing  a = show a
-    toName (Just n) a = unUseActionName a <> " " <> n
+    toName (Just n) a = unInteractionName a <> " " <> n
 
 storyDialog :: Game (Maybe Alt.Layout)
 storyDialog = do

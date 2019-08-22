@@ -34,7 +34,7 @@ import Engine (userState, EngineState)
 import Types (Game, St)
 import Types.EntityAction
 import Types.Entity.Common (EntityId)
-import Types.Entity.PassiveType (UseActionName)
+import Types.Entity.PassiveType (InteractionName)
 import Types.InputState
 import Types.Equipment
 import InputState.Actions
@@ -195,9 +195,9 @@ selectMoveTarget m = whenJustM getFocusedItem $ \e -> case m of
 
     passToSlot e s = withFocusId $ \fi -> passItemToSlot e fi s
 
-selectAction :: (EntityId, UseActionName) -> Game ()
+selectAction :: (EntityId, InteractionName) -> Game ()
 selectAction (eid, eua)
-    = whenJustM (focusEntityId) $ actOnEntity eid . EntityAction_UseAction eua
+    = whenJustM (focusEntityId) $ actOnEntity eid . EntityAction_Interact eua
 
 unfocusItem :: Game ()
 unfocusItem = zoomInputState $ inventoryState.focusedItem .= Nothing

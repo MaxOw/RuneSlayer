@@ -4,7 +4,7 @@ module Types.EntityAction where
 import Delude
 import qualified Prelude
 import Types.Entity.Common
-import Types.Entity.PassiveType (LoadoutEntry, PassiveTypeName, UseActionName)
+import Types.Entity.PassiveType (LoadoutEntry, PassiveTypeName, InteractionName)
 import Types.Entity.Animation (AnimationKind, Direction, Animation)
 import Types.Equipment (EquipmentSlot)
 import Types.Skills.Runes (RuneSet)
@@ -38,12 +38,6 @@ data PlayerAction
    | PlayerAction_SetAttackMode AttackMode
    deriving (Generic, Show)
 
-data UseAction
-   = UseAction_Open
-   | UseAction_InspectContents
-   | UseAction_Close
-   deriving (Eq, Ord, Show, Generic)
-
 data EntityValue
    = EntityValue_Location  Location
    | EntityValue_Direction Direction
@@ -56,7 +50,8 @@ instance Show EntityValue where
         EntityValue_Animation    _ -> "Set: <Animation>"
 
 data DialogAction
-   = DialogAction_NextPage -- ^ Move dialog progression to next page.
+   = DialogAction_Start    -- ^ Start a conversation with given NPC.
+   | DialogAction_NextPage -- ^ Move dialog progression to next page.
    deriving (Show, Generic)
 
 data EntityAction
@@ -92,8 +87,8 @@ data EntityAction
    | EntityAction_SelfFiredAsProjectile Location V2D EntityId AttackPower
    -- tell entity to heal self
    | EntityAction_SelfHeal Health
-   -- tell entity to perform given [UseActionName] at [EntityId]
-   | EntityAction_UseAction UseActionName EntityId
+   -- tell entity to perform given [InteractionName] with [EntityId]
+   | EntityAction_Interact InteractionName EntityId
 
    -- tell entity to create and equip/contain given loadout.
    | EntityAction_AddLoadout [LoadoutEntry (Spawn PassiveTypeName EntityAction)]

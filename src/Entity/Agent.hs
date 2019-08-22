@@ -44,18 +44,20 @@ actOn x a = x & case a of
     EntityAction_RunAnimation      k -> setAnimationKind k
     EntityAction_SetMoveVector     v -> setMoveVector v
     EntityAction_SelfHeal          h -> selfHeal h
-    EntityAction_PlayerAction      _ -> handleOnUpdate a
     EntityAction_SetValue          v -> handleSetValue v
     -- Handle on update:
+    EntityAction_PlayerAction     {} -> handleOnUpdate a
+
     EntityAction_AddItem          {} -> handleOnUpdate a
     EntityAction_RemoveItem       {} -> handleOnUpdate a
 
-    EntityAction_ExecuteAttack       -> handleOnUpdate a
-    EntityAction_SelfAttacked      _ -> handleOnUpdate a
-    EntityAction_UseItem           _ -> handleOnUpdate a
+    EntityAction_ExecuteAttack    {} -> handleOnUpdate a
+    EntityAction_SelfAttacked     {} -> handleOnUpdate a
+    EntityAction_UseItem          {} -> handleOnUpdate a
 
-    EntityAction_AddLoadout        _ -> handleOnUpdate a
-    EntityAction_Dialog            _ -> handleOnUpdate a
+    EntityAction_AddLoadout       {} -> handleOnUpdate a
+    EntityAction_Dialog           {} -> handleOnUpdate a
+    EntityAction_Interact         {} -> handleOnUpdate a
     _ -> id
     where
     selfHeal h _ = x & health %~
@@ -400,9 +402,16 @@ processAction = \case
     EntityAction_SelfAttacked  d -> procAttacked d
     EntityAction_RemoveItem    i -> removeItem i
     EntityAction_AddLoadout    l -> mapM_ addLoadoutEntry l
-    EntityAction_Dialog        d -> updateScript d
     EntityAction_PlayerAction  a -> processPlayerAction a
+    EntityAction_Dialog        d -> updateScript d
+    EntityAction_Interact    n e -> interact n e
     _ -> return ()
+
+    where
+    -- This is a bit ad-hoc...
+    interact n _e = case n of
+        InteractionName "Talk to" -> updateScript DialogAction_Start
+        _ -> return ()
 
 processPlayerAction :: PlayerAction -> Update Agent ()
 processPlayerAction = \case
@@ -513,11 +522,17 @@ oracle x = \case
     EntityQuery_Name           -> Just $ unAgentTypeName $ x^.agentType.name
     EntityQuery_Location       -> Just $ x^.location
     EntityQuery_Equipment      -> Just $ x^.equipment
+    EntityQuery_AgentType      -> Just $ x^.agentType
     EntityQuery_CollisionShape -> locate x <$> x^.collisionShape
     EntityQuery_Reactivity     -> Just $ x^.agentType.reactivity
     EntityQuery_Status         -> Just $ x^.status
     EntityQuery_PlayerStatus   -> Just $ upcast x
+    EntityQuery_Interactions   -> npcInteractions
     _                          -> Nothing
+    where
+    npcInteractions = if x^.agentType.agentKind == AgentKind_NPC
+        then Just [ InteractionName "Talk to" ]
+        else Nothing
 
 --------------------------------------------------------------------------------
 

@@ -16,11 +16,11 @@ import qualified Color
 
 layout_statusPanel :: Status -> Layout
 layout_statusPanel s
-    = container txt
+    = composition [ healthAndRunes, statusText ]
     & padding.each   .~ 10 @@ px
     & padding.right  .~ 14 @@ px
     where
-    txt = textline fs msg & align .~ BottomRight
+    statusText = textline fs msg & align .~ BottomRight
     fs = makeFs 14 warningColor
 
     msg = hr <> am
@@ -29,19 +29,27 @@ layout_statusPanel s
         AttackMode_Manual -> "M"
         AttackMode_Auto   -> "A"
 
+    healthAndRunes = hcat [ healthL, runesL ]
+        & width .~ 300 @@ px
+
+    healthL = layout_healthStatus $ s^.ff#health
+    runesL  = layout_runicStatus  $ s^.ff#runes
+
 --------------------------------------------------------------------------------
 
-layout_healthStatus :: HealthStatus -> Layout
-layout_healthStatus s
-    = container txt
-    & padding.each .~ 10 @@ px
+layout_pointsStatus :: String -> Color -> StatusPoints -> Layout
+layout_pointsStatus f c s = txt
     where
     txt = textline fs msg & align .~ BottomCenter
-    fs = makeFs 14 warningColor
+    fs = makeFs 14 c
 
-    msg = toText @String $ printf "%d/%d HP"
-        (s^.health._Wrapped)
-        (s^.maxHealth._Wrapped)
+    msg = toText @String $ printf f (s^.ff#points) (s^.ff#maxPoints)
+
+layout_healthStatus :: StatusPoints -> Layout
+layout_healthStatus = layout_pointsStatus "%d/%d HP" warningColor
+
+layout_runicStatus :: StatusPoints -> Layout
+layout_runicStatus = layout_pointsStatus "%d/%d RP" Color.blue
 
 --------------------------------------------------------------------------------
 
@@ -104,22 +112,15 @@ layout_gameOverScreen gs = vrel
 
 --------------------------------------------------------------------------------
 
-layout_offensiveSlotsPanel :: SlotsPanel -> Layout
-layout_offensiveSlotsPanel = layout_slotsPanel BottomLeft  Color.green
-
-layout_defensiveSlotsPanel :: SlotsPanel -> Layout
-layout_defensiveSlotsPanel = layout_slotsPanel BottomRight Color.darkgray
-
-layout_slotsPanel :: BoxAlign -> Color -> SlotsPanel -> Layout
-layout_slotsPanel agn fcol desc = vseprel (8 @@ px)
+layout_runicMode :: RunicMode -> Layout
+layout_runicMode desc = vseprel (8 @@ px)
     [ (1 @@ fill, question)
     , (30 @@ px, answer)
-    , (30 @@ px, runeload)
     ]
     & padding.each .~ basePadding
     & size.width   .~ (350 @@ px)
     & size.height  .~ (200 @@ px)
-    & align        .~ agn
+    & align        .~ BottomLeft
     where
     showIf x = if desc^.ff#showQuery then x else def
     question = showIf $ composition
@@ -136,20 +137,6 @@ layout_slotsPanel agn fcol desc = vseprel (8 @@ px)
             & padding.each .~ 8 @@ px
             & padding.left .~ 20 @@ px
         ]
-
-    runeload = hseprel (8 @@ px) runes
-        & align .~ TopLeft
-
-    runes = map ((30 @@ px,) . rune) (desc^.slots)
-
-    rune r = border1 Color.gray $ fillColor c
-        & size.height .~ pct @@ fill
-        & align       .~ BottomCenter
-        where
-        pct = r^.ff#percent
-        c | pct <= 0  = Color.gray
-          | pct <  1  = Color.red
-          | otherwise = fcol
 
     fs = makeFs 10 Color.black
     bg = Color.withOpacity Color.lightgray 0.6

@@ -40,7 +40,7 @@ defaultSt eix scro = do
     gs <- defaultGameState eix
     return $ St
         { field_resources  = def
-        , field_inputState = def
+        , field_inputState = defaultInputState
         , field_gameState  = gs
         , field_menuState  = def
         , field_scroller   = scro

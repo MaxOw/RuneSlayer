@@ -11,7 +11,7 @@ import Types.Entity.Passive
 import Types.Entity.Reactivity
 import Types.Entity.Script
 import Types.Equipment
-import Types.Skills.Runes (RunicLevel, RunicSlots, RuneName)
+import Types.Skills.Runes (RunicLevel, RunicPoints, RuneName)
 
 --------------------------------------------------------------------------------
 
@@ -87,8 +87,8 @@ data Agent = Agent
    , field_fullStats          :: Stats
 
    , field_runicLevel         :: RunicLevel
-   , field_offensiveSlots     :: RunicSlots
-   , field_defensiveSlots     :: RunicSlots
+   , field_runicPoints        :: RunicPoints
+   , field_maxRunicPoints     :: RunicPoints
    , field_selectedRune       :: Maybe RuneName
 
    , field_agentType          :: AgentType
@@ -104,8 +104,8 @@ instance HasAnimateWhenStopped Agent Bool where
 -- Agent fields needed when displaying UI
 data PlayerStatus = PlayerStatus
    { field_runicLevel         :: RunicLevel
-   , field_offensiveSlots     :: RunicSlots
-   , field_defensiveSlots     :: RunicSlots
+   , field_runicPoints        :: RunicPoints
+   , field_maxRunicPoints     :: RunicPoints
    , field_health             :: Health
    , field_selectedRune       :: Maybe RuneName
    , field_status             :: Set EntityStatus
@@ -145,6 +145,9 @@ fullStats = ff#fullStats
 
 script :: Lens' Agent Script
 script = ff#script
+
+runicPoints :: Lens' Agent RunicPoints
+runicPoints = ff#runicPoints
 
 agentKind :: Lens' AgentType AgentKind
 agentKind = ff#agentKind

@@ -278,11 +278,16 @@ executeAttack = whenM canExecuteAttack $ do
 canExecuteAttack :: Update Agent Bool
 canExecuteAttack = (&&)
     <$> checkTimeUp Timer_Attack
-    <*> anyOffensiveRuneLoaded
+    <*> canAgentAttack
     where
-    anyOffensiveRuneLoaded = useAgentKind >>= \x -> if x == AgentKind_Player
-        then uses (self.ff#offensiveSlots) (any (>0) . listRunicSlots)
+    canAgentAttack = useAgentKind >>= \x -> if x == AgentKind_Player
+        then enougthRunicPoints
         else return True
+
+    enougthRunicPoints = do
+        rp <- use $ self.runicPoints._Wrapped
+        ap <- Unwrapped <$> getAttackPower
+        return (ap <= rp)
 
 getWeaponKind :: Update Agent (Maybe WeaponKind)
 getWeaponKind = do
@@ -296,12 +301,12 @@ executeAttackAt targetEntity vectorToTarget = do
     whenWeaponCanAttack wkind targetEntity $ do
         orientTowards targetEntity
         startAttackAnimation wkind vectorToTarget
-        executeAttackByKind wkind
-        startTimer Timer_Attack =<< getAttackCooldown
-        self.ff#offensiveSlots %= dischargeRunicSlot
-    where
-    executeAttackByKind wkind = do
         power <- getAttackPower
+        executeAttackByKind power wkind
+        startTimer Timer_Attack =<< getAttackCooldown
+        self.runicPoints %= max 0 . subtract (Wrapped $ Unwrapped power)
+    where
+    executeAttackByKind power wkind = do
         delay <- getAttackDelay
         let tid = targetEntity^.entityId
         addDelayedAction delay $ case wkind of
@@ -409,16 +414,20 @@ processAction = \case
 
     where
     -- This is a bit ad-hoc...
-    interact n _e = case n of
-        InteractionName "Talk to" -> updateScript DialogAction_Start
+    interact n e = case n of
+        InteractionName "Talk to" -> talkTo e
         _ -> return ()
+
+    talkTo e = do
+        whenJustM (queryById e) orientTowards
+        updateScript DialogAction_Start
 
 processPlayerAction :: PlayerAction -> Update Agent ()
 processPlayerAction = \case
-    PlayerAction_AddRunes        r -> addRunes r
-    PlayerAction_SelectRune        -> selectCurrentRune
-    PlayerAction_UpdateRune   rt r -> updateCurrentRune rt r
-    PlayerAction_SetAttackMode  am -> setAttackMode am
+    PlayerAction_AddRunes      r -> addRunes r
+    PlayerAction_SelectRune      -> selectCurrentRune
+    PlayerAction_UpdateRune    s -> updateCurrentRune s
+    PlayerAction_SetAttackMode m -> setAttackMode m
     where
     addRunes r = do
         -- systemMessage "New runes learned!"
@@ -431,18 +440,19 @@ processPlayerAction = \case
             currentTime <- use $ context.ff#frameTimestamp
             self.ff#selectedRune .= selectRune currentTime rlvl
 
-    updateCurrentRune rt r = do
-        updateRuneUsage r
-        loadSlot rt r
+    updateCurrentRune s = do
+        updateRuneUsage s
+        when s addRunicPoints
         self.ff#selectedRune .= Nothing
 
-    loadSlot RuneType_Offensive True = self.ff#offensiveSlots %= fillRunicSlot
-    loadSlot RuneType_Defensive True = self.ff#defensiveSlots %= fillRunicSlot
-    loadSlot _ _ = return ()
+    addRunicPoints = do
+        np <- RunicPoints <$> use (self.ff#runicLevel.ff#level._Wrapped)
+        mx <- use $ self.ff#maxRunicPoints
+        self.runicPoints %= min mx . (np+)
 
-    updateRuneUsage r = use (self.ff#selectedRune) >>= \case
+    updateRuneUsage s = use (self.ff#selectedRune) >>= \case
         Nothing -> return ()
-        Just sn -> self.ff#runicLevel %= updateUsage sn (RuneUsage r)
+        Just sn -> self.ff#runicLevel %= updateUsage sn (RuneUsage s)
 
     setAttackMode = assign (self.ff#attackMode)
 
@@ -453,17 +463,24 @@ removeItem i = do
 
 procAttacked :: AttackPower -> Update Agent ()
 procAttacked attackPower = do
-    -- ad <- uses (self.ff#defensiveSlots) (any (>0) . listRunicSlots)
-    -- self.ff#defensiveSlots %= dischargeRunicSlot
     applyAttackDamage
     whenM shouldDie doDie
     where
     applyAttackDamage = do
-        fdef <- getDefence
-        let calcDef (AttackPower a) (Defence d) = Health $ a - d
-        let ap = max 0 $ calcDef attackPower fdef
+        rd <- calcRunicDefence
+        let ap = Health . max 0 $ (Unwrapped attackPower) - rd
         self.health %= max 0 . subtract ap
         addEffect $ HitEffect ap
+
+    calcRunicDefence = useAgentKind >>= \case
+        AgentKind_Player -> do
+            defence <- Unwrapped <$> getDefence
+            let attack = Unwrapped attackPower
+            let mda = min defence attack
+            rp <- uses (self.runicPoints) Unwrapped
+            self.runicPoints._Wrapped %= max 0 . subtract mda
+            return $ min rp mda
+        _ -> Unwrapped <$> getDefence
 
     doDie = do
         isPlayer <- (AgentKind_Player ==) <$> useAgentKind
@@ -554,5 +571,10 @@ makeAgent _rs p = def
     & baseStats         .~ p^.stats
     & agentType         .~ p
 
-    & ff#offensiveSlots .~ initRunicSlots 4
-    & ff#defensiveSlots .~ initRunicSlots 3
+    & initPlayer
+    where
+    initPlayer
+        | isPlayer  = set (ff#maxRunicPoints) 20
+        | otherwise = id
+    isPlayer = p^.agentKind == AgentKind_Player
+

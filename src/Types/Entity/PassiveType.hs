@@ -119,7 +119,8 @@ instance FromJSON PassiveKind where parseJSON = genericParseJSON customOptionsJS
 instance ToJSON WeaponKind where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSON
 
-makeWrapped ''PassiveTypeName
+instance Wrapped PassiveTypeName
+instance Rewrapped PassiveTypeName PassiveTypeName
 instance Default PassiveTypeName
 
 instance ToJSON InteractionEffect where

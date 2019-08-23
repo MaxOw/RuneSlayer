@@ -14,6 +14,7 @@ import Types.Entity.Animation (AnimationKind)
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.Equipment
+import Types.Entity.Passive (InteractionName(..))
 import Equipment (contentList)
 import GameState.Query (canFitIntoContainer)
 import InputState
@@ -90,12 +91,11 @@ handleKeyReleased = mapM_ handleDeactivation <=< popDeactivators
 
 customModeHandler :: Keypress -> InputMode -> Game ()
 customModeHandler kp = \case
-    OffensiveMode -> customModeHandler_runicMode RuneType_Offensive kp
-    DefensiveMode -> customModeHandler_runicMode RuneType_Defensive kp
+    RunicMode -> customModeHandler_runicMode kp
     _ -> return ()
 
-customModeHandler_runicMode :: RuneType -> Keypress -> Game ()
-customModeHandler_runicMode rt kp = case keypressKey kp of
+customModeHandler_runicMode :: Keypress -> Game ()
+customModeHandler_runicMode kp = case keypressKey kp of
     k | Just ch <- keyToChar k -> appendInputString ch >> autoAccept
     Key'Backspace -> backspaceInputString
     Key'Enter     -> acceptAnswer
@@ -119,11 +119,11 @@ customModeHandler_runicMode rt kp = case keypressKey kp of
                 return $ fromMaybe False $ isCorrectAnswer ans <$> mr
 
     correctAnswer = do
-        actOnPlayer $ PlayerAction_UpdateRune rt True
+        actOnPlayer $ PlayerAction_UpdateRune True
         inputActionEscape
 
     wrongAnswer   = do
-        actOnPlayer $ PlayerAction_UpdateRune rt False
+        actOnPlayer $ PlayerAction_UpdateRune False
         inputActionEscape
 
 --------------------------------------------------------------------------------
@@ -139,8 +139,7 @@ handleActivation = \case
     DropAllItems         -> dropAllItems
     ExecuteAttack        -> executeAttack
     SetAttackMode     m  -> setAttackMode m
-    StartOffensiveMode   -> startOffensiveMode
-    StartDefensiveMode   -> startDefensiveMode
+    StartRunicMode       -> startRunicMode
     SelectItemToPickUp   -> selectItemToPickUp
     SelectItemMoveTarget -> selectItemMoveTarget
     SelectItemToDrop     -> selectItemToDrop
@@ -189,15 +188,10 @@ defaultExit = \case
 
 --------------------------------------------------------------------------------
 
-startOffensiveMode :: Game ()
-startOffensiveMode = do
+startRunicMode :: Game ()
+startRunicMode = do
     actOnPlayer PlayerAction_SelectRune
-    setMode OffensiveMode
-
-startDefensiveMode :: Game ()
-startDefensiveMode = do
-    actOnPlayer PlayerAction_SelectRune
-    setMode DefensiveMode
+    setMode RunicMode
 
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
@@ -260,9 +254,9 @@ selectAction = do
         ar -> startSelect SelectKind_Action ar
 
 talkToNPC :: Game ()
-talkToNPC = do
+talkToNPC = withFocusId $ \fid -> do
     whenJustM (viaNonEmpty head <$> focusNPCsInRange) $ \eid -> do
-        actOnEntity eid $ EntityAction_Dialog DialogAction_Start
+        actOnEntity eid $ EntityAction_Interact (InteractionName "Talk to") fid
 
 --------------------------------------------------------------------------------
 

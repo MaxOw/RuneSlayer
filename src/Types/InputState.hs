@@ -10,7 +10,6 @@ import Types.EntityAction (AttackMode(..))
 import Types.Debug (DebugFlag(..))
 import Types.Equipment (EquipmentSlot)
 import Engine.Events.Types
--- import Engine (defaultModifierKeys)
 
 import Types.InputAction as Types.InputState
 import Types.InputKeymap as Types.InputState
@@ -62,8 +61,6 @@ data InventoryState = InventoryState
    , field_moveStart   :: Maybe EntityId
    } deriving (Generic)
 
--- data RunicState = RunicState
-
 instance Default InventoryState
 
 data StoryDialogState = StoryDialogState
@@ -82,38 +79,34 @@ data InputState = InputState
    , field_inputKeymap    :: InputKeymap
    , field_deactivators   :: Map Keypress [InputAction]
    , field_selectState    :: Maybe SelectState
-   -- , field_offensiveState :: Maybe RunicState
    , field_visiblePanels  :: Set PanelName
    , field_inventoryState :: InventoryState
    , field_storyDialog    :: Maybe StoryDialogState
    } deriving (Generic)
 
-instance Default InputState where
-    def = InputState
-        { field_mode           = def
-        , field_hist           = def
-        , field_active         = def
-        , field_inputString    = def
-        , field_commonKeymap   = defaultCommonKeymap
-        , field_inputKeymap    = defaultInputKeymap
-        , field_deactivators   = def
-        , field_selectState    = def
-        -- , field_offensiveState = def
-        , field_visiblePanels  = defaultVisiblePanels
-        , field_inventoryState = def
-        , field_storyDialog    = def
-        }
+type InputStateM = StateT InputState IO
+
+--------------------------------------------------------------------------------
+
+defaultInputState :: InputState
+defaultInputState = InputState
+    { field_mode           = def
+    , field_hist           = def
+    , field_active         = def
+    , field_inputString    = def
+    , field_commonKeymap   = defaultCommonKeymap
+    , field_inputKeymap    = defaultInputKeymap
+    , field_deactivators   = def
+    , field_selectState    = def
+    , field_visiblePanels  = defaultVisiblePanels
+    , field_inventoryState = def
+    , field_storyDialog    = def
+    }
 
 defaultVisiblePanels :: Set PanelName
 defaultVisiblePanels = Set.fromList
     [ StatusPanel
-    , OffensiveSlotsPanel
-    , DefensiveSlotsPanel
     ]
-
-type InputStateM = StateT InputState IO
-
---------------------------------------------------------------------------------
 
 defaultSelectors :: [Char]
 defaultSelectors = "jfkdlsahgurieowpq"
@@ -161,12 +154,11 @@ defaultInputKeymap = buildInputKeymap
         , InputStr "mm" (SetAttackMode AttackMode_Manual)
         , InputStr "ma" (SetAttackMode AttackMode_Auto)
 
-        , InputStr "f" StartOffensiveMode
-        , InputStr "d" StartDefensiveMode
+        , InputStr "r" StartRunicMode
 
-        , InputStr "a" SelectAction
-        -- , InputStr "au" SelectAction
-        -- , InputStr "at" TalkToNPC
+        , InputStr "f" SelectAction
+        -- , InputStr "ff" SelectAction
+        -- , InputStr "ft" TalkToNPC
         ]
 
     , InputGroup InventoryMode

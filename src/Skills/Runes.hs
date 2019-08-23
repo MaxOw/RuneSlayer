@@ -1,16 +1,11 @@
 module Skills.Runes
-    ( RuneSet, RunicLevel, RunicSlots, RuneUsage(..)
+    ( RuneSet, RunicLevel, RunicPoints(..), RuneUsage(..)
 
     , updateUsage
     , selectRune
     , getRuneByName
     , addKnownRunes
     , isCorrectAnswer
-
-    , initRunicSlots
-    , fillRunicSlot
-    , dischargeRunicSlot
-    , listRunicSlots
 
     , buildRuneSet
     -- , getRunesByKind
@@ -25,7 +20,6 @@ module Skills.Runes
 import Delude hiding (Indexable)
 import Data.Time.Clock (UTCTime)
 import Data.Generics.Product.Subtype (smash)
-import qualified Data.IntMap as IntMap
 
 import Types.Skills.Runes
 
@@ -105,36 +99,6 @@ addKnownRunes rs = over (ff#mastery) ins
 
 isCorrectAnswer :: HasF "answers" r [Text] => Text -> r -> Bool
 isCorrectAnswer ans = any (==ans) . view (ff#answers)
-
---------------------------------------------------------------------------------
-
-initRunicSlots :: Int -> RunicSlots
-initRunicSlots n = def
-    & ff#slotsCount .~ n
-    & slots         .~ IntMap.fromList (map (,0) [0..n-1])
-
-fillRunicSlot :: RunicSlots -> RunicSlots
-fillRunicSlot x = case mk of
-    Nothing -> x
-    Just sk -> x & slots %~ IntMap.insert sk 1
-    where
-    mk = viaNonEmpty head $ map fst $ sortOn snd
-       $ IntMap.toList $ x^.slots
-
-listRunicSlots :: RunicSlots -> [Float]
-listRunicSlots r
-    = map (fromMaybe 0 . flip IntMap.lookup m) $ take n [0..]
-    where
-    m = r^.ff#slots
-    n = r^.ff#slotsCount
-
-dischargeRunicSlot :: RunicSlots -> RunicSlots
-dischargeRunicSlot x = case mk of
-    Nothing -> x
-    Just sk -> x & slots %~ IntMap.insert sk 0
-    where
-    mk = viaNonEmpty head $ map fst $ filter ((>0) . snd) $ sortOn snd
-       $ IntMap.toList $ x^.slots
 
 --------------------------------------------------------------------------------
 

@@ -68,10 +68,8 @@ Requirements for first release: v0.1
 * Initial island.                                                            [ ]
 
 * Learning mechanics                                                         [ ]
-  - Offensive runes.                                                         (#)
-  - Defensive runes.                                                         (#)
   - Runic levels.                                                            (#)
-  - Merge offensive/defensive slots into one (Runic Points: RP ala MP).      ( )
+  - Runic points.                                                            (#)
   - Display runes status.                                                    ( )
 
 * Loadouts                                                                   [X]

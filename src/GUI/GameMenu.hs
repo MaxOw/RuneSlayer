@@ -13,7 +13,7 @@ import Types.InputState
 import Types.Entity.PassiveType (InteractionName(..))
 import Types.Entity.Agent (PlayerStatus)
 import InputState (getMode, isPanelVisible, getInputString, showActionKeySeqs)
-import Skills.Runes (RunicSlots, listRunicSlots, getRuneByName)
+import Skills.Runes (getRuneByName)
 import Focus (focusEntity)
 import GameState.Query
 import Entity
@@ -34,6 +34,7 @@ gameMenuLayout = Alt.composition . catMaybes <$> sequence
     where
     overlayMenuLayout = getMode >>= \case
         StatusMode m -> statusMenuLayout m
+        RunicMode    -> runicModeLayout
      -- SpaceMode    -> spaceMenuLayout
         _            -> return Nothing -- layoutEmpty
 
@@ -43,16 +44,13 @@ statusPanesLayout :: Game Alt.Layout
 statusPanesLayout = Alt.composition . catMaybes <$> sequence
  -- [ rIf GroundPreviewPanel    groundPreviewPanelLayout
     [ pure Nothing
-    , rIf StatusPanel           statusPanelLayout
-    , rIf OffensiveSlotsPanel   offensiveSlotsPanelLayout
-    , rIf DefensiveSlotsPanel   defensiveSlotsPanelLayout
-    , healthStatus
+    , rIf StatusPanel statusPanelLayout
     , actionsMenu
     ]
     where
     rIf panel renderFunc =
         isPanelVisible panel >>= \case
-            True  -> Just <$> renderFunc
+            True  -> renderFunc
             False -> pure Nothing
 
 gameOverScreenLayout :: Game (Maybe Alt.Layout)
@@ -60,40 +58,28 @@ gameOverScreenLayout = getGameOverScreen >>= \case
     Nothing -> return Nothing
     Just gs -> return $ Just $ layout_gameOverScreen gs
 
-statusPanelLayout :: Game Alt.Layout
-statusPanelLayout = do
+statusPanelLayout :: Game (Maybe Alt.Layout)
+statusPanelLayout = withPlayerStatus $ \ps ->
+    let hir = Set.member EntityStatus_HostilesInRange (ps^.status)
+    in layout_statusPanel $ def
+        & ff#hostilesInRange .~ hir
+        & ff#attackMode      .~ ps^.ff#attackMode
+        & ff#health          .~ makeHealth ps
+        & ff#runes           .~ makeRunes  ps
+    where
+    makeHealth s = def
+        & ff#points    .~ s^.health._Wrapped
+        & ff#maxPoints .~ s^.ff#fullStats.maxHealth._Wrapped
+    makeRunes s = def
+        & ff#points    .~ s^.ff#runicPoints._Wrapped
+        & ff#maxPoints .~ s^.ff#maxRunicPoints._Wrapped
+
+withPlayerStatus :: (PlayerStatus -> a) -> Game (Maybe a)
+withPlayerStatus f = do
     mfo <- focusEntity
     case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
-        Nothing -> return def
-        Just ps -> do
-            let hir = Set.member EntityStatus_HostilesInRange (ps^.status)
-            return $ layout_statusPanel $ def
-                & ff#hostilesInRange .~ hir
-                & ff#attackMode      .~ ps^.ff#attackMode
-
-offensiveSlotsPanelLayout :: Game Alt.Layout
-offensiveSlotsPanelLayout = slotsPanelLayout
-    (OffensiveMode ==)
-    (view $ ff#offensiveSlots)
-    layout_offensiveSlotsPanel
-
-defensiveSlotsPanelLayout :: Game Alt.Layout
-defensiveSlotsPanelLayout = slotsPanelLayout
-    (DefensiveMode ==)
-    (view $ ff#defensiveSlots)
-    layout_defensiveSlotsPanel
-
-healthStatus :: Game (Maybe Alt.Layout)
-healthStatus = withStatus $ \s -> do
-    return $ Just $ layout_healthStatus $ def
-        & health    .~ s^.health
-        & maxHealth .~ s^.ff#fullStats.maxHealth
-    where
-    withStatus f = do
-        mfo <- focusEntity
-        case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
-            Nothing -> return Nothing
-            Just ps -> f ps
+        Nothing -> return Nothing
+        Just ps -> return $ Just $ f ps
 
 actionsMenu :: Game (Maybe Alt.Layout)
 actionsMenu = do
@@ -128,26 +114,17 @@ storyDialog = do
             & content .~ fromMaybe "" (Zipper.focus $ sd^.ff#dialogPages)
             & ff#nextPageKey .~ ksq
 
-slotsPanelLayout
-    :: (InputMode -> Bool)
-    -> (PlayerStatus -> RunicSlots)
-    -> (Layout.SlotsPanel -> Alt.Layout)
-    -> Game Alt.Layout
-slotsPanelLayout cndMode viewSlots layoutF = do
+runicModeLayout :: Game (Maybe Alt.Layout)
+runicModeLayout = do
     ans <- getInputString
-    iom <- fmap cndMode getMode
-    mfo <- focusEntity
-    case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
-        Nothing -> return def
-        Just ps -> return $ layoutF $ makeDesc iom ps ans
+    iom <- (RunicMode ==) <$> getMode
+    withPlayerStatus $ \ps -> layout_runicMode $ makeDesc iom ps ans
     where
     makeDesc iom ps ans = def
-        & ff#slots      .~ ss
         & ff#showQuery  .~ (isJust qt && iom)
         & ff#queryText  .~ fromMaybe "" (view (ff#query) <$> qt)
         & ff#answerText .~ ans
         where
-        ss = map Layout.Slot $ listRunicSlots $ viewSlots ps
         qt = flip getRuneByName (ps^.ff#runicLevel) =<< ps^.ff#selectedRune
 
 --------------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 {-# Language DeriveDataTypeable #-}
+{-# Language TemplateHaskell #-}
 module Types.Skills.Runes where
 
 import Delude hiding (Indexable)
@@ -9,16 +10,18 @@ import Data.IxSet.Typed
 
 --------------------------------------------------------------------------------
 
-data RunicSlots = RunicSlots
-   { field_slotsCount :: Int
-   , field_slots      :: IntMap Float
-   } deriving (Generic)
-instance Default RunicSlots
+newtype RunicPoints = RunicPoints Int
+    deriving (Eq, Ord, Data, Show, FromJSON, Num, Default, Generic)
+instance Wrapped RunicPoints
+instance Rewrapped RunicPoints RunicPoints
 
 --------------------------------------------------------------------------------
 
 newtype RunePowerLevel = RunePowerLevel Int
-    deriving (Eq, Ord, Data, Show, FromJSON, Num, Default)
+    deriving (Eq, Ord, Data, Show, FromJSON, Num, Default, Generic)
+instance Wrapped RunePowerLevel
+instance Rewrapped RunePowerLevel RunePowerLevel
+
 newtype RuneName = RuneName Text
     deriving (Eq, Ord, Data, Show, FromJSON, Hashable, Default)
 newtype RuneKind = RuneKind Text
@@ -100,7 +103,7 @@ instance Default RunicLevel where
     def = RunicLevel
         { field_mastery  = mempty
         , field_lastUsed = def
-        , field_level    = 0
+        , field_level    = 2
         , field_count    = 0
         }
 

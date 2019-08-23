@@ -15,8 +15,7 @@ data StatusMenu
 data InputMode
    = NormalMode
    | StatusMode StatusMenu
-   | OffensiveMode
-   | DefensiveMode
+   | RunicMode
    | SpaceMode
    deriving (Show, Eq, Ord, Generic)
 instance Default InputMode where def = NormalMode
@@ -34,8 +33,6 @@ data MoveDirection
 data PanelName
    = GroundPreviewPanel
    | StatusPanel
-   | OffensiveSlotsPanel
-   | DefensiveSlotsPanel
    deriving (Eq, Ord, Show)
 
 --------------------------------------------------------------------------------
@@ -50,8 +47,7 @@ data InputAction
    | DropAllItems
    | ExecuteAttack
    | SetAttackMode AttackMode
-   | StartOffensiveMode
-   | StartDefensiveMode
+   | StartRunicMode
    | SelectItemToPickUp
    | SelectItemMoveTarget
    | SelectItemToDrop

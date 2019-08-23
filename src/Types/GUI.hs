@@ -3,7 +3,6 @@ module Types.GUI (module Types.GUI) where
 import Delude
 
 import Types.GUI.Common as Types.GUI
-import Types.Entity.Common (Health)
 import Types.EntityAction (AttackMode)
 
 --------------------------------------------------------------------------------
@@ -11,16 +10,18 @@ import Types.EntityAction (AttackMode)
 data Status = Status
    { field_hostilesInRange :: Bool
    , field_attackMode      :: AttackMode
+   , field_health          :: StatusPoints
+   , field_runes           :: StatusPoints
    } deriving (Generic)
 instance Default Status
 
 --------------------------------------------------------------------------------
 
-data HealthStatus = HealthStatus
-   { field_health    :: Health
-   , field_maxHealth :: Health
+data StatusPoints = StatusPoints
+   { field_points    :: Int
+   , field_maxPoints :: Int
    } deriving (Generic)
-instance Default HealthStatus
+instance Default StatusPoints
 
 --------------------------------------------------------------------------------
 
@@ -42,17 +43,12 @@ instance Default StoryDialog
 
 --------------------------------------------------------------------------------
 
-data Slot = Slot
-   { field_percent :: Float
-   } deriving (Generic)
-
-data SlotsPanel = SlotsPanel
-   { field_slots      :: [Slot]
-   , field_showQuery  :: Bool
+data RunicMode = RunicMode
+   { field_showQuery  :: Bool
    , field_queryText  :: Text
    , field_answerText :: Text
    } deriving (Generic)
-instance Default SlotsPanel
+instance Default RunicMode
 
 --------------------------------------------------------------------------------
 

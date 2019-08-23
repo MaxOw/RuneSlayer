@@ -26,15 +26,10 @@ data AttackMode
    deriving (Generic, Eq, Ord, Show, Enum, Bounded)
 instance Default AttackMode where def = AttackMode_Manual
 
-data RuneType
-   = RuneType_Offensive
-   | RuneType_Defensive
-   deriving (Generic, Show)
-
 data PlayerAction
    = PlayerAction_SelectRune
    | PlayerAction_AddRunes RuneSet
-   | PlayerAction_UpdateRune RuneType Bool
+   | PlayerAction_UpdateRune Bool
    | PlayerAction_SetAttackMode AttackMode
    deriving (Generic, Show)
 

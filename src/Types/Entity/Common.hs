@@ -152,12 +152,21 @@ maxEffectSpawnDistance = disM 20
 
 --------------------------------------------------------------------------------
 
-makeWrapped ''Location
-makeWrapped ''Distance
-makeWrapped ''Velocity
-makeWrapped ''Health
-makeWrapped ''AttackPower
-makeWrapped ''Defence
-makeWrapped ''Speed
-makeWrapped ''Volume
-makeWrapped ''Duration
+instance Wrapped Location
+instance Rewrapped Location Location
+instance Wrapped Distance
+instance Rewrapped Distance Distance
+instance Wrapped Velocity
+instance Rewrapped Velocity Velocity
+instance Wrapped Health
+instance Rewrapped Health Health
+instance Wrapped AttackPower
+instance Rewrapped AttackPower AttackPower
+instance Wrapped Defence
+instance Rewrapped Defence Defence
+instance Wrapped Speed
+instance Rewrapped Speed Speed
+instance Wrapped Volume
+instance Rewrapped Volume Volume
+instance Wrapped Duration
+instance Rewrapped Duration Duration

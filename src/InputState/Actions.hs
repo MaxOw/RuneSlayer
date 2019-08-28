@@ -53,8 +53,8 @@ showStoryDialog eid sd = do
         , field_dialogPages = Zipper.fromList $ sd^.ff#dialogPages
         }
 
-showActionKeySeqs :: InputAction -> InputMode -> Game Text
-showActionKeySeqs a m = uses (userState.inputState.inputKeymap)
+showActionKeySeqs :: InputMode -> InputAction -> Game Text
+showActionKeySeqs m a = uses (userState.inputState.inputKeymap)
     $ fromString . InputKeymap.showKeySeqs . InputKeymap.lookupInputAction a m
 
 --------------------------------------------------------------------------------

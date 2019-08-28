@@ -13,6 +13,10 @@ import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import qualified Diagrams.TwoD.Transform as T
 import Engine.Types (Engine, graphics)
 import Engine.Graphics.Scroller (newScroller)
+import Engine.Graphics.Scroller.Types (Scroller)
+import Types.GameState
+import Types.InputState (defaultInputState)
+import Types.Entity (EntityIndex)
 import Types.Config
 import Types.St
 import Types.Entity.Common
@@ -37,6 +41,7 @@ import qualified Graphics.UI.GLFW as GLFW
 import qualified Data.Collider as Collider
 
 import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
+import qualified Tutorial
 
 descPath :: FilePath
 descPath = "data/desc"
@@ -192,4 +197,35 @@ spawnPassiveToAction :: Spawn PassiveTypeName EntityAction -> DirectedAction
 spawnPassiveToAction a = directAtWorld
     $ WorldAction_SpawnEntity (SpawnEntity_Passive $ a^.name) $ def
         & actions .~ a^.actions
+
+--------------------------------------------------------------------------------
+
+defaultSt :: MonadIO m => EntityIndex -> Scroller -> m St
+defaultSt eix scro = do
+    gs <- defaultGameState eix
+    return $ St
+        { field_resources  = def
+        , field_inputState = defaultInputState
+        , field_gameState  = gs
+        , field_menuState  = def
+        , field_scroller   = scro
+        , field_debugFlags = def
+        , field_overview   = mempty
+        , field_config     = def
+        , field_wires      = def
+        }
+
+defaultGameState :: MonadIO m => EntityIndex -> m GameState
+defaultGameState eix = do
+    return $ GameState
+        { field_entities       = eix
+        , field_actions        = []
+        , field_focusId        = Nothing
+        , field_gameScale      = 64
+        , field_menuScale      = 1.0
+        , field_frameCount     = 0
+        , field_changeCache    = mempty
+        , field_gameOverScreen = Nothing
+        , field_tutorialState  = Tutorial.defaultTutorialState
+        }
 

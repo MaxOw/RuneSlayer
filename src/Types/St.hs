@@ -1,6 +1,5 @@
 module Types.St
     ( St(..)
-    , defaultSt
 
     , GameWire (..)
     , Game
@@ -12,7 +11,6 @@ import Engine (Engine, RenderAction)
 import Engine.Graphics.Scroller.Types (Scroller)
 
 import Types.Config (Config)
-import Types.Entity (EntityIndex)
 import Types.MenuState
 import Types.InputState
 import Types.GameState
@@ -34,19 +32,4 @@ instance HasResources St Resources
 
 type Game a = Engine St a
 newtype GameWire = GameWire { stepGameWire :: Game (Maybe GameWire) }
-
-defaultSt :: MonadIO m => EntityIndex -> Scroller -> m St
-defaultSt eix scro = do
-    gs <- defaultGameState eix
-    return $ St
-        { field_resources  = def
-        , field_inputState = defaultInputState
-        , field_gameState  = gs
-        , field_menuState  = def
-        , field_scroller   = scro
-        , field_debugFlags = def
-        , field_overview   = mempty
-        , field_config     = def
-        , field_wires      = def
-        }
 

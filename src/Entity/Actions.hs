@@ -62,7 +62,6 @@ import Engine.Common.Types (BBox, bboxToRect, mkBBoxCenter)
 import Engine.Layout.Render (renderSimpleBox)
 
 import Entity
-import Types.Entity.Timer
 import Types.Entity.Passive
 import Types.Entity.Projectile
 import Types.Entity.Appearance
@@ -78,7 +77,8 @@ import qualified EntityIndex
 import qualified Equipment
 import Types.Equipment
 import Equipment (Equipment, contentList)
-import qualified Entity.Timer as Timer
+import qualified Data.Timer as Timer
+import Data.Timer (Timer)
 
 import Data.Hashable (hash)
 import qualified Data.Colour       as Color
@@ -232,17 +232,17 @@ getFrameIdSeed = liftA2 (+)
     (hash <$> useSelfId)
 
 updateTimer
-    :: HasTimer s Timer
+    :: HasTimer s (Timer a)
     => Update s ()
 updateTimer = self.timer %= Timer.update defaultDelta
 
 startTimer
-    :: HasTimer s Timer
+    :: HasTimer s (Timer TimerType)
     => TimerType -> Duration -> Update s ()
 startTimer tt d = self.timer %= Timer.start tt d
 
 checkTimeUp
-    :: HasTimer s Timer
+    :: HasTimer s (Timer TimerType)
     => TimerType -> Update s Bool
 checkTimeUp tt = do
     d <- uses (self.timer) (Timer.lookup tt)

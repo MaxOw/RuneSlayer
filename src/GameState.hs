@@ -36,6 +36,7 @@ import ResourceManager (lookupPassive)
 import Types.ResourceManager (agentsMap)
 import InputState.Actions (inspectContent, showStoryDialog)
 
+import qualified Tutorial
 import qualified EntityIndex
 
 --------------------------------------------------------------------------------
@@ -48,14 +49,20 @@ updateGameState = do
     join $ EntityIndex.update
         <$> use (userState.resources)
         <*> pure handleWorldAction
+        <*> pure handleEntityActions
         <*> use (gs actions)
         <*> use (gs frameCount)
         <*> use (gs entities)
 
     gs actions .= []
 
+    Tutorial.update
     where
     gs l = userState.gameState.l
+
+handleEntityActions :: [DirectedEntityAction] -> Game ()
+handleEntityActions as = do
+    Tutorial.entityActionsHook as
 
 handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case

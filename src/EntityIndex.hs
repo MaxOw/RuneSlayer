@@ -70,8 +70,9 @@ noSetMoveVector _                               = True
 update :: MonadIO m
     => Resources
     -> (WorldAction -> m (Maybe (Entity, SpawnEntityOpts)))
+    -> ([DirectedEntityAction] -> m ())
     -> [DirectedAction] -> Word32 -> EntityIndex -> m ()
-update res handleWorldAction globalActions fct eix = do
+update res handleWorldAction handleEntityActions globalActions fct eix = do
 
     actList <- readIORef $ eix^.activatedList
     dynSet  <- readIORef $ eix^.dynamicIndex
@@ -103,6 +104,7 @@ update res handleWorldAction globalActions fct eix = do
     newEntitiesActionsList <- concat <$> mapM handleAndInsert actionsAtWorld
 
     let allActionsAtEntity = newEntitiesActionsList <> actionsAtEntity
+    handleEntityActions allActionsAtEntity
 
     -- Map of entity action grouped by target entity id
     let directedActionsMap :: HashMap EntityId [EntityAction]

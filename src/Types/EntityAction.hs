@@ -49,6 +49,14 @@ data DialogAction
    | DialogAction_NextPage -- ^ Move dialog progression to next page.
    deriving (Show, Generic)
 
+data FiredProjectileOpts = FiredProjectileOpts
+   { field_location    :: Location
+   , field_direction   :: V2D
+   , field_source      :: Maybe EntityId
+   , field_target      :: EntityId
+   , field_attackPower :: AttackPower
+   } deriving (Show, Generic)
+
 data EntityAction
    = EntityAction_SetMoveVector V2D
    | EntityAction_SetValue EntityValue
@@ -74,12 +82,12 @@ data EntityAction
    | EntityAction_SelfUnmarkAsTarget
    -- tell entity to execute attack on market target
    | EntityAction_ExecuteAttack
-   -- tell entity it was attacked
-   | EntityAction_SelfAttacked AttackPower
+   -- tell entity it was attacked with [AttackPower] possibly by [EntityId]
+   | EntityAction_SelfAttacked AttackPower (Maybe EntityId)
    -- send player specific actions
    | EntityAction_PlayerAction PlayerAction
    -- tell entity to fire self as a projectile at target
-   | EntityAction_SelfFiredAsProjectile Location V2D EntityId AttackPower
+   | EntityAction_SelfFiredAsProjectile FiredProjectileOpts
    -- tell entity to heal self
    | EntityAction_SelfHeal Health
    -- tell entity to perform given [InteractionName] with [EntityId]

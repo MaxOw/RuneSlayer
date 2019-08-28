@@ -10,6 +10,7 @@ data Projectile = Projectile
    , field_velocity     :: Velocity
    , field_distanceLeft :: Distance
    , field_attackPower  :: AttackPower
+   , field_source       :: Maybe EntityId
    , field_target       :: EntityId
    , field_passiveType  :: PassiveType
    } deriving (Generic)

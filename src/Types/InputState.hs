@@ -75,7 +75,6 @@ data InputState = InputState
    , field_hist           :: Seq Keypress
    , field_active         :: Map ActiveAction Int
    , field_inputString    :: Seq Char
-   , field_commonKeymap   :: Keymap
    , field_inputKeymap    :: InputKeymap
    , field_deactivators   :: Map Keypress [InputAction]
    , field_selectState    :: Maybe SelectState
@@ -94,7 +93,6 @@ defaultInputState = InputState
     , field_hist           = def
     , field_active         = def
     , field_inputString    = def
-    , field_commonKeymap   = defaultCommonKeymap
     , field_inputKeymap    = defaultInputKeymap
     , field_deactivators   = def
     , field_selectState    = def
@@ -112,17 +110,17 @@ defaultSelectors :: [Char]
 defaultSelectors = "jfkdlsahgurieowpq"
 -- defaultSelectors = "jf"
 
-defaultCommonKeymap :: Keymap
-defaultCommonKeymap = buildKeymap
+defaultCommonInputSeqs :: [InputSeq]
+defaultCommonInputSeqs =
     [ InputKey Key'Escape InputAction_Escape
     ]
 
 defaultInputKeymap :: InputKeymap
-defaultInputKeymap = buildInputKeymap
+defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
     [ InputGroup NormalMode
-        [ InputKey Key'Space  (SetMode SpaceMode)
+        -- [ InputKey Key'Space  (SetMode SpaceMode)
 
-        , InputStr "i" (SetMode InventoryMode)
+        [ InputStr "i" (SetMode InventoryMode)
 
         , InputStr "j" (SimpleMove MoveDown)
         , InputStr "k" (SimpleMove MoveUp)

@@ -23,7 +23,7 @@ import GameState (getGameOverScreen)
 import qualified Types.GUI as Layout
 import GUI.Inventory
 import GUI.Layout
--- import qualified Color
+import qualified Tutorial
 
 --------------------------------------------------------------------------------
 
@@ -45,6 +45,7 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
  -- [ rIf GroundPreviewPanel    groundPreviewPanelLayout
     [ pure Nothing
     , rIf StatusPanel statusPanelLayout
+    , Tutorial.display
     , actionsMenu
     ]
     where
@@ -106,7 +107,7 @@ actionsMenu = do
 storyDialog :: Game (Maybe Alt.Layout)
 storyDialog = do
     msd <- use $ userState.inputState.ff#storyDialog
-    ksq <- showActionKeySeqs InputAction_NextPage StoryDialogMode
+    ksq <- showActionKeySeqs StoryDialogMode InputAction_NextPage
     case msd of
         Nothing -> return Nothing
         Just sd -> return $ Just $ layout_storyDialog $ def

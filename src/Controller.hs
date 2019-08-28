@@ -26,6 +26,8 @@ import Focus
 import Skills.Runes (getRuneByName, isCorrectAnswer)
 import Entity
 
+import qualified Tutorial
+
 --------------------------------------------------------------------------------
 
 handleEvent :: Event -> Game ()
@@ -80,6 +82,7 @@ handleOtherModes kp = do
     case mAction of
         Just act -> do
             handleActionFinalizers act
+            Tutorial.inputActionHook act
             handleActivation act
             registerDeactivation kp act
         Nothing -> customModeHandler kp =<< getMode

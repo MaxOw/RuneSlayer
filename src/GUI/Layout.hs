@@ -66,18 +66,13 @@ layout_actionsMenu ls = vrel hintLines
 --------------------------------------------------------------------------------
 
 layout_storyDialog :: StoryDialog -> Layout
-layout_storyDialog s = border1 Color.gray cnt
+layout_storyDialog s = box ins
     & align .~ BottomCenter
     & padding.bottom .~ 100 @@ px
     & padding.left   .~ 100 @@ px
     & padding.right  .~ 100 @@ px
     & height .~ 0.4 @@ fill
     where
-    cnt = composition
-        [ fillColorA bg
-        , ins
-        ]
-
     ins = vrel
         [ (40 @@ px  , tit)
         , (1  @@ fill, con)
@@ -88,13 +83,12 @@ layout_storyDialog s = border1 Color.gray cnt
     nextPageText = "Press " <> s^.ff#nextPageKey <> " to proceed..."
 
     tit = textline ft (s^.title)   & align .~ TopLeft
-    con = textline fc (s^.content) & align .~ TopLeft
+    con = text     fc (s^.content) & align .~ TopLeft
     prc = textline fp nextPageText & align .~ BottomRight
 
     ft = makeFs 12 Color.darkgray
     fc = makeFs 10 Color.gray
     fp = makeFs 8 warningColor
-    bg = Color.withOpacity Color.black 0.6
 
 --------------------------------------------------------------------------------
 

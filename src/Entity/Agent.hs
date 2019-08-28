@@ -15,7 +15,6 @@ import Types.Entity.Reactivity
 import Types.Entity.Agent
 import Types.Entity.Effect
 import Types.Entity.Passive
-import Types.Entity.Timer
 import Types.Equipment
 
 import Entity
@@ -248,10 +247,17 @@ performDelayedAction = \case
     DelayedActionType_Attack           eid p -> attack eid p
     DelayedActionType_FireProjectile v tid p -> fireProjectile v tid p
     where
-    attack eid p = addAction eid $ EntityAction_SelfAttacked p
+    attack t p = addAction t . EntityAction_SelfAttacked p . Just =<< useSelfId
     fireProjectile v tid p = whenJustM selectProjectile $ \pid -> do
+        sid <- useSelfId
         loc <- use $ self.location
-        addAction pid $ EntityAction_SelfFiredAsProjectile loc v tid p
+        addAction pid $ EntityAction_SelfFiredAsProjectile $ FiredProjectileOpts
+            { field_location    = loc
+            , field_direction   = v
+            , field_source      = Just sid
+            , field_target      = tid
+            , field_attackPower = p
+            }
 
 selectProjectile :: Update Agent (Maybe EntityId)
 selectProjectile = getFirstArrow <$> getEquippedItem EquipmentSlot_PrimaryOther
@@ -403,13 +409,13 @@ autoTargetWith func = do
 
 processAction :: EntityAction -> Update Agent ()
 processAction = \case
-    EntityAction_UseItem       i -> useItem i
-    EntityAction_SelfAttacked  d -> procAttacked d
-    EntityAction_RemoveItem    i -> removeItem i
-    EntityAction_AddLoadout    l -> mapM_ addLoadoutEntry l
-    EntityAction_PlayerAction  a -> processPlayerAction a
-    EntityAction_Dialog        d -> updateScript d
-    EntityAction_Interact    n e -> interact n e
+    EntityAction_UseItem        i -> useItem i
+    EntityAction_SelfAttacked d _ -> procAttacked d
+    EntityAction_RemoveItem     i -> removeItem i
+    EntityAction_AddLoadout     l -> mapM_ addLoadoutEntry l
+    EntityAction_PlayerAction   a -> processPlayerAction a
+    EntityAction_Dialog         d -> updateScript d
+    EntityAction_Interact     n e -> interact n e
     _ -> return ()
 
     where

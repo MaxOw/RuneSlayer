@@ -13,13 +13,16 @@ import Types.InputKeymap
 
 --------------------------------------------------------------------------------
 
-buildInputKeymap :: KeymapDesc -> InputKeymap
-buildInputKeymap kd = InputKeymap
-    { field_keymap    = Map.fromList $ map makeInputGroup kd
-    , field_actionmap = buildActionmap kd
+buildInputKeymap :: [InputSeq] -> KeymapDesc -> InputKeymap
+buildInputKeymap cm kd = InputKeymap
+    { field_keymap          = Map.fromList $ map makeInputGroup kd
+    , field_keymapCommon    = buildKeymap cm
+    , field_actionmap       = buildActionmap kd
+    , field_actionmapCommon = acm
     }
     where
     makeInputGroup (InputGroup inputMode km) = (inputMode, buildKeymap km)
+    acm = Map.fromListWith (<>) $ map (over _2 one . swap . fromInputSeq) cm
 
 buildKeymap :: [InputSeq] -> Keymap
 buildKeymap = PrefixMap.fromList . map fromInputSeq
@@ -38,10 +41,11 @@ buildActionmap
 
 -- | Lookup key sequences to press in a given InputMode for a given InputAction.
 lookupInputAction :: InputAction -> InputMode -> InputKeymap -> [KeySeq]
-lookupInputAction a m
+lookupInputAction a m k
     = fromMaybe []
-    . (Map.lookup m <=< Map.lookup a)
-    . view (ff#actionmap)
+    $ (maybe (Map.lookup a (k^.ff#actionmapCommon)) Just)
+    $ (Map.lookup m <=< Map.lookup a)
+    $ view (ff#actionmap) k
 
 showKeySeqs :: [KeySeq] -> String
 showKeySeqs = \case

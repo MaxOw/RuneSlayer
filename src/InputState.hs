@@ -79,7 +79,7 @@ getSelectState = use (userState.inputState.selectState)
 getModeKeymap :: Game Keymap
 getModeKeymap = do
     currentInputMode <- getMode
-    common <- use (userState.inputState.commonKeymap)
+    common <- use (userState.inputState.inputKeymap.ff#keymapCommon)
     modeKeymap <- use (userState.inputState.inputKeymap.ff#keymap)
     return $ case Map.lookup currentInputMode modeKeymap of
         Nothing -> common

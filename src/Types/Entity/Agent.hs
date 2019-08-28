@@ -6,14 +6,19 @@ import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.ZIndex
 import Types.Entity.Animation
-import Types.Entity.Timer
 import Types.Entity.Passive
 import Types.Entity.Reactivity
 import Types.Entity.Script
 import Types.Equipment
 import Types.Skills.Runes (RunicLevel, RunicPoints, RuneName)
+import Data.Timer (Timer)
 
 --------------------------------------------------------------------------------
+
+data TimerType
+   = Timer_Attack
+   | Timer_Bla
+   deriving (Eq, Ord, Generic)
 
 data UpdateOnce
    = UpdateOnce_Equipment
@@ -74,7 +79,7 @@ data Agent = Agent
 
    , field_processOnUpdate    :: [EntityAction]
    , field_target             :: Maybe EntityId
-   , field_timer              :: Timer
+   , field_timer              :: Timer TimerType
 
    , field_equipment          :: Equipment
    , field_debugFlags         :: EntityDebugFlags

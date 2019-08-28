@@ -77,7 +77,12 @@ Requirements for first release: v0.1
   - AddLoadout Entity Action.                                                (#)
   - Recursive loadouts.                                                      (#)
 
-* Add hint/help/tutorial windows.                                            [ ]
+* Add hint/tutorial windows.                                                 [ ]
+  - Display tutorial steps.                                                  (#)
+  - Check tutorial steps progress conditions.                                (#)
+  - Mark satisfied conditions.                                               ( )
+
+* Add help commands/window.                                                  [ ]
 * Add System Messages.                                                       [ ]
 
 * NPCs.                                                                      [X]

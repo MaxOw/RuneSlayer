@@ -110,19 +110,20 @@ containerRemoveItems rs = do
     es <- catMaybes <$> mapM queryById cs
     self.contentVolume .= sumOf (traverse.entity.oracleVolume.traverse) es
 
-projectileFire :: (Location, V2D, EntityId, AttackPower) -> Update Passive ()
-projectileFire (loc, vectorToTarget, tid, attackPower) = do
+projectileFire :: FiredProjectileOpts -> Update Passive ()
+projectileFire f = do
     selfDelete
     let maxDist   = distanceInMeters 12
     let projSpeed = speedInMetersPerSecond 40
-    let vel = velocityFromSpeed vectorToTarget projSpeed
-    projType <- use (self.passiveType)
+    let vel = velocityFromSpeed (f^.direction) projSpeed
+    projType <- use $ self.passiveType
     spawnProjectile $ Projectile
-        { field_location     = loc
+        { field_location     = f^.location
         , field_velocity     = vel
         , field_distanceLeft = maxDist
-        , field_attackPower  = attackPower
-        , field_target       = tid
+        , field_attackPower  = f^.ff#attackPower
+        , field_source       = f^.ff#source
+        , field_target       = f^.target
         , field_passiveType  = projType
         }
 

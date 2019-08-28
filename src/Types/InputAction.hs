@@ -28,7 +28,7 @@ data MoveDirection
    | MoveDown
    | MoveLeft
    | MoveRight
-   deriving (Show, Eq, Ord)
+   deriving (Show, Eq, Ord, Enum, Bounded)
 
 data PanelName
    = GroundPreviewPanel

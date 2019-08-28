@@ -34,7 +34,8 @@ doDemage :: EntityWithId -> Update Projectile ()
 doDemage eid = do
     ap <- use $ self.attackPower
     pt <- use $ self.passiveType.ff#stats.ff#attack
-    addAction eid $ EntityAction_SelfAttacked (ap + pt)
+    msource <- use $ self.ff#source
+    addAction eid $ EntityAction_SelfAttacked (ap + pt) msource
     deleteSelf .= True
 
 getEffectiveDistance :: Update Projectile Distance

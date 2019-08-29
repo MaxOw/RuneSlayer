@@ -27,6 +27,7 @@ import Skills.Runes (getRuneByName, isCorrectAnswer)
 import Entity
 
 import qualified Tutorial
+import qualified Messages
 
 --------------------------------------------------------------------------------
 
@@ -205,7 +206,7 @@ selectItemToPickUp = do
 
 selectItemMoveTarget :: Game ()
 selectItemMoveTarget = getFocusedItem >>= \case
-    Nothing -> putStrLn "No item selected!" -- systemMessage
+    Nothing -> return () -- Messages.add "No item selected!"
     Just fi -> lookupEntity fi >>= \case
         Nothing -> return ()
         Just fe -> startSelect SelectKind_MoveTo =<< getValidTargets fe
@@ -247,19 +248,20 @@ selectItemToFocus = do
 
 useFocusedItem :: Game ()
 useFocusedItem = getFocusedItem >>= \case
-    Nothing -> putStrLn "No item selected!" -- systemMessage "No item selected!"
+    Nothing -> Messages.add "No item selected!"
     Just fi -> actOnFocusedEntity $ EntityAction_UseItem fi
 
 selectInteraction :: Game ()
 selectInteraction = do
     mar <- focusInteractionsInRange
     case over (traverse._1) (view entityId) mar of
-        [] -> return () -- systemMessage "There's nothing nearby."
+        [] -> Messages.add "There's nothing to interact with nearby."
         ar -> startSelect SelectKind_Action ar
 
 interact :: Game ()
-interact = whenJustM getNearest $ \eid ->
-    withFocusId $ actOnEntity eid . EntityAction_Interact Nothing
+interact = getNearest >>= \case
+    Nothing  -> Messages.add "There's nothing to interact with nearby."
+    Just eid -> withFocusId $ actOnEntity eid . EntityAction_Interact Nothing
     where
     getNearest = focusLocation >>= \case
         Nothing -> return Nothing
@@ -293,7 +295,9 @@ pickupAllItems :: Game ()
 pickupAllItems = do
     es <- fmap (view entityId) <$> focusItemsInRange
     cs <- fmap (view entityId) <$> focusItemsInContainer
-    mapM_ pickupItem (es <> cs)
+    case es <> cs of
+        [] -> Messages.add "No items nearby."
+        is -> mapM_ pickupItem is
 
 dropAllItems :: Game ()
 dropAllItems = do

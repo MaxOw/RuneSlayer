@@ -19,6 +19,7 @@ import Types.Entity.Common
 import Types.Config
 import Types.St
 import Types.MenuState
+import Types.GameState (gameState)
 import Types.Debug
 import Entity
 import EntityIndex (lookupInRange)

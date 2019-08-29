@@ -448,7 +448,7 @@ processPlayerAction = \case
     PlayerAction_SetAttackMode m -> setAttackMode m
     where
     addRunes r = do
-        -- systemMessage "New runes learned!"
+        systemMessage "New runes learned!"
         self.ff#runicLevel %= addKnownRunes r
 
     selectCurrentRune = use (self.ff#selectedRune) >>= \case
@@ -473,6 +473,9 @@ processPlayerAction = \case
         Just sn -> self.ff#runicLevel %= updateUsage sn (RuneUsage s)
 
     setAttackMode = assign (self.ff#attackMode)
+
+systemMessage :: Text -> Update x ()
+systemMessage = addWorldAction . WorldAction_Message
 
 removeItem :: EntityId -> Update Agent ()
 removeItem i = do

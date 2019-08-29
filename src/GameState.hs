@@ -37,6 +37,7 @@ import Types.ResourceManager (agentsMap)
 import InputState.Actions (inspectContent, showStoryDialog)
 
 import qualified Tutorial
+import qualified Messages
 import qualified EntityIndex
 
 --------------------------------------------------------------------------------
@@ -57,6 +58,7 @@ updateGameState = do
     gs actions .= []
 
     Tutorial.update
+    Messages.update
     where
     gs l = userState.gameState.l
 
@@ -67,9 +69,10 @@ handleEntityActions as = do
 handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case
     WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
-    WorldAction_InspectContent tid -> inspectContent tid >> return Nothing
-    WorldAction_StoryDialog eid sd -> showStoryDialog eid sd >> return Nothing
-    WorldAction_GameOver           -> startGameOver >> return Nothing
+    WorldAction_InspectContent tid -> nop $ inspectContent tid
+    WorldAction_StoryDialog eid sd -> nop $ showStoryDialog eid sd
+    WorldAction_Message        msg -> nop $ Messages.add msg
+    WorldAction_GameOver           -> nop $ startGameOver
     where
     spawnEntity = \case
         SpawnEntity_Passive    n -> spawnPassive n
@@ -84,6 +87,8 @@ handleWorldAction = \case
         flip (maybe (pure Nothing)) mit $ \it -> do
             let e = toEntity $ makePassive rs it
             return $ Just e
+
+    nop x = x >> return Nothing
 
     spawnAgent n = do
         mit <- lookupAgentType n

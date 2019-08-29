@@ -83,7 +83,7 @@ Requirements for first release: v0.1
   - Mark satisfied conditions.                                               ( )
 
 * Add help commands/window.                                                  [ ]
-* Add System Messages.                                                       [ ]
+* Add System Messages.                                                       [X]
 
 * NPCs.                                                                      [X]
   - Add NPC Agent Kind.                                                      (#)

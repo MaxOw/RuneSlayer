@@ -29,6 +29,7 @@ data WorldAction
    -- Open inventory/contents inspection window of [EntityId] for player
    | WorldAction_InspectContent EntityId
    | WorldAction_StoryDialog EntityId StoryDialog
+   | WorldAction_Message Text
    | WorldAction_GameOver
 
 --------------------------------------------------------------------------------

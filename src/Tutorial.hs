@@ -11,9 +11,10 @@ import Delude
 import qualified Data.Set as Set
 import Engine.Layout.Alt (Layout)
 
-import Engine (userState, EngineState)
+import Engine (EngineState)
 import Types (Game, St)
 import Types.Entity (DirectedEntityAction)
+import Types.GameState (gameState)
 import Types.InputState (InputMode(..))
 import Types.InputAction
 import Types.EntityAction
@@ -256,7 +257,7 @@ getCurrentStep = use (tutorialState.currentStep)
 -- getPreviousStep = uses (tutorialState.currentStep) precStop
 
 tutorialState :: Lens' (EngineState St) TutorialState
-tutorialState = userState.gameState.ff#tutorialState
+tutorialState = gameState.ff#tutorialState
 
 isNormalMode :: Game Bool
 isNormalMode = (NormalMode ==) <$> getMode

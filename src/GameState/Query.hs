@@ -3,8 +3,8 @@ module GameState.Query where
 import Delude
 import qualified Data.Set as Set
 
-import Engine (userState)
 import Types (Game)
+import Types.GameState (gameState)
 import Types.Entity (Entity)
 import Types.Entity.Common (Volume)
 
@@ -45,11 +45,11 @@ calcFreeVolume (view entity -> e) = case e^.oracleMaxVolume of
 
 lookupEntities :: Foldable t => t EntityId -> Game [EntityWithId]
 lookupEntities is = do
-    es <- use $ userState.gameState.entities
+    es <- use $ gameState.entities
     EntityIndex.lookupManyById is es
 
 lookupEntity :: EntityId -> Game (Maybe EntityWithId)
 lookupEntity i = do
-    es <- use $ userState.gameState.entities
+    es <- use $ gameState.entities
     EntityIndex.lookupById i es
 

@@ -135,7 +135,6 @@ MakeFieldLens(effects)
 MakeFieldLens(effectUpdate)
 MakeFieldLens(collisionShape)
 
-MakeFieldLens(gameState)
 MakeFieldLens(inputState)
 MakeFieldLens(selectState)
 MakeFieldLens(inventoryState)

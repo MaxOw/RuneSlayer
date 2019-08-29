@@ -24,6 +24,7 @@ import qualified Types.GUI as Layout
 import GUI.Inventory
 import GUI.Layout
 import qualified Tutorial
+import qualified Messages
 
 --------------------------------------------------------------------------------
 
@@ -46,6 +47,7 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
     [ pure Nothing
     , rIf StatusPanel statusPanelLayout
     , Tutorial.display
+    , Just <$> Messages.display
     , actionsMenu
     ]
     where

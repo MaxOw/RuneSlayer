@@ -7,7 +7,7 @@ module Types.St
 
 import Delude
 
-import Engine (Engine, RenderAction)
+import Engine (Engine, EngineState, RenderAction, userState)
 import Engine.Graphics.Scroller.Types (Scroller)
 
 import Types.Config (Config)
@@ -29,6 +29,8 @@ data St = St
    , field_wires      :: [GameWire]
    } deriving (Generic)
 instance HasResources St Resources
+instance HasGameState St
+instance HasGameState (EngineState St) where gameState = userState.gameState
 
 type Game a = Engine St a
 newtype GameWire = GameWire { stepGameWire :: Game (Maybe GameWire) }

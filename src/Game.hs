@@ -227,5 +227,6 @@ defaultGameState eix = do
         , field_changeCache    = mempty
         , field_gameOverScreen = Nothing
         , field_tutorialState  = Tutorial.defaultTutorialState
+        , field_systemMessages = def
         }
 

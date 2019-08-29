@@ -2,9 +2,9 @@ module Focus where
 
 import Delude
 import qualified Data.Set as Set
-import Engine (userState)
 import Entity
 import Types
+import Types.GameState (gameState)
 import Types.Entity.Common
 import Types.Entity.Passive
 import Types.Entity.Agent (AgentKind (..), agentKind)
@@ -19,7 +19,7 @@ import InputState.Actions
 -- Get focused entity (if any)
 focusEntity :: Game (Maybe Entity)
 focusEntity = do
-    mfi <- use $ userState.gameState.focusId
+    mfi <- use $ gameState.focusId
     case mfi of
         Nothing -> return Nothing
         Just fi -> fmap (view entity) <$> lookupEntity fi
@@ -31,12 +31,12 @@ focusLocation = (view (oracleLocation) =<<) <$> focusEntity
 -- Get location of a camera
 cameraLocation :: Game (Maybe Location)
 cameraLocation = do
-    eix <- use $ userState.gameState.entities
+    eix <- use $ gameState.entities
     mei <- lookupByTag EntityIndexTag_Camera eix
     return (view (entity.oracleLocation) =<< mei)
 
 focusEntityId :: Game (Maybe EntityId)
-focusEntityId = use (userState.gameState.focusId)
+focusEntityId = use (gameState.focusId)
 
 withFocusId :: (EntityId -> Game ()) -> Game ()
 withFocusId = whenJustM focusEntityId
@@ -44,7 +44,7 @@ withFocusId = whenJustM focusEntityId
 focusEntityKindInRange :: EntityKind -> Distance -> Game [EntityWithId]
 focusEntityKindInRange k d = focusLocation >>= \case
     Nothing -> return []
-    Just lc -> lookupInRadius k lc d =<< use (userState.gameState.entities)
+    Just lc -> lookupInRadius k lc d =<< use (gameState.entities)
 
 -- Get items within pickup range of a focused entity
 focusItemsInRange :: Game [EntityWithId]

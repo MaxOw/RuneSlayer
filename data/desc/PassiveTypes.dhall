@@ -22,14 +22,15 @@ let InteractionEntry  = Entry Text (List InteractionEffect)
 let defaultStats = constants.defaultStats
 
 let defaultItemType =
-  { passiveKind   = [] : List PassiveKind
-  , weaponKind    = None WeaponKind
-  , appearance    = appearance.empty
-  , fittingSlots  = [] : List EquipmentSlot
-  , containerType = None ContainerType
-  , stats         = defaultStats
-  , interactions  = [] : List InteractionEntry
-  , zindex        = 0
+  { passiveKind        = [] : List PassiveKind
+  , weaponKind         = None WeaponKind
+  , appearance         = appearance.empty
+  , fittingSlots       = [] : List EquipmentSlot
+  , containerType      = None ContainerType
+  , stats              = defaultStats
+  , interactions       = [] : List InteractionEntry
+  , primaryInteraction = None Text
+  , zindex             = 0
   }
 
 let action =
@@ -143,6 +144,7 @@ let healthPotion = defaultItemType //
   , interactions  =
       [ action "Use" [ useEffect.heal 5, useEffect.transformInto names.emptyFlask ]
       ]
+  , primaryInteraction = Some "Use"
   }
 
 let bag = defaultItemType //
@@ -179,7 +181,11 @@ let woodenChest = defaultStaticType //
   , appearance = [ appearance.sprite sprites.woodenChest1 ]
   , interactions =
     [ action "Open" [ useEffect.transformInto names.woodenChest_open ]
+    , action "Open and inspect contents of"
+      [ useEffect.transformInto names.woodenChest_open
+      , useEffect.inspectContent ]
     ]
+  , primaryInteraction = Some "Open and inspect contents of"
   , containerType = Some
     { maxVolume  = 100
     , allowKinds = [ PassiveKind.Item ]
@@ -195,6 +201,7 @@ let woodenChest_open = defaultStaticType //
     [ action "Close" [ useEffect.transformInto names.woodenChest ]
     , action "Inspect contents of" [ useEffect.inspectContent ]
     ]
+  , primaryInteraction = Some "Inspect contents of"
   , containerType = Some
     { maxVolume  = 100
     , allowKinds = [ PassiveKind.Item ]
@@ -209,6 +216,7 @@ let woodenDoor = defaultStaticType //
   , interactions =
     [ action "Open" [ useEffect.transformInto names.woodenDoor_open ]
     ]
+  , primaryInteraction = Some "Open"
   }
 
 let woodenDoor_open = defaultStaticType //
@@ -218,6 +226,7 @@ let woodenDoor_open = defaultStaticType //
   , interactions =
     [ action "Close" [ useEffect.transformInto names.woodenDoor ]
     ]
+  , primaryInteraction = Some "Close"
   }
 
 

@@ -415,17 +415,29 @@ processAction = \case
     EntityAction_AddLoadout     l -> mapM_ addLoadoutEntry l
     EntityAction_PlayerAction   a -> processPlayerAction a
     EntityAction_Dialog         d -> updateScript d
-    EntityAction_Interact     n e -> interact n e
+    EntityAction_Interact     n e -> interact e n
     _ -> return ()
 
     where
-    -- This is a bit ad-hoc...
-    interact n e = case n of
-        InteractionName "Talk to" -> talkTo e
-        _ -> return ()
+    interact t = mapM_ (performInteractionEffect t) <=< getInteraction
+    getInteraction = \case
+        Just a  -> use $ self.agentType.ff#interactions.at(a).traverse
+        Nothing -> do
+            ma <- use $ self.agentType.ff#primaryInteraction
+            case ma of
+                Nothing -> return []
+                Just a  -> use $ self.agentType.ff#interactions.at(a).traverse
 
-    talkTo e = do
-        whenJustM (queryById e) orientTowards
+performInteractionEffect :: EntityId -> InteractionEffect -> Update Agent ()
+performInteractionEffect t = \case
+    InteractionEffect_TransformInto _ -> return ()
+    InteractionEffect_InspectContent  -> return ()
+    InteractionEffect_DeleteSelf      -> return ()
+    InteractionEffect_Heal          _ -> return ()
+    InteractionEffect_TalkTo          -> talkTo
+    where
+    talkTo = do
+        whenJustM (queryById t) orientTowards
         updateScript DialogAction_Start
 
 processPlayerAction :: PlayerAction -> Update Agent ()

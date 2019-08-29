@@ -1,8 +1,12 @@
 let passives   = ./PassiveNames.dhall
+let types      = ./Types.dhall
 let enums      = ./Enums.dhall
 
-let EquipmentSlot = enums.EquipmentSlot
-let Reactivity    = enums.Reactivity
+let EquipmentSlot     = enums.EquipmentSlot
+let Reactivity        = enums.Reactivity
+let Entry             = types.Entry
+let InteractionEffect = types.InteractionEffect
+let InteractionEntry  = Entry Text (List InteractionEffect)
 
 let defaultStats =
   { attack      = 0
@@ -25,13 +29,20 @@ let defaultEquipmentSlots =
   , EquipmentSlot.PrimaryOther
   ]
 
-let defaultHumanAgent =
+let defaultAgent =
+  { animateWhenStopped = False
+  , renderOffset       = None (List Double)
+  , equipmentSlots     = [] : List EquipmentSlot
+  , interactions       = [] : List InteractionEntry
+  , primaryInteraction = None Text
+  }
+
+let defaultHumanAgent = defaultAgent //
   { corpse          = passives.humanCorpse
   , reactivity      = { Life = 0.1 }
   , hostileTowards  = [ Reactivity.Shadow ]
   , autoTargetRange = 8 -- meters
 
-  , animateWhenStopped = False
   , renderOffset       = [0.0, 0.8]
 
   , equipmentSlots = defaultEquipmentSlots
@@ -46,5 +57,6 @@ in
 
 , defaultStats          = defaultStats
 , defaultEquipmentSlots = defaultEquipmentSlots
+, defaultAgent          = defaultAgent
 , defaultHumanAgent     = defaultHumanAgent
 }

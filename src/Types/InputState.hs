@@ -154,8 +154,9 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
 
         , InputStr "r" StartRunicMode
 
-        , InputStr "f" SelectAction
-        -- , InputStr "ff" SelectAction
+        , InputStr "f" Interact
+        , InputStr "F" SelectInteraction
+        -- , InputStr "ff" SelectInteraction
         -- , InputStr "ft" TalkToNPC
         ]
 

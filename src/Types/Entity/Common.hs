@@ -141,6 +141,9 @@ speedInMetersPerSecond = Speed
 isWithinDistance :: Distance -> Location -> Location -> Bool
 isWithinDistance d a b = distance (a^._Wrapped) (b^._Wrapped) <= (d^._Wrapped)
 
+calcDistance :: Location -> Location -> Distance
+calcDistance = Wrapped .: distance `on` Unwrapped
+
 defaultPickupRange :: Distance
 defaultPickupRange = disM 1.5
 

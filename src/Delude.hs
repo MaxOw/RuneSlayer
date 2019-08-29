@@ -28,6 +28,7 @@ module Delude
     , whenChanged_
 
     , nextStop, precStop
+    , (.:)
     ) where
 
 import Relude         as All
@@ -201,4 +202,9 @@ nextStop a = if a == maxBound then a else succ a
 
 precStop :: (Eq a, Bounded a, Enum a) => a -> a
 precStop a = if a == minBound then a else pred a
+
+--------------------------------------------------------------------------------
+
+(.:) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
+(.:) = (.).(.)
 

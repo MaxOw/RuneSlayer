@@ -36,6 +36,7 @@ data InteractionEffect
    | InteractionEffect_InspectContent
    | InteractionEffect_DeleteSelf
    | InteractionEffect_Heal Health
+   | InteractionEffect_TalkTo
    deriving (Generic, Show)
 
 {-
@@ -74,20 +75,21 @@ data LoadoutEntry a = LoadoutEntry
    } deriving (Generic, Show, Functor, Foldable, Traversable)
 
 data PassiveType = PassiveType
-   { field_name          :: PassiveTypeName
-   , field_volume        :: Volume
-   , field_passiveKind   :: Set PassiveKind
-   , field_weaponKind    :: Maybe WeaponKind
-   , field_stats         :: Stats
-   , field_appearance    :: Appearance
+   { field_name               :: PassiveTypeName
+   , field_volume             :: Volume
+   , field_passiveKind        :: Set PassiveKind
+   , field_weaponKind         :: Maybe WeaponKind
+   , field_stats              :: Stats
+   , field_appearance         :: Appearance
    -- Animation when equipped, TODO: rename it as such.
-   , field_animation     :: Maybe AnimationName
-   , field_behindBody    :: Maybe Bool
-   , field_fittingSlots  :: Set EquipmentSlot
-   , field_containerType :: Maybe ContainerType
-   , field_interactions  :: Map InteractionName [InteractionEffect]
-   , field_zindex        :: Word32
-   , field_renderOffset  :: Maybe V2D
+   , field_animation          :: Maybe AnimationName
+   , field_behindBody         :: Maybe Bool
+   , field_fittingSlots       :: Set EquipmentSlot
+   , field_containerType      :: Maybe ContainerType
+   , field_interactions       :: Map InteractionName [InteractionEffect]
+   , field_primaryInteraction :: Maybe InteractionName
+   , field_zindex             :: Word32
+   , field_renderOffset       :: Maybe V2D
    } deriving (Generic)
 
 data ContainerType = ContainerType
@@ -95,6 +97,11 @@ data ContainerType = ContainerType
    , field_allowKinds :: Set PassiveKind
    , field_showCount  :: Bool
    } deriving (Generic)
+
+--------------------------------------------------------------------------------
+
+primaryInteraction :: Lens' PassiveType (Maybe InteractionName)
+primaryInteraction = ff#primaryInteraction
 
 --------------------------------------------------------------------------------
 

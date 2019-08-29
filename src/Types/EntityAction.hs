@@ -91,7 +91,8 @@ data EntityAction
    -- tell entity to heal self
    | EntityAction_SelfHeal Health
    -- tell entity to perform given [InteractionName] with [EntityId]
-   | EntityAction_Interact InteractionName EntityId
+   -- Nothing = use default interaction
+   | EntityAction_Interact (Maybe InteractionName) EntityId
 
    -- tell entity to create and equip/contain given loadout.
    | EntityAction_AddLoadout [LoadoutEntry (Spawn PassiveTypeName EntityAction)]

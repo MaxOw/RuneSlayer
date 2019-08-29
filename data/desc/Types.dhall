@@ -48,6 +48,7 @@ let InteractionEffect =
   | InspectContent : { InspectContent : List {} }
   | DeleteSelf     : { DeleteSelf     : List {} }
   | Heal           : { Heal           : Natural }
+  | TalkTo         : { TalkTo         : List {} }
   >
 
 let Range = { rangeMin : Natural, rangeMax : Natural }

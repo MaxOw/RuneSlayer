@@ -14,7 +14,7 @@ import Types.Entity.Animation (AnimationKind)
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.Equipment
-import Types.Entity.Passive (InteractionName(..))
+import Types.Entity.Common (calcDistance)
 import Equipment (contentList)
 import GameState.Query (canFitIntoContainer)
 import InputState
@@ -148,7 +148,8 @@ handleActivation = \case
     SelectItemToDrop     -> selectItemToDrop
     SelectItemToFocus    -> selectItemToFocus
     UseFocusedItem       -> useFocusedItem
-    SelectAction         -> selectAction
+    SelectInteraction    -> selectInteraction
+    Interact             -> interact
     TalkToNPC            -> talkToNPC
     FastQuit             -> Engine.closeWindow
     InputAction_NextPage -> nextPage
@@ -249,17 +250,30 @@ useFocusedItem = getFocusedItem >>= \case
     Nothing -> putStrLn "No item selected!" -- systemMessage "No item selected!"
     Just fi -> actOnFocusedEntity $ EntityAction_UseItem fi
 
-selectAction :: Game ()
-selectAction = do
-    mar <- focusActionsInRange
+selectInteraction :: Game ()
+selectInteraction = do
+    mar <- focusInteractionsInRange
     case over (traverse._1) (view entityId) mar of
         [] -> return () -- systemMessage "There's nothing nearby."
         ar -> startSelect SelectKind_Action ar
 
+interact :: Game ()
+interact = whenJustM getNearest $ \eid ->
+    withFocusId $ actOnEntity eid . EntityAction_Interact Nothing
+    where
+    getNearest = focusLocation >>= \case
+        Nothing -> return Nothing
+        Just lc -> do
+            ns <- map (view _1) <$> focusInteractionsInRange
+            let calcDist = fmap (calcDistance lc) . view (entity.oracleLocation)
+            let eds = mapMaybe (\n -> (n,) <$> calcDist n) ns
+            return $ viaNonEmpty head $ map fst $ sortWith snd eds
+
 talkToNPC :: Game ()
 talkToNPC = withFocusId $ \fid -> do
+    -- TODO: rewrite this as interact parametrized with NPCs only.
     whenJustM (viaNonEmpty head <$> focusNPCsInRange) $ \eid -> do
-        actOnEntity eid $ EntityAction_Interact (InteractionName "Talk to") fid
+        actOnEntity eid $ EntityAction_Interact Nothing fid
 
 --------------------------------------------------------------------------------
 

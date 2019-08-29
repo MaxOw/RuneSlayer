@@ -58,6 +58,9 @@ data AgentType = AgentType
 
    , field_agentKind          :: AgentKind
    , field_scriptName         :: Maybe ScriptName
+
+   , field_interactions       :: Map InteractionName [InteractionEffect]
+   , field_primaryInteraction :: Maybe InteractionName
    } deriving (Generic)
 
 data DelayedActionType

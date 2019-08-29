@@ -15,10 +15,14 @@ let inspectContent = InteractionEffect.InspectContent { InspectContent = unit }
 let heal =
   λ(x : Natural) →
     InteractionEffect.Heal { Heal = x }
+
+let talkTo = InteractionEffect.TalkTo { TalkTo = unit }
+
 in
 { transformInto  = transformInto
 , deleteSelf     = deleteSelf
 , inspectContent = inspectContent
 , heal           = heal
+, talkTo         = talkTo
 }
 

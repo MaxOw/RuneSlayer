@@ -196,8 +196,8 @@ selectMoveTarget m = whenJustM getFocusedItem $ \e -> case m of
     passToSlot e s = withFocusId $ \fi -> passItemToSlot e fi s
 
 selectAction :: (EntityId, InteractionName) -> Game ()
-selectAction (eid, eua)
-    = whenJustM (focusEntityId) $ actOnEntity eid . EntityAction_Interact eua
+selectAction (eid, eua) = whenJustM (focusEntityId)
+    $ actOnEntity eid . EntityAction_Interact (Just eua)
 
 unfocusItem :: Game ()
 unfocusItem = zoomInputState $ inventoryState.focusedItem .= Nothing

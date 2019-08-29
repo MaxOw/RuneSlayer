@@ -76,7 +76,7 @@ tutorialMovement = makeTransition checkStepDone pageDesc
         kleft  <- dirKeys MoveLeft
         kright <- dirKeys MoveRight
         let contentText = mconcat
-                [ "To move in cardinal directions press: \n"
+                [ "To move in cardinal directions press: "
                 , kdown  , " - South, "
                 , kup    , " - North, "
                 , kleft  , " - West, "
@@ -126,12 +126,12 @@ tutorialInteraction :: Game ()
 tutorialInteraction = makeTransition checkStepDone pageDesc
     where
     checkStepDone = andM
-        [ checkActivated SelectAction
+        [ checkActivated Interact
         , isNormalMode
         , currentStepSatisified ]
     pageDesc = do
         let titleText = "Interactions."
-        ksac <- showActionKeySeqs NormalMode SelectAction
+        ksac <- showActionKeySeqs NormalMode Interact
         let contentText = mconcat
                 [ "Press ", ksac, " to interact with NPCs and the environment."
                 , "Try striking a conversation with Bertram or inspecting "

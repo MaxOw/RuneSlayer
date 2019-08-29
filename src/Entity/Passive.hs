@@ -134,7 +134,13 @@ processAction = \case
     _ -> return ()
     where
     performInteraction t = mapM_ (performInteractionEffect t) <=< getInteraction
-    getInteraction a = use $ self.passiveType.interactions.at(a).traverse
+    getInteraction = \case
+        Just a  -> use $ self.passiveType.interactions.at(a).traverse
+        Nothing -> do
+            ma <- use $ self.passiveType.primaryInteraction
+            case ma of
+                Nothing -> return []
+                Just a  -> use $ self.passiveType.interactions.at(a).traverse
 
 performInteractionEffect :: EntityId -> InteractionEffect -> Update Passive ()
 performInteractionEffect t = \case
@@ -142,6 +148,7 @@ performInteractionEffect t = \case
     InteractionEffect_InspectContent  -> inspectContent
     InteractionEffect_DeleteSelf      -> selfDelete
     InteractionEffect_Heal          h -> heal h
+    InteractionEffect_TalkTo          -> return ()
     where
     transformInto n = do
         rs <- use $ context.resources

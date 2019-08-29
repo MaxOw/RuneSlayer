@@ -447,8 +447,7 @@ addWorldAction :: WorldAction -> Update x ()
 addWorldAction a = actions %= (:> directAtWorld a)
 
 useItem :: HasEntityId e EntityId => e -> Update x ()
-useItem e = addAction e . EntityAction_Interact n =<< use (context.selfId)
-    where n = InteractionName "Use"
+useItem e = addAction e . EntityAction_Interact Nothing =<< use (context.selfId)
 
 --------------------------------------------------------------------------------
 -- Render Actions

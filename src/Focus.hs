@@ -54,8 +54,8 @@ focusItemsInRange = filter isItem
     isItem x = Set.member PassiveKind_Item
         $ x^.entity.oraclePassiveType.traverse.passiveKind
 
-focusActionsInRange :: Game [(EntityWithId, InteractionName)]
-focusActionsInRange = concatMap f <$> allInRange
+focusInteractionsInRange :: Game [(EntityWithId, InteractionName)]
+focusInteractionsInRange = concatMap f <$> allInRange
     where
     allInRange = (++)
         <$> focusEntityKindInRange EntityKind_Passive defaultActionRange

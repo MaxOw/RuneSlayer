@@ -1,13 +1,18 @@
-let animations = ./AnimationNames.dhall
-let passives   = ./PassiveNames.dhall
-let enums      = ./Enums.dhall
-let constants  = ./Constants.dhall
-let names      = ./AgentNames.dhall
+let animations  = ./AnimationNames.dhall
+let passives    = ./PassiveNames.dhall
+let types       = ./Types.dhall
+let enums       = ./Enums.dhall
+let constants   = ./Constants.dhall
+let names       = ./AgentNames.dhall
+let interaction = ./InteractionEffect.dhall
 
-let AgentKind     = enums.AgentKind
-let ScriptName    = enums.ScriptName
-let EquipmentSlot = enums.EquipmentSlot
-let Reactivity    = enums.Reactivity
+let Entry             = types.Entry
+let AgentKind         = enums.AgentKind
+let ScriptName        = enums.ScriptName
+let EquipmentSlot     = enums.EquipmentSlot
+let Reactivity        = enums.Reactivity
+let InteractionEffect = types.InteractionEffect
+let InteractionEntry  = Entry Text (List InteractionEffect)
 
 let defaultStats = constants.defaultStats
 
@@ -16,13 +21,7 @@ let defaultUnitType =
   , pursueRange = 0 -- meters
   }
 
-let defaultAgent =
-  { animateWhenStopped = False
-  , renderOffset       = None (List Double)
-  , equipmentSlots     = [] : List EquipmentSlot
-  }
-
-let defaultEnemyAgent = defaultAgent //
+let defaultEnemyAgent = constants.defaultAgent //
   { unitType  = defaultUnitType
   , agentKind = AgentKind.Enemy
   , hostileTowards = [ Reactivity.Life ]
@@ -79,6 +78,11 @@ let spider = defaultEnemyAgent //
     }
   }
 
+let action =
+  λ(n : Text) →
+  λ(v : List InteractionEffect) →
+    { mapKey = n, mapValue = v }
+
 let npcBertram = defaultHumanNPCAgent //
   { name       = names.npcBertram
   , scriptName = ScriptName.Bertram
@@ -99,6 +103,11 @@ let npcBertram = defaultHumanNPCAgent //
     , maxSpeed    = constants.fastWalkingSpeed
     }
   , equipmentSlots = constants.defaultEquipmentSlots
+
+  , interactions =
+    [ action "Talk to" [ interaction.talkTo ]
+    ]
+  , primaryInteraction = Some "Talk to"
   }
 
 in

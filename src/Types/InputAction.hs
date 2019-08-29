@@ -53,7 +53,8 @@ data InputAction
    | SelectItemToDrop
    | SelectItemToFocus
    | UseFocusedItem
-   | SelectAction
+   | SelectInteraction
+   | Interact
    | TalkToNPC
    | FastQuit
    | InputAction_NextPage

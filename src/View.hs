@@ -11,9 +11,6 @@ import Engine (graphics, context, RenderAction)
 -- import Engine.Debug (logOnce)
 import Graphics.GL
 
--- import Data.Vector (Vector)
--- import qualified Data.Vector.Generic as Vector
-
 import Types (Graphics, Renderer)
 import Types.Entity.Common
 import Types.Config
@@ -39,7 +36,6 @@ import qualified Engine.Layout.Alt as Engine (drawLayout)
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
--- import ResourceManager (lookupResource, ResourceMap)
 
 --------------------------------------------------------------------------------
 
@@ -141,35 +137,6 @@ renderViewportDebug True  p s = renderShape $ def
 
 renderBBoxesDebug :: HasEntity e Entity => [e] -> St -> RenderAction
 renderBBoxesDebug _ _ = mempty
-
-{-
-randomTilesGen :: St -> BBox Float -> RenderAction
-randomTilesGen st b = renderComposition $ map (renderTile st) ps
-    where
-    off :: V2 Int
-    off = V2 (-10) (-10) -- fmap floor $  b^.minPoint
-
-    ps = [V2 x y | x <- take 23 [off^._x..], y <- take 23 [off^._y..]]
-
-renderTile :: St -> V2 Int -> RenderAction
-renderTile st v@(V2 x y)
-    = renderSprite st tile
-    & translate (fmap fromIntegral v)
-    where
-    p0 = 2147480011
-    p1 = 2147480197
-    tile = mkTile $ mod (x*p0 + y*p1 + x*y*p0*p1 + x + y*x) 3
-    mkTile i = Resource.mkEnvRect (42 + i*2) 10 2 2
-
-renderSprite :: HasResources c ResourceMap => c -> Resource -> RenderAction
-renderSprite ctx r = case lookupResource r $ ctx^.resources of
-    Nothing  -> renderShape shape
-    Just img -> T.scale (1/32) $ renderImg img
-    where
-    shape = def
-        & shapeType   .~ SimpleSquare
-        & color       .~ Color.opaque Color.gray
--}
 
 renderEntities :: HasEntity e Entity => [e] -> St -> RenderAction
 renderEntities es st = Engine.renderComposition rs

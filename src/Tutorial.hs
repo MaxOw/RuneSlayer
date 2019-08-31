@@ -65,18 +65,29 @@ tutorialStart = whenM welcomeDialogDone nextTutorialStep
         [ checkActivated InputAction_NextPage
         , isNormalMode ]
 
+keyActivatedPart :: InputMode -> InputAction -> Game ContentPart
+keyActivatedPart m k = do
+    kt <- showActionKeySeqs m k
+    ks <- checkActivated k
+    return $ ckeys ks kt
+
+makeTaskPart :: Game (Text -> ContentPart)
+makeTaskPart = do
+    s <- currentStepSatisified
+    return $ ctask s
+
 tutorialMovement :: Game ()
 tutorialMovement = makeTransition checkStepDone pageDesc
     where
     checkStepDone = allM checkActivated $ map SimpleMove boundedRange
     pageDesc = do
         let titleText = "Movement."
-        let dirKeys = showActionKeySeqs NormalMode . SimpleMove
+        let dirKeys = keyActivatedPart NormalMode . SimpleMove
         kup    <- dirKeys MoveUp
         kdown  <- dirKeys MoveDown
         kleft  <- dirKeys MoveLeft
         kright <- dirKeys MoveRight
-        let contentText = mconcat
+        let contentText =
                 [ "To move in cardinal directions press: "
                 , kdown  , " - South, "
                 , kup    , " - North, "
@@ -87,6 +98,7 @@ tutorialMovement = makeTransition checkStepDone pageDesc
             & title   .~ titleText
             & content .~ contentText
 
+
 tutorialPickingUpItems :: Game ()
 tutorialPickingUpItems = makeTransition checkStepDone pageDesc
     where
@@ -95,10 +107,11 @@ tutorialPickingUpItems = makeTransition checkStepDone pageDesc
         , currentStepSatisified ]
     pageDesc = do
         let titleText = "Picking things up."
-        kpai <- showActionKeySeqs NormalMode PickupAllItems
-        let contentText = mconcat
+        kpai <- keyActivatedPart NormalMode PickupAllItems
+        f <- makeTaskPart
+        let contentText =
                 [ "You can press ", kpai, " to pickup all nearby items. "
-                , "Try moving near that bow over there and picking it up."
+                , f "Try moving near that bow over there and picking it up."
                 ]
         return $ def
             & title   .~ titleText
@@ -113,9 +126,9 @@ tutorialInventory = makeTransition checkStepDone pageDesc
         , isNormalMode ]
     pageDesc = do
         let titleText = "Inventory."
-        kinv <- showActionKeySeqs NormalMode $ SetMode InventoryMode
-        kesc <- showActionKeySeqs InventoryMode $ InputAction_Escape
-        let contentText = mconcat
+        kinv <- keyActivatedPart NormalMode $ SetMode InventoryMode
+        kesc <- keyActivatedPart InventoryMode $ InputAction_Escape
+        let contentText =
                 [ "Press ", kinv, " to open inventory. "
                 , "Pressing ", kesc, " should take you back out."
                 ]
@@ -132,11 +145,12 @@ tutorialInteraction = makeTransition checkStepDone pageDesc
         , currentStepSatisified ]
     pageDesc = do
         let titleText = "Interactions."
-        ksac <- showActionKeySeqs NormalMode Interact
-        let contentText = mconcat
+        ksac <- keyActivatedPart NormalMode Interact
+        f <- makeTaskPart
+        let contentText =
                 [ "Press ", ksac, " to interact with NPCs and the environment."
-                , "Try striking a conversation with Bertram or inspecting "
-                , "the contents of that chest."
+                , f "Try striking a conversation with Bertram or inspecting "
+                , f "the contents of that chest."
                 ]
         return $ def
             & title   .~ titleText
@@ -151,13 +165,13 @@ tutorialRunes = makeTransition checkStepDone pageDesc
         , currentStepSatisified ]
     pageDesc = do
         let titleText = "Runes."
-        krunic <- showActionKeySeqs NormalMode StartRunicMode
-        -- kesc <- showActionKeySeqs RunicMode $ InputAction_Escape
-        let contentText = mconcat
+        krunic <- keyActivatedPart NormalMode StartRunicMode
+        f <- makeTaskPart
+        let contentText =
                 [ "Press ", krunic, " to start runic mode. "
                 , "By answering questions about the runes you've learned, "
                 , "you can load runic points (RP) that you will need when "
-                , "attacking/defending. Try loading some RP."
+                , "attacking/defending. ", f "Try loading some RP."
                 ]
         return $ def
             & title   .~ titleText
@@ -171,8 +185,8 @@ tutorialAttack = makeTransition checkStepDone pageDesc
         , currentStepSatisified ]
     pageDesc = do
         let titleText = "Attacking enemies."
-        kattack <- showActionKeySeqs NormalMode ExecuteAttack
-        let contentText = mconcat
+        kattack <- keyActivatedPart NormalMode ExecuteAttack
+        let contentText =
                 [ "Now assuming you have bow and quiver with arrows equipped "
                 , "(or maybe some other weapon) and have enough runic points "
                 , "loaded to be able to attack, you can move within attack "
@@ -186,6 +200,18 @@ tutorialDone :: Game ()
 tutorialDone = tutorialState.currentPage .= Nothing
 
 --------------------------------------------------------------------------------
+
+ckeys :: Bool -> Text -> ContentPart
+ckeys s x = def
+    & ff#contentType .~ ContentType_Keys
+    & ff#satisfied   .~ s
+    & ff#text        .~ x
+
+ctask :: Bool -> Text -> ContentPart
+ctask s x = def
+    & ff#contentType .~ ContentType_Task
+    & ff#satisfied   .~ s
+    & ff#text        .~ x
 
 display :: Game (Maybe Layout)
 display = return . fmap layout_tutorialPage =<< use (tutorialState.currentPage)
@@ -204,7 +230,7 @@ handleAction (DirectedEntityAction _ act) = case act of
     EntityAction_SelfPassTo   p _ -> satisfyFor p TutorialStep_PickingUpItems
     EntityAction_Interact      {} -> satisfy      TutorialStep_Interaction
     EntityAction_SelfAttacked _ p -> satisfyFor p TutorialStep_Attack
-    EntityAction_PlayerAction (PlayerAction_UpdateRune _) -> satisfyRunes
+    EntityAction_PlayerAction (PlayerAction_UpdateRune True) -> satisfyRunes
     _ -> return ()
     where
     satisfyRunes = satisfy TutorialStep_Runes

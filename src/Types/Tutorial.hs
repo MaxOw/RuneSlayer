@@ -23,9 +23,24 @@ data TimerType
    | TimerType_PostPageDelay
    deriving (Eq, Ord, Generic)
 
+data ContentType
+   = ContentType_Text
+   | ContentType_Keys
+   | ContentType_Task
+instance Default ContentType where def = ContentType_Text
+
+data ContentPart = ContentPart
+   { field_contentType :: ContentType
+   , field_satisfied   :: Bool
+   , field_text        :: Text
+   } deriving (Generic)
+instance Default ContentPart
+instance IsString ContentPart where
+    fromString x = def { field_text = fromString x }
+
 data TutorialPage = TutorialPage
    { field_title   :: Text
-   , field_content :: Text
+   , field_content :: [ContentPart]
    , field_timer   :: Maybe Duration
    } deriving (Generic)
 instance Default TutorialPage

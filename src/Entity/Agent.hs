@@ -84,10 +84,14 @@ update x ctx = runUpdate x ctx $ do
     integrateLocationWhenWalking
     separateCollision
 
-    allMatch _EntityAction_AddItem (addItems . toList)
+    allMatch _EntityAction_AddItem (addItems notify . toList)
     mapM_ processAction =<< use (self.processOnUpdate)
     mapM_ processUpdateOnce =<< use (self.updateOnce)
     self.processOnUpdate .= mempty
+
+    where
+    notify = whenM ((AgentKind_Player ==) <$> useAgentKind) $
+        systemMessage "Not enough space in inventory."
 
 decideAction :: Update Agent ()
 decideAction = useAgentKind >>= \case

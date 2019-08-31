@@ -285,12 +285,16 @@ addItems
     :: HasEquipment       x Equipment
     => HasLocation        x Location
     => HasUpdateOnce      x (Set UpdateOnce)
-    => [(EntityId, Maybe EquipmentSlot)] -> Update x ()
-addItems is = prepItems
+    => Update x ()
+    -> [(EntityId, Maybe EquipmentSlot)]
+    -> Update x ()
+addItems notify is = prepItems
     >>= equipItems
     >>= stuffIntoContainers
-    >>= mapM_ dropItem
-    >> flagUpdate UpdateOnce_Equipment
+    >>= \ds -> do
+    mapM_ dropItem ds
+    when (not $ null ds) notify
+    flagUpdate UpdateOnce_Equipment
     where
     prepItems = catMaybes <$> mapM (\(e, ms) -> fmap (,ms) <$> queryById e) is
 

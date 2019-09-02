@@ -43,9 +43,10 @@ let defaultHumanAgent = defaultAgent //
   , hostileTowards  = [ Reactivity.Shadow ]
   , autoTargetRange = 8 -- meters
 
-  , renderOffset       = [0.0, 0.8]
+  , renderOffset    = [0.0, 0.8]
+  , labelOffset     = [0.0, 1.7]
 
-  , equipmentSlots = defaultEquipmentSlots
+  , equipmentSlots  = defaultEquipmentSlots
   }
 
 in

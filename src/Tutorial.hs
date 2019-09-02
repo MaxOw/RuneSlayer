@@ -25,10 +25,6 @@ import InputState.Actions (showActionKeySeqs, getMode)
 import qualified Data.Timer as Timer
 import Focus (focusEntityId)
 
--- TODO:
--- Add step about runes
--- Add step about attacking enemies...
-
 --------------------------------------------------------------------------------
 
 defaultTutorialState :: TutorialState
@@ -88,7 +84,10 @@ tutorialMovement = makeTransition checkStepDone pageDesc
         kleft  <- dirKeys MoveLeft
         kright <- dirKeys MoveRight
         let contentText =
-                [ "To move in cardinal directions press: "
+                [ "Hello. This is a little tutorial to ease you "
+                , "into the controls better, since they are a bit unusual "
+                , "(they're based on vi). Let's start with movement, "
+                , "to move in cardinal directions press: "
                 , kdown  , " - South, "
                 , kup    , " - North, "
                 , kleft  , " - West, "
@@ -186,11 +185,12 @@ tutorialAttack = makeTransition checkStepDone pageDesc
     pageDesc = do
         let titleText = "Attacking enemies."
         kattack <- keyActivatedPart NormalMode ExecuteAttack
+        f <- makeTaskPart
         let contentText =
                 [ "Now assuming you have bow and quiver with arrows equipped "
                 , "(or maybe some other weapon) and have enough runic points "
                 , "loaded to be able to attack, you can move within attack "
-                , "range of the enemy and press ", kattack, " to attack. "
+                , "range of the enemy and press ", kattack, " to ", f "attack. "
                 ]
         return $ def
             & title   .~ titleText

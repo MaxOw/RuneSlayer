@@ -81,8 +81,8 @@ Requirements for first release: v0.1
   - Display tutorial steps.                                                  (#)
   - Check tutorial steps progress conditions.                                (#)
   - Mark satisfied conditions.                                               (#)
+  - Show possible action overlays.                                           (#)
 
-* Add help commands/window.                                                  [ ]
 * Add System Messages.                                                       [X]
 
 * NPCs.                                                                      [X]
@@ -104,6 +104,8 @@ Requirements for first release: v0.1
 * Sqlite powered, nix-like immutable data storage.                           [ ]
 * Make all dhall files Interpretable instead of going via JSON.              [ ]
   - Put all resources into single DataIndex type loaded from Index.dhall     ( )
+
+* Add help commands/window.                                                  [ ]
 
 * World generator.                                                           [ ]
   - Add WorldGen.dhall watcher/reloader.                                     ( )

@@ -9,14 +9,16 @@ import Engine
 import qualified Engine.Layout.Alt as Alt
 
 import Types
+import Types.Entity.Common (Location)
 import Types.InputState
 import Types.Entity.PassiveType (InteractionName(..))
 import Types.Entity.Agent (PlayerStatus)
 import InputState (getMode, isPanelVisible, getInputString, showActionKeySeqs)
 import Skills.Runes (getRuneByName)
-import Focus (focusEntity)
+import Focus
 import GameState.Query
 import Entity
+import Entity.HasField
 import Types.Entity.Common (EntityStatus(..))
 import GameState (getGameOverScreen)
 
@@ -41,6 +43,48 @@ gameMenuLayout = Alt.composition . catMaybes <$> sequence
 
 --------------------------------------------------------------------------------
 
+overlayLayout :: (Location -> V2 Float) -> Game Alt.Layout
+overlayLayout conv = Alt.composition . catMaybes <$> sequence
+    [ interactionOverlay conv
+    , attackOverlay conv
+    ]
+
+interactionOverlay :: (Location -> V2 Float) -> Game (Maybe Alt.Layout)
+interactionOverlay conv = runMaybeT $ do
+    (e, _) <- MaybeT focusNearestInteractionInRange
+    n      <- MaybeT $ pure $ e^.entity.oraclePrimaryInteraction
+    MaybeT $ overlayLabelFor conv NormalMode Interact e (Unwrapped n)
+
+attackOverlay :: (Location -> V2 Float) -> Game (Maybe Alt.Layout)
+attackOverlay conv = runMaybeT $ do
+    f <- MaybeT $ focusEntity
+    s <- MaybeT $ pure $ f^.oraclePlayerStatus
+    t <- MaybeT $ pure $ s^.target
+    e <- MaybeT $ lookupEntity t
+    if s^.canAttackTarget
+    then MaybeT $ overlayLabelFor conv NormalMode ExecuteAttack e "Attack"
+    else MaybeT $ return Nothing
+
+overlayLabelFor
+    :: HasEntity e Entity
+    => (Location -> V2 Float)
+    -> InputMode -> InputAction -> e -> Text
+    -> Game (Maybe Alt.Layout)
+overlayLabelFor conv m act (view entity -> e) lab = do
+    rightMode <- (m ==) <$> getMode
+    case e^.oracleLocation of
+        Just loc | rightMode -> do
+            kact <- showActionKeySeqs m act
+            let off = fromMaybe 0 $ e^.oracleLabelOffset
+            let pos = conv $ over _Wrapped (+off) loc
+            return $ Just $ layout_actionableLabel kact lab pos
+        _ -> return Nothing
+
+moveOverhead :: Location -> Location
+moveOverhead = over (_Wrapped._y) (+unitHeight)
+    where
+    unitHeight = 1.7
+
 statusPanesLayout :: Game Alt.Layout
 statusPanesLayout = Alt.composition . catMaybes <$> sequence
  -- [ rIf GroundPreviewPanel    groundPreviewPanelLayout
@@ -62,13 +106,16 @@ gameOverScreenLayout = getGameOverScreen >>= \case
     Just gs -> return $ Just $ layout_gameOverScreen gs
 
 statusPanelLayout :: Game (Maybe Alt.Layout)
-statusPanelLayout = withPlayerStatus $ \ps ->
-    let hir = Set.member EntityStatus_HostilesInRange (ps^.status)
-    in layout_statusPanel $ def
-        & ff#hostilesInRange .~ hir
-        & ff#attackMode      .~ ps^.ff#attackMode
-        & ff#health          .~ makeHealth ps
-        & ff#runes           .~ makeRunes  ps
+statusPanelLayout = do
+    ir <- not . null <$> focusItemsInRange
+    withPlayerStatus $ \ps ->
+        let hr = Set.member EntityStatus_HostilesInRange (ps^.status)
+        in layout_statusPanel $ def
+            & ff#hostilesInRange .~ hr
+            & ff#itemsInRange    .~ ir
+            & ff#attackMode      .~ ps^.ff#attackMode
+            & ff#health          .~ makeHealth ps
+            & ff#runes           .~ makeRunes  ps
     where
     makeHealth s = def
         & ff#points    .~ s^.health._Wrapped

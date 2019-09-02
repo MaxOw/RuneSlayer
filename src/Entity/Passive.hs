@@ -206,19 +206,21 @@ render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
 
 oracle :: Passive -> EntityQuery a -> Maybe a
 oracle x = \case
-    EntityQuery_Location      -> x^.location
-    EntityQuery_Name          -> Just showName
-    EntityQuery_Volume        -> Just $ x^.passiveType.volume
-    EntityQuery_FittingSlots  -> Just $ x^.passiveType.fittingSlots
-    EntityQuery_PassiveType   -> Just $ x^.passiveType
-    EntityQuery_Content       -> Just $ x^.content
-    EntityQuery_MaxVolume     -> x^?passiveType.containerType.traverse.maxVolume
-    EntityQuery_ItemAnimation -> x^.passiveType.animation
-    EntityQuery_BehindBody    -> x^.passiveType.behindBody
-    EntityQuery_Stats         -> Just $ x^.passiveType.stats
-    EntityQuery_Interactions  -> Just $ Map.keys $ x^.passiveType.interactions
-    EntityQuery_Owner         -> x^.owner
-    _                         -> Nothing
+    EntityQuery_Location           -> x^.location
+    EntityQuery_Name               -> Just showName
+    EntityQuery_Volume             -> Just $ x^.passiveType.volume
+    EntityQuery_FittingSlots       -> Just $ x^.passiveType.fittingSlots
+    EntityQuery_PassiveType        -> Just $ x^.passiveType
+    EntityQuery_Content            -> Just $ x^.content
+    EntityQuery_MaxVolume          -> x^?passiveType.containerType.traverse.maxVolume
+    EntityQuery_ItemAnimation      -> x^.passiveType.animation
+    EntityQuery_BehindBody         -> x^.passiveType.behindBody
+    EntityQuery_Stats              -> Just $ x^.passiveType.stats
+    EntityQuery_Owner              -> x^.owner
+    EntityQuery_LabelOffset        -> x^.passiveType.labelOffset
+    EntityQuery_Interactions       -> Just $ Map.keys $ x^.passiveType.interactions
+    EntityQuery_PrimaryInteraction -> x^.passiveType.primaryInteraction
+    _                              -> Nothing
     where
     nn = x^.passiveType.name._Wrapped
     ct = x^.content.to length

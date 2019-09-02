@@ -14,7 +14,6 @@ import Types.Entity.Animation (AnimationKind)
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.Equipment
-import Types.Entity.Common (calcDistance)
 import Equipment (contentList)
 import GameState.Query (canFitIntoContainer)
 import InputState
@@ -259,17 +258,9 @@ selectInteraction = do
         ar -> startSelect SelectKind_Action ar
 
 interact :: Game ()
-interact = getNearest >>= \case
+interact = focusNearestInteractionInRange >>= \case
     Nothing  -> Messages.add "There's nothing to interact with nearby."
-    Just eid -> withFocusId $ actOnEntity eid . EntityAction_Interact Nothing
-    where
-    getNearest = focusLocation >>= \case
-        Nothing -> return Nothing
-        Just lc -> do
-            ns <- map (view _1) <$> focusInteractionsInRange
-            let calcDist = fmap (calcDistance lc) . view (entity.oracleLocation)
-            let eds = mapMaybe (\n -> (n,) <$> calcDist n) ns
-            return $ viaNonEmpty head $ map fst $ sortWith snd eds
+    Just (e,_) -> withFocusId $ actOnEntity e . EntityAction_Interact Nothing
 
 talkToNPC :: Game ()
 talkToNPC = withFocusId $ \fid -> do

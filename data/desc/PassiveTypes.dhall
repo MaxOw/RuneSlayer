@@ -175,38 +175,38 @@ let defaultStaticType = defaultItemType //
   { zindex = 1002
   }
 
-let woodenChest = defaultStaticType //
-  { name       = names.woodenChest
-  , volume     = 100
-  , appearance = [ appearance.sprite sprites.woodenChest1 ]
-  , interactions =
-    [ action "Open" [ useEffect.transformInto names.woodenChest_open ]
-    , action "Open and inspect contents of"
-      [ useEffect.transformInto names.woodenChest_open
-      , useEffect.inspectContent ]
-    ]
-  , primaryInteraction = Some "Open and inspect contents of"
+let woodenChest_common = defaultStaticType //
+  { volume = 100
   , containerType = Some
     { maxVolume  = 100
     , allowKinds = [ PassiveKind.Item ]
     , showCount  = False
     }
+  , labelOffset = [0.0, 0.8]
   }
 
-let woodenChest_open = defaultStaticType //
+let inspectActionName = "Inspect"
+
+let woodenChest = woodenChest_common //
+  { name       = names.woodenChest
+  , appearance = [ appearance.sprite sprites.woodenChest1 ]
+  , interactions =
+    [ action inspectActionName
+      [ useEffect.transformInto names.woodenChest_open
+      , useEffect.inspectContent ]
+    , action "Open" [ useEffect.transformInto names.woodenChest_open ]
+    ]
+  , primaryInteraction = Some inspectActionName
+  }
+
+let woodenChest_open = woodenChest_common //
   { name       = names.woodenChest_open
-  , volume     = 100
   , appearance = [ appearance.sprite sprites.woodenChest1_open ]
   , interactions =
-    [ action "Close" [ useEffect.transformInto names.woodenChest ]
-    , action "Inspect contents of" [ useEffect.inspectContent ]
+    [ action inspectActionName [ useEffect.inspectContent ]
+    , action "Close" [ useEffect.transformInto names.woodenChest ]
     ]
-  , primaryInteraction = Some "Inspect contents of"
-  , containerType = Some
-    { maxVolume  = 100
-    , allowKinds = [ PassiveKind.Item ]
-    , showCount  = False
-    }
+  , primaryInteraction = Some inspectActionName
   }
 
 let woodenDoor = defaultStaticType //

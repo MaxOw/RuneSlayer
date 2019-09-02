@@ -62,6 +62,15 @@ focusInteractionsInRange = concatMap f <$> allInRange
         <*> focusEntityKindInRange EntityKind_Dynamic defaultActionRange
     f x = map (x,) $ x^.entity.oracleInteractions.traverse
 
+focusNearestInteractionInRange :: Game (Maybe (EntityWithId, InteractionName))
+focusNearestInteractionInRange = focusLocation >>= \case
+    Nothing -> return Nothing
+    Just lc -> do
+        ns <- focusInteractionsInRange
+        let calcDist = fmap (calcDistance lc) . view (_1.entity.oracleLocation)
+        let eds = mapMaybe (\n -> (n,) <$> calcDist n) ns
+        return $ viaNonEmpty head $ map fst $ sortWith snd eds
+
 focusNPCsInRange :: Game [EntityWithId]
 focusNPCsInRange = filter isNPC
     <$> focusEntityKindInRange EntityKind_Dynamic defaultActionRange

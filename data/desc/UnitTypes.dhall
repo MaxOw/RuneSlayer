@@ -53,7 +53,8 @@ let bat = defaultEnemyAgent //
     , pursueRange = 10 -- meters
     }
 
-  , renderOffset = Some [0.0, 0.8]
+  , renderOffset = [0.0, 0.8]
+  , labelOffset  = [0.0, 1.9]
   }
 
 let spider = defaultEnemyAgent //
@@ -76,6 +77,7 @@ let spider = defaultEnemyAgent //
     { attackSpeed = 1   -- seconds
     , pursueRange = 10  -- meters
     }
+  , labelOffset = [0.0, 0.8]
   }
 
 let action =

@@ -90,6 +90,7 @@ data PassiveType = PassiveType
    , field_primaryInteraction :: Maybe InteractionName
    , field_zindex             :: Word32
    , field_renderOffset       :: Maybe V2D
+   , field_labelOffset        :: Maybe V2D -- Needed when drawing UI labels, et c.
    } deriving (Generic)
 
 data ContainerType = ContainerType
@@ -97,11 +98,6 @@ data ContainerType = ContainerType
    , field_allowKinds :: Set PassiveKind
    , field_showCount  :: Bool
    } deriving (Generic)
-
---------------------------------------------------------------------------------
-
-primaryInteraction :: Lens' PassiveType (Maybe InteractionName)
-primaryInteraction = ff#primaryInteraction
 
 --------------------------------------------------------------------------------
 
@@ -129,6 +125,9 @@ instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSO
 instance Wrapped PassiveTypeName
 instance Rewrapped PassiveTypeName PassiveTypeName
 instance Default PassiveTypeName
+
+instance Wrapped InteractionName
+instance Rewrapped InteractionName InteractionName
 
 instance ToJSON InteractionEffect where
     toEncoding = genericToEncoding customOptionsJSON

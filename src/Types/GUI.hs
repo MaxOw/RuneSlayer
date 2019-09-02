@@ -9,6 +9,7 @@ import Types.EntityAction (AttackMode)
 
 data Status = Status
    { field_hostilesInRange :: Bool
+   , field_itemsInRange    :: Bool
    , field_attackMode      :: AttackMode
    , field_health          :: StatusPoints
    , field_runes           :: StatusPoints

@@ -78,6 +78,7 @@ update x ctx = runUpdate x ctx $ do
     decideAction
     stepScript
 
+    updatePlayerStatus -- This is a bit... not ideal.
     updateActiveAnimation
     updateTimer
     updateDelayedActions
@@ -132,7 +133,7 @@ decideAction = useAgentKind >>= \case
     pursueOrAttackTarget eunit = whenJustM getTarget $ \targetEntity -> do
         attackRange <- getAttackRange
         let pursueRange = eunit^.ff#pursueRange
-        dist <- fromMaybe pursueRange <$> distanceToEntity targetEntity
+        dist <- fromMaybe (1/0) <$> distanceToEntity targetEntity
         if dist < attackRange
         then executeAttack -- attackTarget eunit targetEntity
         else if dist < pursueRange
@@ -236,6 +237,10 @@ updateStats = do
         let mwr = mei^?traverse.entity.oracleStats.traverse.ff#attackRange
         return $ fromMaybe br mwr
 
+updatePlayerStatus :: Update Agent ()
+updatePlayerStatus = whenM ((AgentKind_Player ==) <$> useAgentKind) $ do
+    self.canAttackTarget <~ canExecuteAttack
+
 updateDelayedActions :: Update Agent ()
 updateDelayedActions = do
     as <- use $ self.ff#delayedActions
@@ -286,9 +291,12 @@ executeAttack = whenM canExecuteAttack $ do
             executeAttackAt te $ loc^._Wrapped - sloc^._Wrapped
 
 canExecuteAttack :: Update Agent Bool
-canExecuteAttack = (&&)
-    <$> checkTimeUp Timer_Attack
-    <*> canAgentAttack
+canExecuteAttack = do
+    tu <- checkTimeUp Timer_Attack
+    aa <- canAgentAttack
+    mt <- fmap join . mapM queryById =<< use (self.target)
+    wa <- maybe (return False) weaponCanAttack mt
+    return $ and [tu, aa, wa]
     where
     canAgentAttack = useAgentKind >>= \x -> if x == AgentKind_Player
         then enougthRunicPoints
@@ -302,28 +310,25 @@ canExecuteAttack = (&&)
 getWeaponKind :: Update Agent (Maybe WeaponKind)
 getWeaponKind = do
     mei <- getEquippedItem EquipmentSlot_PrimaryWeapon
-    let mwk = mei^?traverse.entity.oraclePassiveType.traverse.weaponKind.traverse
-    return mwk
+    return $ mei^?traverse.entity.oraclePassiveType.traverse.weaponKind.traverse
 
 executeAttackAt :: EntityWithId -> V2 Float -> Update Agent ()
-executeAttackAt targetEntity vectorToTarget = do
+executeAttackAt t vectorToTarget = do
     wkind <- fromMaybe WeaponKind_Slashing <$> getWeaponKind
-    whenWeaponCanAttack wkind targetEntity $ do
-        orientTowards targetEntity
-        startAttackAnimation wkind vectorToTarget
-        power <- getAttackPower
-        executeAttackByKind power wkind
-        startTimer Timer_Attack =<< getAttackCooldown
-        self.runicPoints %= max 0 . subtract (Wrapped $ Unwrapped power)
+    orientTowards t
+    startAttackAnimation wkind vectorToTarget
+    power <- getAttackPower
+    delay <- getAttackDelay
+    executeAttackByKind delay power wkind
+    startTimer Timer_Attack =<< getAttackCooldown
+    self.runicPoints %= max 0 . subtract (Wrapped $ Unwrapped power)
     where
-    executeAttackByKind power wkind = do
-        delay <- getAttackDelay
-        let tid = targetEntity^.entityId
-        addDelayedAction delay $ case wkind of
-            WeaponKind_Slashing   -> DelayedActionType_Attack tid power
-            WeaponKind_Thrusting  -> DelayedActionType_Attack tid power
-            WeaponKind_Projecting ->
-                DelayedActionType_FireProjectile vectorToTarget tid power
+    tid = t^.entityId
+    executeAttackByKind delay power = addDelayedAction delay . \case
+        WeaponKind_Slashing   -> DelayedActionType_Attack tid power
+        WeaponKind_Thrusting  -> DelayedActionType_Attack tid power
+        WeaponKind_Projecting ->
+            DelayedActionType_FireProjectile vectorToTarget tid power
 
 startAttackAnimation :: WeaponKind -> V2 Float -> Update Agent ()
 startAttackAnimation wkind vectorToTarget = do
@@ -333,14 +338,13 @@ startAttackAnimation wkind vectorToTarget = do
         WeaponKind_Thrusting  -> Animation.Thrust
         WeaponKind_Projecting -> Animation.Fire
 
-whenWeaponCanAttack
-    :: HasEntity e Entity
-    => WeaponKind -> e -> Update Agent () -> Update Agent ()
-whenWeaponCanAttack wkind targetEntity act = do
+weaponCanAttack :: HasEntity e Entity => e -> Update Agent Bool
+weaponCanAttack targetEntity = do
+    wkind <- fromMaybe WeaponKind_Slashing <$> getWeaponKind
     attackRange <- getAttackRange
-    dist <- fromMaybe attackRange <$> distanceToEntity targetEntity
+    dist <- fromMaybe (1/0) <$> distanceToEntity targetEntity
     canFire <- canFireProjectile wkind
-    when (dist < attackRange && canFire) act
+    return $ dist < attackRange && canFire
     where
     canFireProjectile WeaponKind_Projecting = isJust <$> selectProjectile
     canFireProjectile _ = return True
@@ -561,20 +565,18 @@ render x ctx = withZIndex x $ locate x $ renderComposition
 
 oracle :: Agent -> EntityQuery a -> Maybe a
 oracle x = \case
-    EntityQuery_Name           -> Just $ unAgentTypeName $ x^.agentType.name
-    EntityQuery_Location       -> Just $ x^.location
-    EntityQuery_Equipment      -> Just $ x^.equipment
-    EntityQuery_AgentType      -> Just $ x^.agentType
-    EntityQuery_CollisionShape -> locate x <$> x^.collisionShape
-    EntityQuery_Reactivity     -> Just $ x^.agentType.reactivity
-    EntityQuery_Status         -> Just $ x^.status
-    EntityQuery_PlayerStatus   -> Just $ upcast x
-    EntityQuery_Interactions   -> npcInteractions
-    _                          -> Nothing
-    where
-    npcInteractions = if x^.agentType.agentKind == AgentKind_NPC
-        then Just [ InteractionName "Talk to" ]
-        else Nothing
+    EntityQuery_Name               -> Just $ unAgentTypeName $ x^.agentType.name
+    EntityQuery_Location           -> Just $ x^.location
+    EntityQuery_Equipment          -> Just $ x^.equipment
+    EntityQuery_AgentType          -> Just $ x^.agentType
+    EntityQuery_CollisionShape     -> locate x <$> x^.collisionShape
+    EntityQuery_Reactivity         -> Just $ x^.agentType.reactivity
+    EntityQuery_Status             -> Just $ x^.status
+    EntityQuery_PlayerStatus       -> Just $ upcast x
+    EntityQuery_Interactions       -> Just $ Map.keys $ x^.agentType.interactions
+    EntityQuery_PrimaryInteraction -> x^.agentType.primaryInteraction
+    EntityQuery_LabelOffset        -> x^.agentType.labelOffset
+    _                              -> Nothing
 
 --------------------------------------------------------------------------------
 

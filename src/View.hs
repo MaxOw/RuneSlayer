@@ -1,3 +1,4 @@
+{-# Language PatternSynonyms #-}
 module View
     ( renderView
     , prerenderUpdate
@@ -7,7 +8,8 @@ import Delude hiding (context)
 
 import qualified Linear.Matrix as Matrix
 import qualified Engine
-import Engine (graphics, context, RenderAction)
+import Engine (graphics, context, RenderAction, Engine)
+import Engine.Layout.Alt (Layout, makeRenderLayout, pattern BottomLeft)
 -- import Engine.Debug (logOnce)
 import Graphics.GL
 
@@ -94,10 +96,24 @@ renderGame _delta st = do
         -- , setZIndexAtLeast 20000 $ st^.ff#overview
         ]
 
+    whenJustM focusEntity $ const $ drawScaledLayout magScale
+        =<< overlayLayout (locationToLayout viewPos viewScale)
     whenJustM focusEntity $ const $ Engine.drawLayout =<< gameMenuLayout
     whenJustM gameOverScreenLayout Engine.drawLayout
 
     Engine.swapBuffers
+
+-- this is crappy like that for now, later I'll need to fix it in Carnot
+drawScaledLayout :: Float -> Layout -> Engine us ()
+drawScaledLayout s l = when (s == 1.0) $ do
+    projM <- orthoProjection $ def
+        & boxAlign .~ BottomLeft
+        -- & scale    .~ s
+    draw projM =<< makeRenderLayout l
+
+locationToLayout :: V2 Float -> Float -> Location -> V2 Float
+locationToLayout camPos s loc = (v - camPos)^*s
+    where v = Unwrapped loc
 
 --------------------------------------------------------------------------------
 -- Debug Render Modes

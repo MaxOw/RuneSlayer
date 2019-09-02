@@ -8,3 +8,7 @@ import HasField
 #define MakeFieldLens(X) X :: HasF "X" s a => Lens' s a; X = ff#X
 
 MakeFieldLens(stats)
+MakeFieldLens(interactions)
+MakeFieldLens(primaryInteraction)
+MakeFieldLens(labelOffset)
+MakeFieldLens(canAttackTarget)

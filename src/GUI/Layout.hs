@@ -14,6 +14,18 @@ import qualified Color
 
 --------------------------------------------------------------------------------
 
+layout_actionableLabel :: Text -> Text -> V2 Float -> Layout
+layout_actionableLabel key msg loc = absolute locInPixels con
+    & size.height .~ 20 @@ px
+    & size.width  .~ 300 @@ px
+    where
+    con = hrel [ (120 @@ px, klab), (1 @@ fill, txt) ] & align .~ Center
+    locInPixels = fmap ((@@ px) . realToFrac) loc
+    txt  = textline fs msg & align .~ MiddleLeft & padding.left .~ 20 @@ px
+    klab = textline fk key & align .~ MiddleRight
+    fs = makeFs 12 Color.red
+    fk = makeFs 12 Color.white
+
 layout_statusPanel :: Status -> Layout
 layout_statusPanel s
     = composition [ healthAndRunes, statusText ]
@@ -23,8 +35,9 @@ layout_statusPanel s
     statusText = textline fs msg & align .~ BottomRight
     fs = makeFs 14 warningColor
 
-    msg = hr <> am
+    msg = mconcat [hr, ir, am]
     hr = bool "" "!" $ s^.ff#hostilesInRange
+    ir = bool "" "I" $ s^.ff#itemsInRange
     am = case s^.ff#attackMode of
         AttackMode_Manual -> "M"
         AttackMode_Auto   -> "A"

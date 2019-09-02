@@ -61,6 +61,8 @@ data AgentType = AgentType
 
    , field_interactions       :: Map InteractionName [InteractionEffect]
    , field_primaryInteraction :: Maybe InteractionName
+
+   , field_labelOffset        :: Maybe V2D -- Needed when drawing UI labels, et c.
    } deriving (Generic)
 
 data DelayedActionType
@@ -103,6 +105,7 @@ data Agent = Agent
    , field_script             :: Script
 
    , field_isMarked           :: Bool
+   , field_canAttackTarget    :: Bool
    } deriving (Generic)
 instance HasMaxSpeed Agent Speed where
     maxSpeed = ff#fullStats.ff#maxSpeed
@@ -119,6 +122,8 @@ data PlayerStatus = PlayerStatus
    , field_status             :: Set EntityStatus
    , field_attackMode         :: AttackMode
    , field_fullStats          :: Stats
+   , field_target             :: Maybe EntityId
+   , field_canAttackTarget    :: Bool
    } deriving (Generic)
 
 --------------------------------------------------------------------------------

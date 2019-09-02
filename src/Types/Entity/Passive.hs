@@ -40,9 +40,6 @@ passiveKind = ff#passiveKind
 allowKinds :: Lens' ContainerType (Set PassiveKind)
 allowKinds = ff#allowKinds
 
-interactions :: Lens' PassiveType (Map InteractionName [InteractionEffect])
-interactions = ff#interactions
-
 behindBody :: Lens' PassiveType (Maybe Bool)
 behindBody = ff#behindBody
 

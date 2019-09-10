@@ -42,6 +42,7 @@ import qualified Data.Collider as Collider
 
 import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
 import qualified Tutorial
+import qualified Runes
 
 descPath :: FilePath
 descPath = "data/desc"
@@ -54,7 +55,7 @@ initSt = do
     scro <- newScroller $ def
         & bufferMargin .~ Engine.ScrollerMargin_Pixels (64 + 8)
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
-    st <- defaultSt eix scro
+    st <- defaultSt conf eix scro
 
     loadFonts
     rs <- loadResources conf
@@ -87,7 +88,7 @@ initSt = do
 
     overview = ff#overview
 
-loadRuneSet :: Config -> Engine us RuneSet
+loadRuneSet :: MonadIO m => Config -> m RuneSet
 loadRuneSet conf = do
     let rsname = conf^.ff#runeSet
     rus <- loadDhall descPath "RuneSets.dhall"
@@ -121,8 +122,6 @@ loadResources conf = case conf^.debugMode of
         dialogs <- loadDialogs
         -- mapM_ print dialogs
 
-        rust <- loadRuneSet conf
-
         let res = def
                 & imgMap        .~ HashMap.fromList rs
                 & spriteMap     .~ ss
@@ -130,7 +129,6 @@ loadResources conf = case conf^.debugMode of
                 & passiveMap    .~ buildMap ps
                 & agentsMap     .~ buildMap us
                 & dialogMap     .~ dialogs
-                & runeSet       .~ rust
         let pr = fmap (Animation.makeAnimation res)
                $ HashMap.fromList
                $ map (over _1 AnimationName)
@@ -200,9 +198,9 @@ spawnPassiveToAction a = directAtWorld
 
 --------------------------------------------------------------------------------
 
-defaultSt :: MonadIO m => EntityIndex -> Scroller -> m St
-defaultSt eix scro = do
-    gs <- defaultGameState eix
+defaultSt :: MonadIO m => Config -> EntityIndex -> Scroller -> m St
+defaultSt conf eix scro = do
+    gs <- defaultGameState conf eix
     return $ St
         { field_resources  = def
         , field_inputState = defaultInputState
@@ -215,8 +213,10 @@ defaultSt eix scro = do
         , field_wires      = def
         }
 
-defaultGameState :: MonadIO m => EntityIndex -> m GameState
-defaultGameState eix = do
+defaultGameState :: MonadIO m => Config -> EntityIndex -> m GameState
+defaultGameState conf eix = do
+    rust <- loadRuneSet conf
+    rs <- Runes.init rust
     return $ GameState
         { field_entities       = eix
         , field_actions        = []
@@ -224,9 +224,9 @@ defaultGameState eix = do
         , field_gameScale      = 64
         , field_menuScale      = 1.0
         , field_frameCount     = 0
-        , field_changeCache    = mempty
         , field_gameOverScreen = Nothing
         , field_tutorialState  = Tutorial.defaultTutorialState
         , field_systemMessages = def
+        , field_runesState     = rs
         }
 

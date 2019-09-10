@@ -450,35 +450,14 @@ performInteractionEffect t = \case
 
 processPlayerAction :: PlayerAction -> Update Agent ()
 processPlayerAction = \case
-    PlayerAction_AddRunes      r -> addRunes r
-    PlayerAction_SelectRune      -> selectCurrentRune
-    PlayerAction_UpdateRune    s -> updateCurrentRune s
+    PlayerAction_UpdateRune  p s -> updateCurrentRune s p
     PlayerAction_SetAttackMode m -> setAttackMode m
     where
-    addRunes r = do
-        systemMessage "New runes learned!"
-        self.ff#runicLevel %= addKnownRunes r
+    updateCurrentRune s = when s . addRunicPoints
 
-    selectCurrentRune = use (self.ff#selectedRune) >>= \case
-        Just  _ -> return ()
-        Nothing -> do
-            rlvl <- use $ self.ff#runicLevel
-            currentTime <- use $ context.ff#frameTimestamp
-            self.ff#selectedRune .= selectRune currentTime rlvl
-
-    updateCurrentRune s = do
-        updateRuneUsage s
-        when s addRunicPoints
-        self.ff#selectedRune .= Nothing
-
-    addRunicPoints = do
-        np <- RunicPoints <$> use (self.ff#runicLevel.ff#level._Wrapped)
+    addRunicPoints p = do
         mx <- use $ self.ff#maxRunicPoints
-        self.runicPoints %= min mx . (np+)
-
-    updateRuneUsage s = use (self.ff#selectedRune) >>= \case
-        Nothing -> return ()
-        Just sn -> self.ff#runicLevel %= updateUsage sn (RuneUsage s)
+        self.runicPoints %= min mx . (p+)
 
     setAttackMode = assign (self.ff#attackMode)
 

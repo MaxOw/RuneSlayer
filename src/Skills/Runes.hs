@@ -1,11 +1,12 @@
 module Skills.Runes
     ( RuneSet, RunicLevel, RunicPoints(..), RuneUsage(..)
 
-    , updateUsage
+    , updateRuneMastery
     , selectRune
     , getRuneByName
     , addKnownRunes
     , isCorrectAnswer
+    , alterIx
 
     , buildRuneSet
     -- , getRunesByKind
@@ -31,11 +32,8 @@ import Data.IxSet.Typed (IxSet, Indexable, IsIndexOf)
 maxMasteryLevel :: MasteryLevel
 maxMasteryLevel = 10
 
-updateUsage :: RuneName -> RuneUsage -> RunicLevel -> RunicLevel
-updateUsage n u l = l
-    & ff#mastery  %~ alterIx alterMastery n
-    & ff#lastUsed .~ Just n
-    & ff#count    +~ 1
+updateRuneMastery :: RuneName -> RuneUsage -> MasterySet -> MasterySet
+updateRuneMastery n u = alterIx alterMastery n
     where
     alterMastery = Just . updateMastery . fromMaybe defRune
     updateMastery m = m

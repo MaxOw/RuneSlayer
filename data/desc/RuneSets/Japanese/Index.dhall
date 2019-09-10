@@ -4,6 +4,7 @@ let makeHiraganaEntry =
   λ(q : Text) →
   λ(r : Text) →
     { name    = "hiragana_${r}"
+    , runeId  = q
     , kind    = "hiragana"
     , level   = l
     , query   = "Reading of ${q}?"

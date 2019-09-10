@@ -3,7 +3,7 @@
 module Types.Skills.Runes where
 
 import Delude hiding (Indexable)
--- import Data.Time.Clock (UTCTime)
+import Data.Time.Clock (UTCTime)
 
 import Data.Data (Data)
 import Data.IxSet.Typed
@@ -36,6 +36,7 @@ instance FromJSON ValidationStrategy where
 
 data Rune = Rune
    { field_name       :: RuneName
+   , field_runeId     :: Text
    , field_kind       :: RuneKind
    , field_level      :: RunePowerLevel
    , field_query      :: Text
@@ -61,6 +62,7 @@ newtype     UseCount =     UseCount Int deriving (Default, Data, Eq, Ord, Num)
 
 data RuneMastery = RuneMastery
    { field_name          :: RuneName
+   , field_runeId        :: Text
    , field_kind          :: RuneKind
    , field_level         :: RunePowerLevel
    , field_query         :: Text
@@ -88,8 +90,8 @@ instance Indexable MasteryIxs RuneMastery where
         (ixGen (Proxy @MasteryLevel))
 
 data RuneUsage = RuneUsage
-   -- { field_timestamp :: UTCTime
-   { field_success   :: Bool
+   { field_timestamp :: UTCTime
+   , field_success   :: Bool
    } deriving (Generic, Data, Eq, Ord)
 
 data RunicLevel = RunicLevel

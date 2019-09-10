@@ -76,7 +76,7 @@ data InputState = InputState
    , field_active         :: Map ActiveAction Int
    , field_inputString    :: Seq Char
    , field_inputKeymap    :: InputKeymap
-   , field_deactivators   :: Map Keypress [InputAction]
+   , field_deactivators   :: Map Key [InputAction]
    , field_selectState    :: Maybe SelectState
    , field_visiblePanels  :: Set PanelName
    , field_inventoryState :: InventoryState

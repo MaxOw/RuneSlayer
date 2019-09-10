@@ -4,6 +4,7 @@ import Delude
 
 import Types.GUI.Common as Types.GUI
 import Types.EntityAction (AttackMode)
+import Types.Runes (RuneResult)
 
 --------------------------------------------------------------------------------
 
@@ -45,9 +46,9 @@ instance Default StoryDialog
 --------------------------------------------------------------------------------
 
 data RunicMode = RunicMode
-   { field_showQuery  :: Bool
-   , field_queryText  :: Text
+   { field_queryText  :: Text
    , field_answerText :: Text
+   , field_prevResult :: Maybe RuneResult
    } deriving (Generic)
 instance Default RunicMode
 

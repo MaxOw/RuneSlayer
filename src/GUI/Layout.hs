@@ -121,23 +121,23 @@ layout_gameOverScreen gs = vrel
 
 layout_runicMode :: RunicMode -> Layout
 layout_runicMode desc = vseprel (8 @@ px)
-    [ (1 @@ fill, question)
+    [ (30 @@ px, result)
+    , (1 @@ fill, question)
     , (30 @@ px, answer)
     ]
     & padding.each .~ basePadding
     & size.width   .~ (350 @@ px)
-    & size.height  .~ (200 @@ px)
+    & size.height  .~ (240 @@ px)
     & align        .~ BottomLeft
     where
-    showIf x = if desc^.ff#showQuery then x else def
-    question = showIf $ composition
+    question = composition
         [ fillColorA bg
         , text fs (desc^.ff#queryText)
             & align .~ TopLeft
             & padding.each .~ 4 @@ px
         ]
 
-    answer = showIf $ border1 Color.gray $ composition
+    answer = border1 Color.gray $ composition
         [ fillColorA bg
         , textline fs (desc^.ff#answerText <> "▏")
             & align .~ MiddleLeft
@@ -145,6 +145,23 @@ layout_runicMode desc = vseprel (8 @@ px)
             & padding.left .~ 20 @@ px
         ]
 
+    result = case desc^.ff#prevResult of
+        Nothing -> def
+        Just r  -> renderResult r
+
+    renderResult r = if r^.ff#result
+        then resultBox Color.green "Correct!"
+        else resultBox Color.red   "Wrong!"
+
+    resultBox c t = border1 c $ composition
+        [ fillColorA bg
+        , textline (fsC c) t
+            & align .~ MiddleLeft
+            & padding.each .~ 8 @@ px
+            & padding.left .~ 20 @@ px
+        ]
+
     fs = makeFs 10 Color.black
+    fsC = makeFs 10
     bg = Color.withOpacity Color.lightgray 0.6
 

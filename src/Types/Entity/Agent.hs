@@ -10,7 +10,7 @@ import Types.Entity.Passive
 import Types.Entity.Reactivity
 import Types.Entity.Script
 import Types.Equipment
-import Types.Skills.Runes (RunicLevel, RunicPoints, RuneName)
+import Types.Skills.Runes (RunicPoints)
 import Data.Timer (Timer)
 
 --------------------------------------------------------------------------------
@@ -96,10 +96,8 @@ data Agent = Agent
    , field_baseStats          :: Stats
    , field_fullStats          :: Stats
 
-   , field_runicLevel         :: RunicLevel
    , field_runicPoints        :: RunicPoints
    , field_maxRunicPoints     :: RunicPoints
-   , field_selectedRune       :: Maybe RuneName
 
    , field_agentType          :: AgentType
    , field_script             :: Script
@@ -114,11 +112,9 @@ instance HasAnimateWhenStopped Agent Bool where
 
 -- Agent fields needed when displaying UI
 data PlayerStatus = PlayerStatus
-   { field_runicLevel         :: RunicLevel
-   , field_runicPoints        :: RunicPoints
+   { field_runicPoints        :: RunicPoints
    , field_maxRunicPoints     :: RunicPoints
    , field_health             :: Health
-   , field_selectedRune       :: Maybe RuneName
    , field_status             :: Set EntityStatus
    , field_attackMode         :: AttackMode
    , field_fullStats          :: Stats

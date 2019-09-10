@@ -230,7 +230,7 @@ handleAction (DirectedEntityAction _ act) = case act of
     EntityAction_SelfPassTo   p _ -> satisfyFor p TutorialStep_PickingUpItems
     EntityAction_Interact      {} -> satisfy      TutorialStep_Interaction
     EntityAction_SelfAttacked _ p -> satisfyFor p TutorialStep_Attack
-    EntityAction_PlayerAction (PlayerAction_UpdateRune True) -> satisfyRunes
+    EntityAction_PlayerAction (PlayerAction_UpdateRune _ True) -> satisfyRunes
     _ -> return ()
     where
     satisfyRunes = satisfy TutorialStep_Runes

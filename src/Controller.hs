@@ -22,11 +22,11 @@ import GameState
 import GameState.Query
 import Focus
 
-import Skills.Runes (getRuneByName, isCorrectAnswer)
 import Entity
 
 import qualified Tutorial
 import qualified Messages
+import qualified Runes
 
 --------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ goToMainMenu = Engine.closeWindow -- TODO
 interpretGameEvent :: Event -> Game ()
 interpretGameEvent (EventKey key _ keyState mods) = case keyState of
     KeyState'Pressed   -> handleKeyPressed  keypress
-    KeyState'Released  -> handleKeyReleased keypress
+    KeyState'Released  -> handleKeyReleased key
     KeyState'Repeating -> return ()
     where keypress = Keypress key mods
 interpretGameEvent _ = return ()
@@ -84,50 +84,18 @@ handleOtherModes kp = do
             handleActionFinalizers act
             Tutorial.inputActionHook act
             handleActivation act
-            registerDeactivation kp act
+            registerDeactivation (keypressKey kp) act
         Nothing -> customModeHandler kp =<< getMode
 
 -- TODO: Remember to clear all keypress deactivators on focus lost
 
-handleKeyReleased :: Keypress -> Game ()
+handleKeyReleased :: Key -> Game ()
 handleKeyReleased = mapM_ handleDeactivation <=< popDeactivators
 
 customModeHandler :: Keypress -> InputMode -> Game ()
 customModeHandler kp = \case
-    RunicMode -> customModeHandler_runicMode kp
+    RunicMode -> Runes.inputHandler kp
     _ -> return ()
-
-customModeHandler_runicMode :: Keypress -> Game ()
-customModeHandler_runicMode kp = case keypressKey kp of
-    k | Just ch <- keyToChar k -> appendInputString ch >> autoAccept
-    Key'Backspace -> backspaceInputString
-    Key'Enter     -> acceptAnswer
-    Key'Space     -> acceptAnswer
-    _             -> return ()
-    where
-    autoAccept = whenM verifyAnswer correctAnswer
-
-    acceptAnswer = do
-        ver <- verifyAnswer
-        if ver then correctAnswer else wrongAnswer
-
-    verifyAnswer = do
-        ans <- getInputString
-        mfo <- focusEntity
-        case flip entityOracle EntityQuery_PlayerStatus =<< mfo of
-            Nothing -> return False
-            Just ps -> do
-                let mr = flip getRuneByName (ps^.ff#runicLevel)
-                        =<< ps^.ff#selectedRune
-                return $ fromMaybe False $ isCorrectAnswer ans <$> mr
-
-    correctAnswer = do
-        actOnPlayer $ PlayerAction_UpdateRune True
-        inputActionEscape
-
-    wrongAnswer   = do
-        actOnPlayer $ PlayerAction_UpdateRune False
-        inputActionEscape
 
 --------------------------------------------------------------------------------
 
@@ -142,7 +110,7 @@ handleActivation = \case
     DropAllItems         -> dropAllItems
     ExecuteAttack        -> executeAttack
     SetAttackMode     m  -> setAttackMode m
-    StartRunicMode       -> startRunicMode
+    StartRunicMode       -> Runes.startRunicMode
     SelectItemToPickUp   -> selectItemToPickUp
     SelectItemMoveTarget -> selectItemMoveTarget
     SelectItemToDrop     -> selectItemToDrop
@@ -150,7 +118,6 @@ handleActivation = \case
     UseFocusedItem       -> useFocusedItem
     SelectInteraction    -> selectInteraction
     Interact             -> interact
-    TalkToNPC            -> talkToNPC
     FastQuit             -> Engine.closeWindow
     InputAction_NextPage -> nextPage
     InputAction_Escape   -> inputActionEscape
@@ -167,6 +134,7 @@ handleActionFinalizers :: InputAction -> Game ()
 handleActionFinalizers act = sequence_ $ map ($ act)
     [ finalize_clearInventoryState
     , finalize_clearInputString
+    , finalize_clearLastResult
     ]
 
 finalize_clearInventoryState :: InputAction -> Game ()
@@ -183,6 +151,9 @@ finalize_clearInventoryState = \case
 finalize_clearInputString :: InputAction -> Game ()
 finalize_clearInputString _ = clearInputString
 
+finalize_clearLastResult :: InputAction -> Game ()
+finalize_clearLastResult _ = Runes.clearLastResult
+
 --------------------------------------------------------------------------------
 
 defaultExit :: Event -> Game ()
@@ -191,11 +162,6 @@ defaultExit = \case
     _                    -> return ()
 
 --------------------------------------------------------------------------------
-
-startRunicMode :: Game ()
-startRunicMode = do
-    actOnPlayer PlayerAction_SelectRune
-    setMode RunicMode
 
 selectItemToPickUp :: Game ()
 selectItemToPickUp = do
@@ -261,12 +227,6 @@ interact :: Game ()
 interact = focusNearestInteractionInRange >>= \case
     Nothing  -> Messages.add "There's nothing to interact with nearby."
     Just (e,_) -> withFocusId $ actOnEntity e . EntityAction_Interact Nothing
-
-talkToNPC :: Game ()
-talkToNPC = withFocusId $ \fid -> do
-    -- TODO: rewrite this as interact parametrized with NPCs only.
-    whenJustM (viaNonEmpty head <$> focusNPCsInRange) $ \eid -> do
-        actOnEntity eid $ EntityAction_Interact Nothing fid
 
 --------------------------------------------------------------------------------
 

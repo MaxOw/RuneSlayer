@@ -51,13 +51,13 @@ updateBertram a s = case a of
         StoryStatus_Wait -> return s
         StoryStatus_InitialRunes -> do
             whenJustM queryPlayer $ \p -> do
-                rs <- use $ context.resources.runeSet
-                addRunes p $ runeSetByLevel 1 rs
+                -- rs <- use $ context.resources.runeSet
+                -- addRunes p $ runeSetByLevel 1 rs
+                return ()
             nextStatus
         _ -> nextStatus
 
     nextStatus = return $ s & ff#storyStatus %~ nextStop
-    addRunes p = addAction p . EntityAction_PlayerAction . PlayerAction_AddRunes
 
 stepBertram :: ScriptStateBertram -> Update Agent ScriptStateBertram
 stepBertram s = do

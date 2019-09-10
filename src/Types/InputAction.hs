@@ -55,7 +55,6 @@ data InputAction
    | UseFocusedItem
    | SelectInteraction
    | Interact
-   | TalkToNPC
    | FastQuit
    | InputAction_NextPage
    | InputAction_Escape

@@ -73,3 +73,22 @@ inputActionEscape = zoomInputState $ do
     escapeMode = \case
         _ -> NormalMode
 
+--------------------------------------------------------------------------------
+
+getInputString :: Game Text
+getInputString = uses (userState.inputState.ff#inputString)
+    (fromList @Text . toList)
+
+appendInputString :: Char -> Game ()
+appendInputString x = userState.inputState.ff#inputString %= (|> x)
+
+backspaceInputString :: Game ()
+backspaceInputString = userState.inputState.ff#inputString %= dropR1
+
+clearInputString :: Game ()
+clearInputString = userState.inputState.ff#inputString .= mempty
+
+dropR1 :: Snoc (t x) (t x) x x => t x -> t x
+dropR1 (l:>_) = l
+dropR1 x = x
+

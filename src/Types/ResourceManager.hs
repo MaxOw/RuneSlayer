@@ -7,7 +7,6 @@ import Types.Entity.TileSet
 import Types.Entity.Animation
 import Types.Entity.Passive
 import Types.Entity.Agent
-import Types.Skills.Runes
 import Types.Entity.Script
 
 data Resources = Resources
@@ -18,7 +17,6 @@ data Resources = Resources
    , field_agentsMap     :: HashMap AgentTypeName AgentType
    , field_animationsMap :: HashMap AnimationName Animation
    , field_dialogMap     :: HashMap StoryDialogName StoryDialog
-   , field_runeSet       :: RuneSet
    } deriving (Generic)
 instance Default Resources
 instance HasResources Resources Resources where resources = id

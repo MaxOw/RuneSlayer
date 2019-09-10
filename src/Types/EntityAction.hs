@@ -7,7 +7,7 @@ import Types.Entity.Common
 import Types.Entity.PassiveType (LoadoutEntry, PassiveTypeName, InteractionName)
 import Types.Entity.Animation (AnimationKind, Direction, Animation)
 import Types.Equipment (EquipmentSlot)
-import Types.Skills.Runes (RuneSet)
+import Types.Skills.Runes (RunicPoints)
 
 --------------------------------------------------------------------------------
 
@@ -27,9 +27,7 @@ data AttackMode
 instance Default AttackMode where def = AttackMode_Manual
 
 data PlayerAction
-   = PlayerAction_SelectRune
-   | PlayerAction_AddRunes RuneSet
-   | PlayerAction_UpdateRune Bool
+   = PlayerAction_UpdateRune RunicPoints Bool
    | PlayerAction_SetAttackMode AttackMode
    deriving (Generic, Show)
 

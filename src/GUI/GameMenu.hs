@@ -13,8 +13,7 @@ import Types.Entity.Common (Location)
 import Types.InputState
 import Types.Entity.PassiveType (InteractionName(..))
 import Types.Entity.Agent (PlayerStatus)
-import InputState (getMode, isPanelVisible, getInputString, showActionKeySeqs)
-import Skills.Runes (getRuneByName)
+import InputState (getMode, isPanelVisible, showActionKeySeqs)
 import Focus
 import GameState.Query
 import Entity
@@ -27,6 +26,7 @@ import GUI.Inventory
 import GUI.Layout
 import qualified Tutorial
 import qualified Messages
+import qualified Runes
 
 --------------------------------------------------------------------------------
 
@@ -37,9 +37,9 @@ gameMenuLayout = Alt.composition . catMaybes <$> sequence
     where
     overlayMenuLayout = getMode >>= \case
         StatusMode m -> statusMenuLayout m
-        RunicMode    -> runicModeLayout
+        RunicMode    -> Just <$> Runes.display
      -- SpaceMode    -> spaceMenuLayout
-        _            -> return Nothing -- layoutEmpty
+        _            -> return Nothing
 
 --------------------------------------------------------------------------------
 
@@ -163,19 +163,6 @@ storyDialog = do
             & title   .~ sd^.title
             & content .~ fromMaybe "" (Zipper.focus $ sd^.ff#dialogPages)
             & ff#nextPageKey .~ ksq
-
-runicModeLayout :: Game (Maybe Alt.Layout)
-runicModeLayout = do
-    ans <- getInputString
-    iom <- (RunicMode ==) <$> getMode
-    withPlayerStatus $ \ps -> layout_runicMode $ makeDesc iom ps ans
-    where
-    makeDesc iom ps ans = def
-        & ff#showQuery  .~ (isJust qt && iom)
-        & ff#queryText  .~ fromMaybe "" (view (ff#query) <$> qt)
-        & ff#answerText .~ ans
-        where
-        qt = flip getRuneByName (ps^.ff#runicLevel) =<< ps^.ff#selectedRune
 
 --------------------------------------------------------------------------------
 

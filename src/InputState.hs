@@ -30,7 +30,7 @@ import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
 import qualified Data.Zipper as Zipper
 
-import Engine (userState, EngineState)
+import Engine (userState, EngineState, Key)
 import Types (Game, St)
 import Types.EntityAction
 import Types.Entity.Common (EntityId)
@@ -61,11 +61,11 @@ deactivateAction action = do
         let val = fromMaybe 0 $ Map.lookup action activeMap
         in Map.insert action (max 0 $ val - 1) activeMap
 
-registerDeactivation :: Keypress -> InputAction -> Game ()
+registerDeactivation :: Key -> InputAction -> Game ()
 registerDeactivation kp action = zoomInputState $ do
     deactivators %= Map.insertWith (<>) kp [action]
 
-popDeactivators :: Keypress -> Game [InputAction]
+popDeactivators :: Key -> Game [InputAction]
 popDeactivators kp = zoomInputState $ do
     ia <- concat . Map.lookup kp <$> use deactivators
     deactivators %= Map.delete kp
@@ -104,21 +104,6 @@ appendHist kp = userState.inputState.hist <%= (|> kp)
 
 clearHist :: Game ()
 clearHist = userState.inputState.hist .= empty
-
---------------------------------------------------------------------------------
-
-getInputString :: Game Text
-getInputString = uses (userState.inputState.ff#inputString)
-    (fromList @Text . toList)
-
-appendInputString :: Char -> Game ()
-appendInputString x = userState.inputState.ff#inputString %= (|> x)
-
-backspaceInputString :: Game ()
-backspaceInputString = userState.inputState.ff#inputString %= dropR1
-
-clearInputString :: Game ()
-clearInputString = userState.inputState.ff#inputString .= mempty
 
 --------------------------------------------------------------------------------
 
@@ -210,10 +195,6 @@ appendSelect ch = zoomInputState $ selectState._Just.currentPrefix <%= (|> ch)
 
 backspaceSelect :: Game ()
 backspaceSelect = zoomInputState $ selectState._Just.currentPrefix %= dropR1
-
-dropR1 :: Snoc (t x) (t x) x x => t x -> t x
-dropR1 (l:>_) = l
-dropR1 x = x
 
 endSelect :: Game ()
 endSelect = zoomInputState $ selectState .= Nothing

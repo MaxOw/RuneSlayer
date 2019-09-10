@@ -7,6 +7,7 @@ import Types.Entity (EntityIndex)
 import Types.DirectedAction (DirectedAction)
 import Types.Tutorial (TutorialState)
 import Types.Messages (SystemMessages)
+import Types.Runes (RunesState)
 
 data GameOverScreen = GameOverScreen
    { field_timer       :: Duration
@@ -21,10 +22,10 @@ data GameState = GameState
    , field_gameScale      :: Float
    , field_menuScale      :: Float
    , field_frameCount     :: Word32
-   , field_changeCache    :: HashMap String Int
    , field_gameOverScreen :: Maybe GameOverScreen
    , field_tutorialState  :: TutorialState
    , field_systemMessages :: SystemMessages
+   , field_runesState     :: RunesState
    } deriving (Generic)
 
 type GameStateM = StateT GameState IO

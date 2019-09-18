@@ -15,7 +15,7 @@ data SpawnEntity
    = SpawnEntity_Passive PassiveTypeName
    | SpawnEntity_Agent   AgentTypeName
 
-   | SpawnEntity_Effect Location EffectKind
+   | SpawnEntity_Effect  EffectKind
    | SpawnEntity_Projectile Projectile
 
 data SpawnEntityOpts = SpawnEntityOpts

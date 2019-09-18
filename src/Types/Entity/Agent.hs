@@ -32,6 +32,8 @@ data UnitType = UnitType
 
 newtype AgentTypeName = AgentTypeName { unAgentTypeName :: Text }
     deriving (Default, Eq, Hashable, Generic, ToJSON, FromJSON)
+instance Wrapped AgentTypeName
+instance Rewrapped AgentTypeName AgentTypeName
 
 data AgentKind
    = AgentKind_Player

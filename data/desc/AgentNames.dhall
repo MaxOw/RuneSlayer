@@ -4,8 +4,8 @@ let AgentTypeName = types.AgentTypeName
 let makeName = AgentTypeName.MakeAgentTypeName
 
 in
-{ bat        = makeName "Bat"
-, spider     = makeName "Spider"
+{ bat        = makeName "bat"
+, spider     = makeName "spider"
 
-, npcBertram = makeName "Old Man Bartram"
+, npcBertram = makeName "npcBartram"
 }

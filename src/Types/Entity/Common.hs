@@ -15,7 +15,8 @@ import Text.Printf
 
 data EntityStatus
    = EntityStatus_HostilesInRange
-   deriving (Eq, Ord)
+   | EntityStatus_Ignore
+   deriving (Eq, Ord, Show)
 
 data Stats = Stats
    { field_attack      :: AttackPower

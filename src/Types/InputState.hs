@@ -10,6 +10,7 @@ import Types.EntityAction (AttackMode(..))
 import Types.Debug (DebugFlag(..))
 import Types.Equipment (EquipmentSlot)
 import Engine.Events.Types
+import Types.MapEditor
 
 import Types.InputAction as Types.InputState
 import Types.InputKeymap as Types.InputState
@@ -152,12 +153,12 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
         , InputStr "mm" (SetAttackMode AttackMode_Manual)
         , InputStr "ma" (SetAttackMode AttackMode_Auto)
 
+        , InputStr "M" (SetMode MapEditorMode)
+
         , InputStr "r" StartRunicMode
 
         , InputStr "f" Interact
         , InputStr "F" SelectInteraction
-        -- , InputStr "ff" SelectInteraction
-        -- , InputStr "ft" TalkToNPC
         ]
 
     , InputGroup InventoryMode
@@ -176,6 +177,20 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
     , InputGroup StoryDialogMode
         [ InputKey Key'Escape InputAction_Nothing
         , InputKey Key'Space  InputAction_NextPage
+        ]
+
+    , InputGroup MapEditorMode
+        [ InputStr "j" (SimpleMove MoveDown)
+        , InputStr "k" (SimpleMove MoveUp)
+        , InputStr "h" (SimpleMove MoveLeft)
+        , InputStr "l" (SimpleMove MoveRight)
+
+        , InputStr "n" (MapEditorAction MapEditorAction_SelectNext)
+        , InputStr "p" (MapEditorAction MapEditorAction_SelectPrev)
+        , InputStr "m" (MapEditorAction MapEditorAction_NextCategory)
+        , InputKey Key'Space (MapEditorAction MapEditorAction_PlaceEntity)
+
+        , InputStr "q" FastQuit
         ]
     ]
 

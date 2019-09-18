@@ -48,9 +48,11 @@ actOn x a = x & case a of
         | otherwise = x
 
     handleSetValue ev = case ev of
-        EntityValue_Location     v -> location     .~ Just v
-        EntityValue_Direction    v -> direction    .~ Just v
-        EntityValue_Animation    v -> animation    .~ v
+        EntityValue_Location     v -> location  .~ Just v
+        EntityValue_Direction    v -> direction .~ Just v
+        EntityValue_Animation    v -> animation .~ v
+        EntityValue_SetStatus    _ -> id
+        EntityValue_UnsetStatus  _ -> id
 
     setAnimationKind k _ = x
         & animationState.current.kind .~ k
@@ -186,7 +188,7 @@ fitIntoContainer ees = do
 --------------------------------------------------------------------------------
 
 render :: Passive -> RenderContext -> RenderAction
-render x ctx = ifJustLocation x $ maybeLocate x $ withZIndex x
+render x ctx = maybeLocate x $ withZIndex x
     $ addRenderOffset $ renderComposition
     [ itemRenderAction
     , renderDebug

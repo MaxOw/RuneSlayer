@@ -4,12 +4,16 @@ module Data.Zipper
     , null, isLeftmost, isRightmost
     , focus
     , left, right
+    , leftmost, rightmost
+    , leftCycle, rightCycle
     ) where
 
 import Relude hiding (fromList, empty, null)
+import Data.Default
 
 -- | List zipper data type.
 data Zipper a = Zipper [a] [a]
+instance Default (Zipper a) where def = empty
 
 -- | Create zipper from list.
 fromList :: [a] -> Zipper a
@@ -53,3 +57,28 @@ right z@(Zipper ls rs) = case ls of
     []     -> z
     [_]    -> z
     (a:as) -> Zipper as (a:rs)
+
+-- | Move zipper to the leftmost position.
+leftmost :: Zipper a -> Zipper a
+leftmost z
+    | isLeftmost z = z
+    | otherwise    = leftmost $ left z
+
+-- | Move zipper to the rightmost position.
+rightmost :: Zipper a -> Zipper a
+rightmost z
+    | isRightmost z = z
+    | otherwise     = rightmost $ right z
+
+-- | Move zipper one tooth to the left cycling to the end when at the beginning.
+leftCycle :: Zipper a -> Zipper a
+leftCycle z
+    | isLeftmost z = rightmost z
+    | otherwise    = left z
+
+-- | Move zipper one tooth to the right cycling to the beginning when at the end.
+rightCycle :: Zipper a -> Zipper a
+rightCycle z
+    | isRightmost z = leftmost z
+    | otherwise     = right z
+

@@ -13,7 +13,14 @@ import qualified Diagrams.TwoD.Transform as T
 import qualified Color
 
 actOn :: Effect -> EntityAction -> Effect
-actOn x _ = x
+actOn x a = x & case a of
+    EntityAction_SetValue v -> handleSetValue v
+    _ -> id
+    where
+    handleSetValue ev = case ev of
+        EntityValue_Location  v -> set location v
+        _                       -> id
+
 
 update :: Effect -> EntityContext -> Q (Maybe Effect, [DirectedAction])
 update x ctx = runUpdate x ctx $ do

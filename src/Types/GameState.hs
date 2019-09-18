@@ -8,6 +8,7 @@ import Types.DirectedAction (DirectedAction)
 import Types.Tutorial (TutorialState)
 import Types.Messages (SystemMessages)
 import Types.Runes (RunesState)
+import Types.MapEditor (MapEditorState)
 
 data GameOverScreen = GameOverScreen
    { field_timer       :: Duration
@@ -26,6 +27,7 @@ data GameState = GameState
    , field_tutorialState  :: TutorialState
    , field_systemMessages :: SystemMessages
    , field_runesState     :: RunesState
+   , field_mapEditorState :: MapEditorState
    } deriving (Generic)
 
 type GameStateM = StateT GameState IO

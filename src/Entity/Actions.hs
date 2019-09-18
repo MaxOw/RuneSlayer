@@ -193,8 +193,9 @@ addEffect k = do
     whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
         loc <- use $ self.location
         when (isWithinDistance maxEffectSpawnDistance loc cloc) $
-            let st = SpawnEntity_Effect loc k
-            in addWorldAction $ WorldAction_SpawnEntity st def
+            let st = SpawnEntity_Effect k
+            in addWorldAction $ WorldAction_SpawnEntity st $ def
+                & set actions [ EntityAction_SetValue $ EntityValue_Location loc ]
 
 spawnProjectile :: Projectile -> Update s ()
 spawnProjectile p =

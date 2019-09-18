@@ -3,8 +3,9 @@ module Types.InputAction where
 
 import Delude
 import Types.Entity.Animation (AnimationKind)
-import Types.EntityAction (AttackMode(..))
-import Types.Debug (DebugFlag(..))
+import Types.EntityAction (AttackMode)
+import Types.Debug (DebugFlag)
+import Types.MapEditor (MapEditorAction)
 
 data StatusMenu
    = StatusMenu_Inventory
@@ -17,6 +18,7 @@ data InputMode
    | StatusMode StatusMenu
    | RunicMode
    | SpaceMode
+   | MapEditorMode
    deriving (Show, Eq, Ord, Generic)
 instance Default InputMode where def = NormalMode
 
@@ -56,6 +58,7 @@ data InputAction
    | SelectInteraction
    | Interact
    | FastQuit
+   | MapEditorAction MapEditorAction
    | InputAction_NextPage
    | InputAction_Escape
    | InputAction_Nothing

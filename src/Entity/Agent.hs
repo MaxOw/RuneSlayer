@@ -15,6 +15,7 @@ import Types.Entity.Reactivity
 import Types.Entity.Agent
 import Types.Entity.Effect
 import Types.Entity.Passive
+import Types.Entity.Animation
 import Types.Equipment
 
 import Entity
@@ -71,6 +72,8 @@ actOn x a = x & case a of
         EntityValue_Location     v -> x & location .~ v
         EntityValue_Direction    _ -> x
         EntityValue_Animation    _ -> x
+        EntityValue_SetStatus    s -> x & status %~ Set.insert s
+        EntityValue_UnsetStatus  s -> x & status %~ Set.delete s
 
 update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
@@ -207,7 +210,10 @@ processUpdateOnce = \case
     makeBodyAnimation = do
         bns <- use (self.agentType.bodyAnimation)
         rs <- use $ context.resources
-        return $ mconcat $ mapMaybe (flip lookupAnimation rs) bns
+        return $ makeComposeAnimation rs bns
+
+makeComposeAnimation :: Resources -> [AnimationName] -> Animation
+makeComposeAnimation rs = mconcat . mapMaybe (flip lookupAnimation rs)
 
 updateStats :: Update Agent ()
 updateStats = do
@@ -549,13 +555,17 @@ oracle x = \case
     EntityQuery_Equipment          -> Just $ x^.equipment
     EntityQuery_AgentType          -> Just $ x^.agentType
     EntityQuery_CollisionShape     -> locate x <$> x^.collisionShape
-    EntityQuery_Reactivity         -> Just $ x^.agentType.reactivity
+    EntityQuery_Reactivity         -> agentReactivity
     EntityQuery_Status             -> Just $ x^.status
     EntityQuery_PlayerStatus       -> Just $ upcast x
     EntityQuery_Interactions       -> Just $ Map.keys $ x^.agentType.interactions
     EntityQuery_PrimaryInteraction -> x^.agentType.primaryInteraction
     EntityQuery_LabelOffset        -> x^.agentType.labelOffset
     _                              -> Nothing
+    where
+    agentReactivity
+        | Set.member EntityStatus_Ignore (x^.status) = Nothing
+        | otherwise = Just $ x^.agentType.reactivity
 
 --------------------------------------------------------------------------------
 
@@ -570,9 +580,10 @@ agentToEntity = makeEntity $ EntityParts
    }
 
 makeAgent :: Resources -> AgentType -> Agent
-makeAgent _rs p = def
+makeAgent rs p = def
     & equipment         .~ Equipment.create (p^.ff#equipmentSlots)
     & updateOnce        .~ Set.fromList [ UpdateOnce_Equipment ]
+    & animation         .~ makeComposeAnimation rs (p^.bodyAnimation)
     & health            .~ p^.stats.maxHealth
     & baseStats         .~ p^.stats
     & agentType         .~ p

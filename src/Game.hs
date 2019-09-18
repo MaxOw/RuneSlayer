@@ -43,6 +43,7 @@ import qualified Data.Collider as Collider
 import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
 import qualified Tutorial
 import qualified Runes
+import qualified MapEditor
 
 descPath :: FilePath
 descPath = "data/desc"
@@ -61,6 +62,7 @@ initSt = do
     rs <- loadResources conf
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
+    let mes = MapEditor.init rs
 
     let world = generateWorld rs wgconf
     rnd <- makeRenderOverview world
@@ -75,18 +77,20 @@ initSt = do
     EntityIndex.addTag EntityIndexTag_Camera pid eix
     EntityIndex.addTag EntityIndexTag_Player pid eix
     liftIO . GLFW.showWindow =<< use (graphics.context)
-    return $ st
-        & gameState.focusId .~ Just pid
-        & gameState.actions .~ spawnUnits <> spawnItems
-        & resources  .~ rs
-        & overview   .~ rnd
-        & config     .~ conf
+    return $ execState ?? st $ do
+        gameState.focusId        .= Just pid
+        gameState.actions        .= spawnUnits <> spawnItems
+        gameState.mapEditorState .= mes
+        resources                .= rs
+        overview                 .= rnd
+        config                   .= conf
     where
     playerEntity rs pli = toEntity $ makeAgent rs pli
         & location .~ locM 0 0
         & collisionShape .~ Just (Collider.circle 0 0.3)
 
     overview = ff#overview
+    mapEditorState = ff#mapEditorState
 
 loadRuneSet :: MonadIO m => Config -> m RuneSet
 loadRuneSet conf = do
@@ -156,6 +160,7 @@ loadDhallMap = liftIO . dhallToMap descPath
 
 endSt :: Engine St ()
 endSt = do
+    MapEditor.saveAdHoc
     rs <- uses (userState.resources.imgMap) HashMap.elems
     mapM_ (delObject glDeleteTextures . view texture) rs
 
@@ -228,5 +233,6 @@ defaultGameState conf eix = do
         , field_tutorialState  = Tutorial.defaultTutorialState
         , field_systemMessages = def
         , field_runesState     = rs
+        , field_mapEditorState = def
         }
 

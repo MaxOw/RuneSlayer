@@ -23,10 +23,13 @@ import Types.Debug
 import Entity
 import EntityIndex (lookupInRange)
 import GameState (isDebugFlagOn)
+import InputState (getMode, InputMode(..))
 
 import GUI.GameMenu
 
 import Focus
+
+import qualified MapEditor
 
 import Diagrams.TwoD.Transform (translate)
 import qualified Diagrams.TwoD.Transform as T
@@ -95,6 +98,9 @@ renderGame _delta st = do
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
         -- , setZIndexAtLeast 20000 $ st^.ff#overview
         ]
+
+    whenM ((MapEditorMode ==) <$> getMode) $
+        Engine.draw gameProjM . T.scale viewScale =<< MapEditor.renderSelected
 
     whenJustM focusEntity $ const $ drawScaledLayout magScale
         =<< overlayLayout (locationToLayout viewPos viewScale)

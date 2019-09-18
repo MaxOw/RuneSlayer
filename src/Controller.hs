@@ -11,6 +11,7 @@ import Engine.Events.Types hiding (Event)
 import Types (Game, Event)
 import Types.MenuState
 import Types.Entity.Animation (AnimationKind)
+import Types.Entity.Common (EntityStatus (..))
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.Equipment
@@ -27,6 +28,7 @@ import Entity
 import qualified Tutorial
 import qualified Messages
 import qualified Runes
+import qualified MapEditor
 
 --------------------------------------------------------------------------------
 
@@ -60,10 +62,32 @@ interpretGameEvent _ = return ()
 handleKeyPressed :: Keypress -> Game ()
 handleKeyPressed kp = do
     print kp
+    cm <- getMode
     mSelectState <- getSelectState
     case mSelectState of
         Just sm -> handleSelectMode sm kp
         Nothing -> handleOtherModes kp
+    m <- getMode
+    -- This is a bit ad hoc...
+    when (cm /= m) $ do
+        finalizeMode cm
+        initializeMode m
+
+finalizeMode :: InputMode -> Game ()
+finalizeMode = \case
+    MapEditorMode -> finMapEditor
+    _             -> return ()
+    where
+    finMapEditor = actOnFocusedEntity $ EntityAction_SetValue
+        $ EntityValue_UnsetStatus $ EntityStatus_Ignore
+
+initializeMode :: InputMode -> Game ()
+initializeMode = \case
+    MapEditorMode -> iniMapEditor
+    _             -> return ()
+    where
+    iniMapEditor = actOnFocusedEntity $ EntityAction_SetValue
+        $ EntityValue_SetStatus $ EntityStatus_Ignore
 
 handleSelectMode :: SelectState -> Keypress -> Game ()
 handleSelectMode s kp = case keypressKey kp of
@@ -119,6 +143,7 @@ handleActivation = \case
     SelectInteraction    -> selectInteraction
     Interact             -> interact
     FastQuit             -> Engine.closeWindow
+    MapEditorAction    a -> MapEditor.handleActivation a
     InputAction_NextPage -> nextPage
     InputAction_Escape   -> inputActionEscape
     InputAction_Nothing  -> return ()

@@ -25,10 +25,13 @@ data EntityIndexT a = EntityIndex
    , field_entities            :: VectorIndex (EntityWithIdT a)
 
    , field_dynamicIndex        :: IORef (HashSet EntityId)
-   , field_activatedList       :: IORef [EntityId]
+   , field_activatedSet        :: IORef (HashSet EntityId)
    , field_spatialIndex        :: FullMap EntityKind (SpatialIndex EntityId)
    , field_tags                :: IORef (Map EntityIndexTag EntityId)
    } deriving (Generic)
+
+activatedSet :: Lens' (EntityIndexT a) (IORef (HashSet EntityId))
+activatedSet = ff#activatedSet
 
 --------------------------------------------------------------------------------
 

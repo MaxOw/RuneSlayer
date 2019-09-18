@@ -22,7 +22,8 @@ import Text.Printf
 import Engine.Common.Types (minPoint, maxPoint, mkBBoxCenter)
 import Entity
 import Types.Entity.Common
-    (Location, Distance, EntityId (..), EntityKind (..), isWithinDistance)
+    (Location, Distance, EntityId (..)
+    , EntityKind (..), isWithinDistance, distanceInMeters)
 import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex
@@ -58,7 +59,7 @@ new conf = do
         , field_entities            = v
 
         , field_dynamicIndex        = dRef
-        , field_activatedList       = aRef
+        , field_activatedSet        = aRef
         , field_spatialIndex        = FullMap.build f
         , field_tags                = tRef
         }
@@ -67,6 +68,20 @@ noSetMoveVector :: EntityAction -> Bool
 noSetMoveVector (EntityAction_SetMoveVector {}) = False
 noSetMoveVector _                               = True
 
+-- Only update dynamic entities within some distance from camera
+-- This is a brain dead optimization thats good for now but ideally should be
+-- replaced by something smarter later.
+getDynamicIndex :: MonadIO m => EntityIndex -> m (HashSet EntityId)
+getDynamicIndex eix = do
+    mc <- liftIO $ lookupByTag EntityIndexTag_Camera eix
+    case mc >>= view (entity.oracleLocation) of
+        Nothing  -> readIORef $ eix^.dynamicIndex
+        Just loc -> do
+            let dynamicUpdateDist = distanceInMeters 11
+            let dynRange = makeRangeSquare loc dynamicUpdateDist
+            let conv = HashSet.fromList . map (view entityId)
+            conv <$> liftIO (lookupInRange EntityKind_Dynamic dynRange eix)
+
 update :: MonadIO m
     => Resources
     -> (WorldAction -> m (Maybe (Entity, SpawnEntityOpts)))
@@ -74,16 +89,16 @@ update :: MonadIO m
     -> [DirectedAction] -> Word32 -> EntityIndex -> m ()
 update res handleWorldAction handleEntityActions globalActions fct eix = do
 
-    actList <- readIORef $ eix^.activatedList
-    dynSet  <- readIORef $ eix^.dynamicIndex
-    -- List of entity ids to process in this update O(n+m)
-    let toProcIdList = actList <> toList dynSet
-    -- List of entities in need of processing O(n)
+    actSet <- readIORef $ eix^.activatedSet
+    dynSet <- getDynamicIndex eix
+    -- List of entity ids to process in this update
+    let toProcIdList = toList actSet <> toList dynSet
+    -- List of entities in need of processing
     toProcList <- liftIO $ lookupManyById toProcIdList eix
 
     cft <- liftIO getCurrentTime
 
-    -- List of results after applying update function on each entity toProc O(n)
+    -- List of results after applying update function on each entity toProc
     -- [(EntityId, (Maybe Entity, [DirectedEntityAction]))]
     updateResult <- forM toProcList $ \(EntityWithId k v) ->
         let ctx = EntityContext
@@ -144,7 +159,8 @@ update res handleWorldAction handleEntityActions globalActions fct eix = do
     -- Update list of activated entities to be processed in next frame
     directedList <- liftIO $ lookupManyById (HashMap.keys directedActionsMap) eix
     let f = filter (\e -> entityKind (e^.entity) /= EntityKind_Dynamic)
-    writeIORef (eix^.activatedList) (map (view entityId) $ f directedList)
+    writeIORef (eix^.activatedSet) $
+        HashSet.fromList $ map (view entityId) $ f directedList
 
     -- Update index of dynamic entities
     let dynDeleteSet = makeDynSet $ filter shouldDeleteDyn toReindexList
@@ -289,8 +305,11 @@ lookupInRadius :: MonadQ m
 lookupInRadius k loc d eix =
     filter isInRadius <$> lookupInRange k queryRange eix
     where
-    queryRange = mkBBoxCenter (loc^._Wrapped) (pure . (*2) $ d^._Wrapped)
+    queryRange = makeRangeSquare loc d
     isInRadius x = maybe False (isWithinDistance d loc) (x^.entity.oracleLocation)
+
+makeRangeSquare :: Location -> Distance -> RangeBBox
+makeRangeSquare loc d = mkBBoxCenter (loc^._Wrapped) (pure . (*2) $ d^._Wrapped)
 
 lookupManyById :: (Foldable t, MonadQ m)
     => t EntityId -> EntityIndex -> m [EntityWithId]

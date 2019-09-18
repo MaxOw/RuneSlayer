@@ -2,6 +2,7 @@ module InputState.Actions where
 
 import Delude
 import qualified Data.Zipper as Zipper
+import qualified Data.Text as Text
 
 import Engine (userState)
 import Types (Game)
@@ -77,7 +78,7 @@ inputActionEscape = zoomInputState $ do
 
 getInputString :: Game Text
 getInputString = uses (userState.inputState.ff#inputString)
-    (fromList @Text . toList)
+    (Text.strip . fromList @Text . toList)
 
 appendInputString :: Char -> Game ()
 appendInputString x = userState.inputState.ff#inputString %= (|> x)

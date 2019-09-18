@@ -59,8 +59,7 @@ inputHandler kp = case keypressKey kp of
     -- autoAccept = whenM verifyAnswer acceptAnswer
 
 acceptAnswer :: Game ()
-acceptAnswer = do
-    ans <- getInputString
+acceptAnswer = getInputString >>= \ans -> when (ans /= "") $ do
     ver <- verifyAnswer ans
     updateUsage ver ans
     clearInputString

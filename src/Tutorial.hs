@@ -2,6 +2,7 @@ module Tutorial
     ( defaultTutorialState
     , restart, skipAll
     , update
+    , handleActivation
     , display
     , inputActionHook
     , entityActionsHook
@@ -42,6 +43,11 @@ update :: Game ()
 update = do
     tutorialState.timer %= Timer.update defaultDelta
     handleTutorialStep =<< use (tutorialState.currentStep)
+
+handleActivation :: TutorialAction -> Game ()
+handleActivation = \case
+    TutorialAction_SkipAll -> skipAll
+    TutorialAction_Restart -> restart
 
 handleTutorialStep :: TutorialStep -> Game ()
 handleTutorialStep = \case

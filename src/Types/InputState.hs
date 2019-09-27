@@ -159,6 +159,9 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
 
         , InputStr "f" Interact
         , InputStr "F" SelectInteraction
+
+        , InputStr "Ts" (TutorialAction TutorialAction_SkipAll)
+        , InputStr "Tr" (TutorialAction TutorialAction_Restart)
         ]
 
     , InputGroup InventoryMode

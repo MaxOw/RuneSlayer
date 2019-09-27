@@ -144,6 +144,7 @@ handleActivation = \case
     Interact             -> interact
     FastQuit             -> Engine.closeWindow
     MapEditorAction    a -> MapEditor.handleActivation a
+    TutorialAction     a -> Tutorial.handleActivation a
     InputAction_NextPage -> nextPage
     InputAction_Escape   -> inputActionEscape
     InputAction_Nothing  -> return ()

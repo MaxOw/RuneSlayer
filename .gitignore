@@ -6,5 +6,9 @@ ignore
 *.ignore
 *.[ao]
 *.hi
+*.ps
+*.hp
+*.aux
+*.prof
 beam
 deps

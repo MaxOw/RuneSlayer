@@ -36,7 +36,7 @@ import qualified Diagrams.TwoD.Transform as T
 import Engine.Graphics.Utils (mkMatHomo2)
 import Engine.Graphics
 import Engine.Common.Types
-import Engine.Graphics.Scroller (updateScroller', makeRenderScroller)
+import qualified Engine.Graphics.Scroller.Cells as Scroller
 import qualified Engine.Layout.Alt as Engine (drawLayout)
 
 import qualified Data.Colour       as Color
@@ -58,7 +58,14 @@ renderMainMenu delta st = do
 
 renderGame :: Renderer
 renderGame _delta st = do
-    renderScroller <- prerenderUpdate False st
+    zoomOutScrollerDebug   <- isDebugFlagOn DebugFlag_ZoomOutScroller
+    showDynamicBBoxesDebug <- isDebugFlagOn DebugFlag_ShowDynamicBoundingBoxes
+    hideScrollerDebug      <- isDebugFlagOn DebugFlag_HideScroller
+
+    renderScroller <- if hideScrollerDebug
+        then return mempty
+        else prerenderUpdate False st
+        -- else makeRenderTiles st
     renderSetup
 
     (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
@@ -70,10 +77,6 @@ renderGame _delta st = do
     let viewportSize = Size (fromIntegral w) (fromIntegral h)
 
     let viewRange = mkBBoxCenter viewPos (viewportSize ^/ viewScale)
-
-    zoomOutScrollerDebug   <- isDebugFlagOn DebugFlag_ZoomOutScroller
-    hideScrollerDebug      <- isDebugFlagOn DebugFlag_HideScroller
-    showDynamicBBoxesDebug <- isDebugFlagOn DebugFlag_ShowDynamicBoundingBoxes
 
     let magScale = if zoomOutScrollerDebug then 0.5 else 1
 
@@ -197,31 +200,32 @@ cameraPos = do
 prerenderUpdate :: Bool -> St -> Graphics RenderAction
 prerenderUpdate forceRedraw st = do
     let s = st^.scroller
-    let vscale = st^.gameState.gameScale
     vpos <- cameraPos
-    -- (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
-    -- let vtrigsize = Size (fromIntegral w) (fromIntegral h)
-    let vtrigsize = Size 2 2
-    updateScroller' s forceRedraw vscale vpos vtrigsize $ \bb -> do
+    Scroller.update s vpos $ \bb -> do
         es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
-        -- logOnce (show $ length es)
         return $ renderEntitiesRaw es st
-        -- Engine.drawAtlasBatch projM $ renderEntitiesRaw es st
-        -- return $ renderEntities (take 500 es) st
-    makeRenderScroller s
+    Scroller.makeRenderAction s
 
--- renderEntitiesRaw :: HasEntity e Entity => [e] -> St -> Vector AtlasDesc
+-- Render tiles without caching (for comparison)
+makeRenderTiles :: St -> Graphics RenderAction
+makeRenderTiles st = do
+    vpos <- cameraPos
+    let vscale = st^.gameState.gameScale
+    (w, h) <- Engine.getFramebufferSize =<< use (graphics.context)
+    let bb = mkBBoxCenter vpos ((fromIntegral <$> Size w h) ^/ vscale)
+    es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
+    return $ T.scale vscale $ renderEntitiesRaw es st
+
 renderEntitiesRaw :: HasEntity e Entity => [e] -> St -> RenderAction
--- renderEntitiesRaw es st = Vector.mapMaybe f $ Vector.take 1000 $ Vector.fromList es
 renderEntitiesRaw es st = renderComposition rs
     where
     rs = map (flip entityRender ctx . view entity) es
-    -- f = unR . flip entityRender ctx . view entity
     ctx = RenderContext
         { field_resources  = st^.resources
         , field_debugFlags = st^.debugFlags
         }
     {-
+    f = unR . flip entityRender ctx . view entity
     unR = \case
         RenderFromAtlas d -> Just d
         _ -> Nothing

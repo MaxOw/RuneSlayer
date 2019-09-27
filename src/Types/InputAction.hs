@@ -37,6 +37,11 @@ data PanelName
    | StatusPanel
    deriving (Eq, Ord, Show)
 
+data TutorialAction
+   = TutorialAction_SkipAll
+   | TutorialAction_Restart
+   deriving (Eq, Ord, Show)
+
 --------------------------------------------------------------------------------
 
 data InputAction
@@ -59,6 +64,7 @@ data InputAction
    | Interact
    | FastQuit
    | MapEditorAction MapEditorAction
+   | TutorialAction TutorialAction
    | InputAction_NextPage
    | InputAction_Escape
    | InputAction_Nothing

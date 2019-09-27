@@ -12,8 +12,7 @@ import Engine (RenderAction, Img, userState, texture, context)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import qualified Diagrams.TwoD.Transform as T
 import Engine.Types (Engine, graphics)
-import Engine.Graphics.Scroller (newScroller)
-import Engine.Graphics.Scroller.Types (Scroller)
+import Engine.Graphics.Scroller.TypesCells (Scroller)
 import Types.GameState
 import Types.InputState (defaultInputState)
 import Types.Entity (EntityIndex)
@@ -38,6 +37,7 @@ import qualified EntityIndex
 import EntityIndex (EntityIndexTag(..))
 import qualified Graphics.UI.GLFW as GLFW
 
+import qualified Engine.Graphics.Scroller.Cells as Scroller
 import qualified Data.Collider as Collider
 
 import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
@@ -53,8 +53,7 @@ initSt = do
     conf   <- loadDhall "" "Config.dhall"
     wgconf <- inputAuto descPath "./WorldGen.dhall"
 
-    scro <- newScroller $ def
-        & bufferMargin .~ Engine.ScrollerMargin_Pixels (64 + 8)
+    scro <- Scroller.new $ def & set scale 64
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
     st <- defaultSt conf eix scro
 

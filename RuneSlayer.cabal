@@ -9,8 +9,7 @@ Executable RuneSlayer
   hs-source-dirs   : src
   main-is          : Main.hs
   ghc-options      :
-    -- -O2
-    -O
+    -O2
     -rtsopts
     -threaded
     "-with-rtsopts=-G3 -N -qg1"
@@ -92,7 +91,7 @@ Executable RuneSlayer
                 , free
 
                 , linear
-                , Carnot == 0.1.19.0
+                , Carnot == 0.1.21.1
                 , gl
                 , colour
                 , palette

@@ -11,6 +11,7 @@ Executable RuneSlayer
   ghc-options      :
     -O2
     -rtsopts
+    -- -prof -fexternal-interpreter -fprof-auto -- -top
     -threaded
     "-with-rtsopts=-G3 -N -qg1"
     -- -with-rtsopts=-N4

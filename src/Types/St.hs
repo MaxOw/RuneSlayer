@@ -8,7 +8,7 @@ module Types.St
 import Delude
 
 import Engine (Engine, EngineState, RenderAction, userState)
-import Engine.Graphics.Scroller.TypesCells (Scroller)
+import Engine.Graphics.Scroller.Cells (Scroller)
 
 import Types.Config (Config)
 import Types.MenuState

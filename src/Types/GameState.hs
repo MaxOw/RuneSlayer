@@ -21,7 +21,6 @@ data GameState = GameState
    , field_actions        :: [DirectedAction]
    , field_focusId        :: Maybe EntityId
    , field_gameScale      :: Float
-   , field_menuScale      :: Float
    , field_frameCount     :: Word32
    , field_gameOverScreen :: Maybe GameOverScreen
    , field_tutorialState  :: TutorialState

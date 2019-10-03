@@ -12,7 +12,6 @@ import Engine (RenderAction, Img, userState, texture, context)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import qualified Diagrams.TwoD.Transform as T
 import Engine.Types (Engine, graphics)
-import Engine.Graphics.Scroller.TypesCells (Scroller)
 import Types.GameState
 import Types.InputState (defaultInputState)
 import Types.Entity (EntityIndex)
@@ -53,9 +52,8 @@ initSt = do
     conf   <- loadDhall "" "Config.dhall"
     wgconf <- inputAuto descPath "./WorldGen.dhall"
 
-    scro <- Scroller.new $ def & set scale 64
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
-    st <- defaultSt conf eix scro
+    st <- initBaseSt conf eix
 
     loadFonts
     rs <- loadResources conf
@@ -202,9 +200,10 @@ spawnPassiveToAction a = directAtWorld
 
 --------------------------------------------------------------------------------
 
-defaultSt :: MonadIO m => Config -> EntityIndex -> Scroller -> m St
-defaultSt conf eix scro = do
-    gs <- defaultGameState conf eix
+initBaseSt :: Config -> EntityIndex -> Engine u St
+initBaseSt conf eix = do
+    gs <- initGameState conf eix
+    scro <- Scroller.new $ def & set scale (gs^.gameScale)
     return $ St
         { field_resources  = def
         , field_inputState = defaultInputState
@@ -217,16 +216,14 @@ defaultSt conf eix scro = do
         , field_wires      = def
         }
 
-defaultGameState :: MonadIO m => Config -> EntityIndex -> m GameState
-defaultGameState conf eix = do
-    rust <- loadRuneSet conf
-    rs <- Runes.init rust
+initGameState :: Config -> EntityIndex -> Engine u GameState
+initGameState conf eix = do
+    rs <- Runes.init =<< loadRuneSet conf
     return $ GameState
         { field_entities       = eix
         , field_actions        = []
         , field_focusId        = Nothing
         , field_gameScale      = 64
-        , field_menuScale      = 1.0
         , field_frameCount     = 0
         , field_gameOverScreen = Nothing
         , field_tutorialState  = Tutorial.defaultTutorialState

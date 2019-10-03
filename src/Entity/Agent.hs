@@ -24,7 +24,6 @@ import Entity.Utils
 import Entity.Actions
 import Entity.Script
 
-import Skills.Runes
 import ResourceManager (Resources, lookupAnimation)
 import qualified Equipment
 

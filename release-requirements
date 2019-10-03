@@ -6,7 +6,6 @@ Requirements for first release: v0.1
 ## General
 
 * Main Menu.                                                                 [ ]
-* Saving and loading.                                                        [ ]
 * Fix scroller lag.                                                          [X]
 * Benchmark and speedup rendering pipeline.                                  [X]
 
@@ -14,10 +13,9 @@ Requirements for first release: v0.1
   - Debug modes.                                                             (#)
   - Keymaps.                                                                 ( )
 
-* Improve text rendering.                                                    [ ]
-* Improve layout rendering.                                                  [ ]
-  - Rewrite all gui with alt layout                                          [ ]
-  - Add layout caching                                                       [ ]
+* Improve layout rendering.                                                  [X]
+  - Rewrite all gui with alt layout                                          (#)
+  - Add text/layout caching                                                  (#)
 
 * Remove template haskell for record fields generation.                      [X]
 
@@ -97,6 +95,7 @@ Requirements for first release: v0.1
 
 ## Version 0.2 #################################################################
 
+* Saving and loading.                                                        [ ]
 * Merge actOn & update entity functions.                                     [ ]
 * Unify AgentKind & Script                                                   [ ]
 * Auto updates.                                                              [ ]
@@ -118,4 +117,6 @@ Requirements for first release: v0.1
   - Building set.                                                            ( )
   - Floor-plan to building map. (via building set)                           ( )
   - Floor-plan generator.                                                    ( )
+
+* Improve text rendering.                                                    [ ]
 

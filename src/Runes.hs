@@ -39,8 +39,8 @@ init rs = do
         , field_level          = 2
         }
 
-addKnownRunes :: RuneSet -> Game ()
-addKnownRunes rs = runesState.mastery %= addToMasterySet rs
+-- addKnownRunes :: RuneSet -> Game ()
+-- addKnownRunes rs = runesState.mastery %= addToMasterySet rs
 
 addToMasterySet :: RuneSet -> MasterySet -> MasterySet
 addToMasterySet = IxSet.insertList . map uprune . toList

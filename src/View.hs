@@ -8,8 +8,7 @@ import Delude hiding (context)
 
 import qualified Linear.Matrix as Matrix
 import qualified Engine
-import Engine (graphics, context, RenderAction, Engine)
-import Engine.Layout.Alt (Layout, makeRenderLayout, pattern BottomLeft)
+import Engine (graphics, context, RenderAction)
 -- import Engine.Debug (logOnce)
 import Graphics.GL
 
@@ -105,20 +104,13 @@ renderGame _delta st = do
     whenM ((MapEditorMode ==) <$> getMode) $
         Engine.draw gameProjM . T.scale viewScale =<< MapEditor.renderSelected
 
-    whenJustM focusEntity $ const $ drawScaledLayout magScale
-        =<< overlayLayout (locationToLayout viewPos viewScale)
-    whenJustM focusEntity $ const $ Engine.drawLayout =<< gameMenuLayout
+    let conv = locationToLayout viewPos viewScale
+    whenJustM focusEntity $ const $ do
+        Engine.drawLayout =<< overlayLayout conv
+        Engine.drawLayout =<< gameMenuLayout
     whenJustM gameOverScreenLayout Engine.drawLayout
 
     Engine.swapBuffers
-
--- this is crappy like that for now, later I'll need to fix it in Carnot
-drawScaledLayout :: Float -> Layout -> Engine us ()
-drawScaledLayout s l = when (s == 1.0) $ do
-    projM <- orthoProjection $ def
-        & boxAlign .~ BottomLeft
-        -- & scale    .~ s
-    draw projM =<< makeRenderLayout l
 
 locationToLayout :: V2 Float -> Float -> Location -> V2 Float
 locationToLayout camPos s loc = (v - camPos)^*s
@@ -198,7 +190,7 @@ cameraPos = do
     return $ fromMaybe 0 $ view _Wrapped <$> mloc
 
 prerenderUpdate :: Bool -> St -> Graphics RenderAction
-prerenderUpdate forceRedraw st = do
+prerenderUpdate _forceRedraw st = do
     let s = st^.scroller
     vpos <- cameraPos
     Scroller.update s vpos $ \bb -> do
@@ -206,6 +198,7 @@ prerenderUpdate forceRedraw st = do
         return $ renderEntitiesRaw es st
     Scroller.makeRenderAction s
 
+{-
 -- Render tiles without caching (for comparison)
 makeRenderTiles :: St -> Graphics RenderAction
 makeRenderTiles st = do
@@ -215,6 +208,7 @@ makeRenderTiles st = do
     let bb = mkBBoxCenter vpos ((fromIntegral <$> Size w h) ^/ vscale)
     es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
     return $ T.scale vscale $ renderEntitiesRaw es st
+-}
 
 renderEntitiesRaw :: HasEntity e Entity => [e] -> St -> RenderAction
 renderEntitiesRaw es st = renderComposition rs

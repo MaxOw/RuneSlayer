@@ -197,7 +197,7 @@ selectItemToPickUp = do
 
 selectItemMoveTarget :: Game ()
 selectItemMoveTarget = getFocusedItem >>= \case
-    Nothing -> return () -- Messages.add "No item selected!"
+    Nothing -> return () -- Messages.addInfo "No item selected!"
     Just fi -> lookupEntity fi >>= \case
         Nothing -> return ()
         Just fe -> startSelect SelectKind_MoveTo =<< getValidTargets fe
@@ -239,19 +239,19 @@ selectItemToFocus = do
 
 useFocusedItem :: Game ()
 useFocusedItem = getFocusedItem >>= \case
-    Nothing -> Messages.add "No item selected!"
+    Nothing -> Messages.addInfo "No item selected!"
     Just fi -> actOnFocusedEntity $ EntityAction_UseItem fi
 
 selectInteraction :: Game ()
 selectInteraction = do
     mar <- focusInteractionsInRange
     case over (traverse._1) (view entityId) mar of
-        [] -> Messages.add "There's nothing to interact with nearby."
+        [] -> Messages.addInfo "There's nothing to interact with nearby."
         ar -> startSelect SelectKind_Action ar
 
 interact :: Game ()
 interact = focusNearestInteractionInRange >>= \case
-    Nothing  -> Messages.add "There's nothing to interact with nearby."
+    Nothing  -> Messages.addInfo "There's nothing to interact with nearby."
     Just (e,_) -> withFocusId $ actOnEntity e . EntityAction_Interact Nothing
 
 --------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ pickupAllItems = do
     es <- fmap (view entityId) <$> focusItemsInRange
     cs <- fmap (view entityId) <$> focusItemsInContainer
     case es <> cs of
-        [] -> Messages.add "No items nearby."
+        [] -> Messages.addInfo "No items nearby."
         is -> mapM_ pickupItem is
 
 dropAllItems :: Game ()

@@ -13,7 +13,7 @@ module Entity.Actions
     , selectAnimation
     , updateActiveAnimation
     , updateAnimationState
-    , addEffect
+    , addHitEffect
     , spawnProjectile, spawnPassive
     , addLoadoutEntry
     , updateTimer, startTimer, checkTimeUp
@@ -35,7 +35,6 @@ module Entity.Actions
     , renderAppearance
     , renderBBox
     , renderCollisionShape
-    , renderTargetMark
 
     -- Queries
     , queryInRange, queryInRadius
@@ -68,7 +67,6 @@ import Types.Entity.Appearance
 import Types.Entity.Agent
 import Types.Entity.Animation (AnimationState, AnimationKind)
 import Types.Entity.Reactivity (ReactivCategory)
-import Types.Entity.Effect (EffectKind)
 import qualified Entity.Animation as Animation
 import Entity.Utils
 import Types.EntityIndex (EntityIndexTag(..))
@@ -185,17 +183,15 @@ updateActiveAnimation = do
 updateAnimationState :: HasAnimationState s AnimationState => Update s ()
 updateAnimationState = self.animationState %= Animation.update defaultDelta
 
-addEffect
-    :: HasLocation s Location
-    => EffectKind -> Update s ()
-addEffect k = do
+addHitEffect :: Location -> Health -> Update s ()
+addHitEffect loc hp = do
     cei <- queryByTag EntityIndexTag_Camera
     whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
-        loc <- use $ self.location
         when (isWithinDistance maxEffectSpawnDistance loc cloc) $
-            let st = SpawnEntity_Effect k
-            in addWorldAction $ WorldAction_SpawnEntity st $ def
-                & set actions [ EntityAction_SetValue $ EntityValue_Location loc ]
+            addWorldAction $ WorldAction_Message $ Message_HitEffect loc hp
+            -- let st = SpawnEntity_Effect k
+            -- in addWorldAction $ WorldAction_SpawnEntity st $ def
+                -- & set actions [ EntityAction_SetValue $ EntityValue_Location loc ]
 
 spawnProjectile :: Projectile -> Update s ()
 spawnProjectile p =
@@ -492,13 +488,6 @@ renderCollisionShape cs = monoidJust cs $ \case
         & T.scale     (d^.radius)
         & translate (d^.center._Wrapped)
         & zindex    .~ 10000
-
-renderTargetMark :: RenderAction
-renderTargetMark = renderShape $ def
-    & shapeType .~ SimpleCircle
-    & color     .~ Color.withOpacity Color.red 0.3
-    & T.scale  0.4
-    & T.scaleY 0.7
 
 --------------------------------------------------------------------------------
 -- Queries

@@ -104,7 +104,6 @@ data Agent = Agent
    , field_agentType          :: AgentType
    , field_script             :: Script
 
-   , field_isMarked           :: Bool
    , field_canAttackTarget    :: Bool
    } deriving (Generic)
 instance HasMaxSpeed Agent Speed where

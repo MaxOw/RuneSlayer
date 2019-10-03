@@ -1,11 +1,19 @@
 module Types.Messages where
 
 import Delude
-import Types.Entity.Common (Duration, timeInSeconds)
+import Types.Entity.Common (Duration, Location, timeInSeconds)
+
+data MessageKind
+   = MessageKind_Info
+   | MessageKind_HitEffect
+   deriving (Eq)
 
 data SystemMessage = SystemMessage
-   { field_content  :: Text
-   , field_duration :: Duration
+   { field_content     :: Text
+   , field_location    :: Maybe Location
+   , field_messageKind :: MessageKind
+   , field_duration    :: Duration
+   , field_maxDuration :: Duration
    } deriving (Generic)
 
 data SystemMessages = SystemMessages

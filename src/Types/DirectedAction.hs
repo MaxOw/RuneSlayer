@@ -24,12 +24,17 @@ data SpawnEntityOpts = SpawnEntityOpts
    } deriving (Generic)
 instance Default SpawnEntityOpts
 
+data Message
+   = Message_Info Text
+   | Message_HitEffect Location Health
+
 data WorldAction
    = WorldAction_SpawnEntity SpawnEntity SpawnEntityOpts
    -- Open inventory/contents inspection window of [EntityId] for player
    | WorldAction_InspectContent EntityId
    | WorldAction_StoryDialog EntityId StoryDialog
-   | WorldAction_Message Text
+   | WorldAction_Message Message
+   | WorldAction_MarkTarget (Maybe EntityId)
    | WorldAction_GameOver
 
 --------------------------------------------------------------------------------

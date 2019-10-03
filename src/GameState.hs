@@ -65,10 +65,17 @@ handleWorldAction = \case
     WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
     WorldAction_InspectContent tid -> nop $ inspectContent tid
     WorldAction_StoryDialog eid sd -> nop $ showStoryDialog eid sd
-    WorldAction_Message        msg -> nop $ Messages.add msg
+    WorldAction_Message        msg -> nop $ handleMessage msg
+    WorldAction_MarkTarget    mtid -> nop $ markTarget mtid
     WorldAction_GameOver           -> nop $ startGameOver
     where
     nop x = x >> return Nothing
+
+    handleMessage = \case
+        Message_Info         msg -> Messages.addInfo msg
+        Message_HitEffect loc hp -> Messages.addHitEffect loc hp
+
+    markTarget x = gameState.ff#targetId .= x
 
 spawnEntity :: SpawnEntity -> Game (Maybe Entity)
 spawnEntity se = do

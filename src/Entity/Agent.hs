@@ -13,7 +13,6 @@ import qualified Diagrams.TwoD.Transform as T
 import Types.Debug
 import Types.Entity.Reactivity
 import Types.Entity.Agent
-import Types.Entity.Effect
 import Types.Entity.Passive
 import Types.Entity.Animation
 import Types.Equipment
@@ -36,8 +35,6 @@ import qualified Entity.Animation as Animation
 
 actOn :: Agent -> EntityAction -> Agent
 actOn x a = x & case a of
-    EntityAction_SelfMarkAsTarget    -> set isMarked True
-    EntityAction_SelfUnmarkAsTarget  -> set isMarked False
     -- Handle here:
     EntityAction_ToggleDebug       f -> toggleDebugFlag f
     EntityAction_RunAnimation      k -> setAnimationKind k
@@ -392,23 +389,19 @@ getAggroTarget = do
         (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
 
 autoTarget :: Update Agent ()
-autoTarget = autoTargetWith $ \_ _ -> return ()
+autoTarget = autoTargetWith $ \_ -> return ()
 
 autoTargetMark :: Update Agent ()
-autoTargetMark = autoTargetWith $ \currentTarget newTarget -> do
-    mapM_ (flip addAction EntityAction_SelfUnmarkAsTarget) currentTarget
-    mapM_ (flip addAction EntityAction_SelfMarkAsTarget) newTarget
+autoTargetMark = autoTargetWith $ addWorldAction . WorldAction_MarkTarget
 
-autoTargetWith
-    :: (Maybe EntityId -> Maybe EntityId -> Update Agent ())
-    -> Update Agent ()
+autoTargetWith :: (Maybe EntityId -> Update Agent ()) -> Update Agent ()
 autoTargetWith func = do
     newTarget <- fmap (view entityId) <$> getAggroTarget
     currentTarget <- use $ self.target
     when (newTarget /= currentTarget) $
       whenM (isCloserBy 0.1 newTarget currentTarget) $ do
         self.target .= newTarget
-        func currentTarget newTarget
+        func newTarget
 
     where
     isCloserBy d newTarget currentTarget = do
@@ -467,7 +460,7 @@ processPlayerAction = \case
     setAttackMode = assign (self.ff#attackMode)
 
 systemMessage :: Text -> Update x ()
-systemMessage = addWorldAction . WorldAction_Message
+systemMessage = addWorldAction . WorldAction_Message . Message_Info
 
 removeItem :: EntityId -> Update Agent ()
 removeItem i = do
@@ -483,7 +476,10 @@ procAttacked attackPower = do
         rd <- calcRunicDefence
         let ap = Health . max 0 $ (Unwrapped attackPower) - rd
         self.health %= max 0 . subtract ap
-        addEffect $ HitEffect ap
+        loc <- use $ self.location
+        off <- use $ self.agentType.ff#renderOffset
+        let rloc = over _Wrapped (+ fromMaybe 0 off) loc
+        addHitEffect rloc ap
 
     calcRunicDefence = useAgentKind >>= \case
         AgentKind_Player -> do
@@ -520,8 +516,7 @@ useAgentKind = use $ self.agentType.agentKind
 
 render :: Agent -> RenderContext -> RenderAction
 render x ctx = withZIndex x $ locate x $ renderComposition
-    [ renderIf (x^.isMarked) renderTargetMark
-    , renderDebug
+    [ renderDebug
     , addRenderOffset renderAnim
     ]
     where

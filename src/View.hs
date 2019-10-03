@@ -32,6 +32,7 @@ import qualified MapEditor
 
 import Diagrams.TwoD.Transform (translate)
 import qualified Diagrams.TwoD.Transform as T
+import GameState.Query
 import Engine.Graphics.Utils (mkMatHomo2)
 import Engine.Graphics
 import Engine.Common.Types
@@ -84,6 +85,8 @@ renderGame _delta st = do
         & set scale magScale
     let viewProjM = gameProjM !*! viewM
 
+    renderMark <- makeRenderMark
+
     es <- lookupInRange EntityKind_Dynamic viewRange $ st^.gameState.entities
     is <- lookupInRange EntityKind_Passive viewRange $ st^.gameState.entities
 
@@ -94,7 +97,8 @@ renderGame _delta st = do
         [ mempty
         , renderUnless hideScrollerDebug renderScroller
         , T.scale viewScale $ renderComposition
-            [ renderEntities (es <> is) st
+            [ renderMark
+            , renderEntities (es <> is) st
             , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
@@ -111,6 +115,22 @@ renderGame _delta st = do
     whenJustM gameOverScreenLayout Engine.drawLayout
 
     Engine.swapBuffers
+
+makeRenderMark :: Game RenderAction
+makeRenderMark = do
+    mtid <- use $ gameState.ff#targetId
+    mt <- maybe (return Nothing) lookupEntity mtid
+    let mloc = mt^?traverse.entity.oracleLocation.traverse
+    case mloc of
+        Nothing  -> return mempty
+        Just loc -> return $ setZIndexAtLeast 1001 $ locate loc $ renderShape $ def
+            & shapeType .~ SimpleCircle
+            & color     .~ Color.withOpacity Color.red 0.4
+            & T.scale  0.5
+            & T.scaleY 0.8
+    where
+    locate loc = translate $ Unwrapped loc
+
 
 locationToLayout :: V2 Float -> Float -> Location -> V2 Float
 locationToLayout camPos s loc = (v - camPos)^*s

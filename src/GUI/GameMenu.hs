@@ -45,7 +45,8 @@ gameMenuLayout = Alt.composition . catMaybes <$> sequence
 
 overlayLayout :: (Location -> V2 Float) -> Game Alt.Layout
 overlayLayout conv = Alt.composition . catMaybes <$> sequence
-    [ interactionOverlay conv
+    [ Just <$> Messages.displayLocated conv
+    , interactionOverlay conv
     , attackOverlay conv
     ]
 
@@ -91,7 +92,7 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
     [ pure Nothing
     , rIf StatusPanel statusPanelLayout
     , Tutorial.display
-    , Just <$> Messages.display
+    , Just <$> Messages.displayInfo
     , actionsMenu
     ]
     where

@@ -223,6 +223,7 @@ initGameState conf eix = do
         { field_entities       = eix
         , field_actions        = []
         , field_focusId        = Nothing
+        , field_targetId       = Nothing
         , field_gameScale      = 64
         , field_frameCount     = 0
         , field_gameOverScreen = Nothing

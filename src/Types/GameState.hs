@@ -20,6 +20,7 @@ data GameState = GameState
    { field_entities       :: EntityIndex
    , field_actions        :: [DirectedAction]
    , field_focusId        :: Maybe EntityId
+   , field_targetId       :: Maybe EntityId
    , field_gameScale      :: Float
    , field_frameCount     :: Word32
    , field_gameOverScreen :: Maybe GameOverScreen

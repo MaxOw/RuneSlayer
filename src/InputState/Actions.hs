@@ -58,6 +58,19 @@ showActionKeySeqs :: InputMode -> InputAction -> Game Text
 showActionKeySeqs m a = uses (userState.inputState.inputKeymap)
     $ fromString . InputKeymap.showKeySeqs . InputKeymap.lookupInputAction a m
 
+explainAction :: InputMode -> InputAction -> Game Text
+explainAction m a = case m of
+    _ -> return $ explainCommon a
+    where
+    explainCommon = \case
+        SelectItemToPickUp   -> "pick up item"
+        SelectItemToDrop     -> "drop item"
+        SelectItemToFocus    -> "focus item"
+        SelectItemMoveTarget -> "move itme"
+        PickupAllItems       -> "pickup all itmes"
+        DropAllItems         -> "drop all items"
+        _                    -> show a
+
 --------------------------------------------------------------------------------
 
 clearInventoryState :: Game ()

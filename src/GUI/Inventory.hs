@@ -18,6 +18,7 @@ import Entity
 import qualified Equipment
 import Types.Equipment
 import GUI.Layout (layout_inventory)
+import InputState.Actions (showActionKeySeqs, explainAction)
 import Types.GUI as Layout
 
 --------------------------------------------------------------------------------
@@ -28,10 +29,26 @@ inventoryLayout = do
     fi <- getFocusedItem
     cs <- getContainers
     st <- use userState
-    return $ layout_inventory $ def
-        & ff#equipment   .~ map (toSelectEntry st) eq
-        & ff#description .~ fmap toDescription fi
-        & ff#containers  .~ cs
+    ks <- getInventoryKeysInfo
+    return $ layout_inventory $ Inventory
+        { field_equipment   = map (toSelectEntry st) eq
+        , field_description = fmap toDescription fi
+        , field_containers  = cs
+        , field_keys        = ks
+        }
+
+getInventoryKeysInfo :: Game [KeyInfo]
+getInventoryKeysInfo = traverse f
+    [ SelectItemToPickUp
+    , SelectItemToDrop
+    , SelectItemToFocus
+    , SelectItemMoveTarget
+    , PickupAllItems
+    , DropAllItems
+    ]
+    where
+    md  = InventoryMode
+    f x = KeyInfo <$> showActionKeySeqs md x <*> explainAction md x
 
 --------------------------------------------------------------------------------
 

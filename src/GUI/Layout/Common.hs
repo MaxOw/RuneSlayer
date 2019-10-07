@@ -31,9 +31,11 @@ box :: Layout -> Layout
 box x = border1 Color.gray $ composition [ fillColorA bg, x ]
     where bg = Color.withOpacity Color.black 0.6
 
+borderSep :: (Sizing, Layout)
+borderSep = (1 @@ px, fillColor Color.gray)
+
 catb1 :: ([(Sizing, Layout)] -> Layout) -> [Layout] -> Layout
-catb1 f = f . intersperse b . map (1 @@ fill,)
-    where b = (1 @@ px  , fillColor Color.gray)
+catb1 f = f . intersperse borderSep . map (1 @@ fill,)
 
 hcatb1 :: [Layout] -> Layout
 hcatb1 = catb1 hrel

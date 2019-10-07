@@ -79,6 +79,7 @@ Requirements for first release: v0.1
   - Check tutorial steps progress conditions.                                (#)
   - Mark satisfied conditions.                                               (#)
   - Show possible action overlays.                                           (#)
+  - Inventory keys info.                                                     (#)
 
 * Add System Messages.                                                       [X]
 

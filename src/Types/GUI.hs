@@ -75,10 +75,15 @@ data Container = Container
    } deriving (Generic)
 instance Default Container
 
+data KeyInfo = KeyInfo
+   { field_key  :: Text
+   , field_info :: Text
+   } deriving (Generic)
+
 data Inventory = Inventory
    { field_equipment   :: [SelectEntry]
    , field_description :: Maybe Description
    , field_containers  :: [Container]
+   , field_keys        :: [KeyInfo]
    } deriving (Generic)
-instance Default Inventory
 

@@ -1,7 +1,7 @@
 module GameState.Query where
 
 import Delude
-import qualified Data.Set as Set
+import qualified Data.Set  as Set
 
 import Types (Game)
 import Types.GameState (gameState)

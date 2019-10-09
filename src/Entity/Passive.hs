@@ -64,7 +64,7 @@ actOn x a = x & case a of
 update :: Passive -> EntityContext -> Q (Maybe Passive, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
     updateAnimationState
-    allMatch _EntityAction_AddItem (containerAddItems . fmap fst)
+    allMatch _EntityAction_AddItem containerAddItems
     allMatch _EntityAction_RemoveItem containerRemoveItems
     firstMatch _EntityAction_SelfPassTo (uncurry selfPassTo)
     firstMatch _EntityAction_SelfFiredAsProjectile projectileFire
@@ -72,8 +72,8 @@ update x ctx = runUpdate x ctx $ do
     self.processOnUpdate .= mempty
 
 selfPassTo :: Maybe EntityId -> Maybe EquipmentSlot -> Update Passive ()
-selfPassTo mno mes = use (self.owner) >>= \mco -> when (mco /= mno) $ do
-    removeSelfFromOwner
+selfPassTo mno mes = use (self.owner) >>= \mco -> do
+    when (mco /= mno) $ removeSelfFromOwner
     case mno of
         Just no -> do
             addItem no
@@ -100,11 +100,6 @@ selfDelete :: Update Passive ()
 selfDelete = do
     removeSelfFromOwner
     deleteSelf .= True
-
-containerAddItems :: NonEmpty EntityId -> Update Passive ()
-containerAddItems ls = do
-    es <- catMaybes <$> mapM queryById (toList ls)
-    mapM_ dropItem =<< fitIntoContainer es
 
 containerRemoveItems :: NonEmpty EntityId -> Update Passive ()
 containerRemoveItems rs = do
@@ -165,25 +160,36 @@ performInteractionEffect t = \case
 
     heal = addAction t . EntityAction_SelfHeal
 
+containerAddItems
+    :: NonEmpty (EntityId, Maybe EquipmentSlot) -> Update Passive ()
+containerAddItems ls = do
+    es <- catMaybes <$> mapM f (toList ls)
+    mapM_ dropItem =<< fitIntoContainer es
+    where
+    f (e, _) = queryById e
+
 fitIntoContainer :: [EntityWithId] -> Update Passive [EntityWithId]
 fitIntoContainer ees = do
     alwd <- use (self.passiveType.containerType.traverse.allowKinds)
-    let (allowed, otherItems) = splitAllowedItems alwd ees
-    overflow <- go allowed
+    let (allowed, otherItems) = splitAllowedItems (view entity) alwd ees
+    overflow <- go [] allowed
     return $ otherItems <> overflow
     where
-    go [] = return []
-    go (e:es) = do
+    go os [] = return os
+    go os (e:es) = do
         cv <- use (self.contentVolume)
         ct <- use (self.passiveType.containerType)
+        let ev = fromMaybe 0 (e^.entity.oracleVolume)
         let mv = fromMaybe 0 $ ct^?traverse.maxVolume
-        if cv >= mv
-        then return (e:es)
+        if cv+ev > mv
+        then go (e:os) es
         else do
             let eid = e^.entityId
-            self.content       %= (eid:)
-            self.contentVolume += fromMaybe 0 (e^.entity.oracleVolume)
-            go es
+            cl <- use $ self.content
+            when (List.notElem eid cl) $ do
+                self.content       %= (eid:)
+                self.contentVolume += fromMaybe 0 (e^.entity.oracleVolume)
+            go os es
 
 --------------------------------------------------------------------------------
 

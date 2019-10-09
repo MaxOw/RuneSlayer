@@ -49,6 +49,9 @@ let makeCorpse =
       , appearance  = appearance.simple sprite
       }
 
+let weaponSlots = [ EquipmentSlot.PrimaryWeapon, EquipmentSlot.SecondaryWeapon ]
+let otherSlots  = [ EquipmentSlot.PrimaryOther,  EquipmentSlot.SecondaryOther  ]
+
 --------------------------------------------------------------------------------
 
 let helmet = defaultItemType //
@@ -67,7 +70,7 @@ let dagger = defaultItemType //
   , passiveKind  = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , weaponKind   = Some WeaponKind.Slashing
   , appearance   = appearance.simple sprites.dagger
-  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
+  , fittingSlots = weaponSlots
   , animation    = animations.dagger
   , stats        = defaultStats // { attack = 2, attackRange = 2 }
   }
@@ -78,7 +81,7 @@ let spear = defaultItemType //
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Thrusting
   , appearance   = appearance.simple sprites.spear
-  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
+  , fittingSlots = weaponSlots
   , animation    = animations.spear
   , stats        = defaultStats // { attack = 5, attackRange = 3 }
   }
@@ -89,7 +92,7 @@ let sword = defaultItemType //
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Slashing
   , appearance   = appearance.simple sprites.sword
-  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
+  , fittingSlots = weaponSlots
   , animation    = animations.sword
   , stats        = defaultStats // { attack = 5, attackRange = 3 }
   }
@@ -100,7 +103,7 @@ let bow = defaultItemType //
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Projecting
   , appearance   = appearance.simple sprites.bow
-  , fittingSlots = [ EquipmentSlot.PrimaryWeapon ]
+  , fittingSlots = weaponSlots
   , animation    = animations.bow
   , stats        = defaultStats // { attack = 3, attackRange = 9 }
   }
@@ -117,9 +120,10 @@ let arrow = defaultItemType //
 let quiver = defaultItemType //
   { name         = names.quiver
   , volume       = 10
-  , passiveKind  = [ PassiveKind.Item, PassiveKind.Container ]
+  , passiveKind  = [ PassiveKind.Item, PassiveKind.SmallItem, PassiveKind.Container ]
+--, passiveKind  = [ PassiveKind.Item, PassiveKind.Container ]
   , appearance   = appearance.simple sprites.quiver
-  , fittingSlots = [ EquipmentSlot.PrimaryOther ]
+  , fittingSlots = otherSlots
   , animation    = animations.quiver
   , behindBody   = Some True
   , containerType = Some
@@ -141,7 +145,7 @@ let healthPotion = defaultItemType //
   , volume      = 0.1
   , passiveKind = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , appearance  = appearance.simple sprites.healthPotion
-  , interactions  =
+  , interactions =
       [ action "Use" [ useEffect.heal 5, useEffect.transformInto names.emptyFlask ]
       ]
   , primaryInteraction = Some "Use"

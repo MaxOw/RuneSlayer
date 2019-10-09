@@ -41,6 +41,10 @@ focusEntityId = use (gameState.focusId)
 withFocusId :: (EntityId -> Game ()) -> Game ()
 withFocusId = whenJustM focusEntityId
 
+withFocusEntityWithId :: (EntityWithId -> Game ()) -> Game ()
+withFocusEntityWithId = whenJustM $ runMaybeT $
+    MaybeT . lookupEntity =<< MaybeT (use $ gameState.focusId)
+
 focusEntityKindInRange :: EntityKind -> Distance -> Game [EntityWithId]
 focusEntityKindInRange k d = focusLocation >>= \case
     Nothing -> return []

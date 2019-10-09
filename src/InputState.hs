@@ -158,7 +158,9 @@ handleSelectKind s selseq = do
         vs = v^.values
 
 selectPickup :: EntityId -> Game ()
-selectPickup eid = pickupItem eid >> selectFocus eid
+selectPickup eid = withFocusEntityWithId $ \fe -> do
+    mapM_ pickupItem =<< filterFitItems fe =<< lookupEntities [eid]
+    selectFocus eid
 
 selectDrop :: EntityId -> Game ()
 selectDrop eid = dropItem eid >> selectFocus eid

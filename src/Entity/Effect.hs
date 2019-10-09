@@ -9,8 +9,8 @@ import Entity.Actions (locate, withZIndex)
 import Entity.Utils
 import Types.Entity.Effect
 
-import qualified Diagrams.TwoD.Transform as T
-import qualified Color
+-- import qualified Diagrams.TwoD.Transform as T
+-- import qualified Color
 
 actOn :: Effect -> EntityAction -> Effect
 actOn x a = x & case a of
@@ -33,7 +33,7 @@ render x _ctx = withZIndex x $ locate x $ correctHeight $ renderEffect (x^.kind)
     renderEffect = \case
         HitEffect a -> translateY (x^.era) $ renderHit a
         where
-        renderHit a = mempty
+        renderHit _ = mempty
         -- renderHit a = T.scale (1/64) $ renderSimpleText d $ show (-a^._Wrapped)
         -- d = def & color .~ Color.opaque Color.red
 

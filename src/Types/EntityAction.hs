@@ -84,6 +84,8 @@ data EntityAction
    | EntityAction_SelfUnmarkAsTarget
    -- tell entity to execute attack on market target
    | EntityAction_ExecuteAttack
+   -- tell entity to swap primary and secondary weapons
+   | EntityAction_SwapWeapon
    -- tell entity it was attacked with [AttackPower] possibly by [EntityId]
    | EntityAction_SelfAttacked AttackPower (Maybe EntityId)
    -- send player specific actions

@@ -63,12 +63,12 @@ explainAction m a = case m of
     _ -> return $ explainCommon a
     where
     explainCommon = \case
-        SelectItemToPickUp   -> "pick up item"
-        SelectItemToDrop     -> "drop item"
+        SelectItemToPickUp   -> "pickup (yank) item"
+        SelectItemToDrop     -> "drop (put-down) item"
         SelectItemToFocus    -> "focus item"
-        SelectItemMoveTarget -> "move itme"
-        PickupAllItems       -> "pickup all itmes"
-        DropAllItems         -> "drop all items"
+        SelectItemMoveTarget -> "move item"
+        PickupAllItems       -> "pickup all"
+        DropAllItems         -> "drop all"
         _                    -> show a
 
 --------------------------------------------------------------------------------

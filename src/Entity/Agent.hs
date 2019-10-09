@@ -41,6 +41,7 @@ actOn x a = x & case a of
     EntityAction_SetMoveVector     v -> setMoveVector v
     EntityAction_SelfHeal          h -> selfHeal h
     EntityAction_SetValue          v -> handleSetValue v
+    EntityAction_SwapWeapon          -> swapWeapon
     -- Handle on update:
     EntityAction_PlayerAction     {} -> handleOnUpdate a
 
@@ -70,6 +71,18 @@ actOn x a = x & case a of
         EntityValue_Animation    _ -> x
         EntityValue_SetStatus    s -> x & status %~ Set.insert s
         EntityValue_UnsetStatus  s -> x & status %~ Set.delete s
+
+    swapWeapon = over equipment f
+        where
+        f e = Equipment.alter (const sw) EquipmentSlot_PrimaryWeapon
+            . Equipment.alter (const pw) EquipmentSlot_SecondaryWeapon
+            . Equipment.alter (const so) EquipmentSlot_PrimaryOther
+            $ Equipment.alter (const po) EquipmentSlot_SecondaryOther e
+            where
+            pw = Equipment.lookupSlot EquipmentSlot_PrimaryWeapon   e
+            sw = Equipment.lookupSlot EquipmentSlot_SecondaryWeapon e
+            po = Equipment.lookupSlot EquipmentSlot_PrimaryOther    e
+            so = Equipment.lookupSlot EquipmentSlot_SecondaryOther  e
 
 update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
@@ -213,7 +226,8 @@ makeComposeAnimation rs = mconcat . mapMaybe (flip lookupAnimation rs)
 
 updateStats :: Update Agent ()
 updateStats = do
-    eis <- uses (self.equipment) Equipment.contentList
+    let exs = [ EquipmentSlot_SecondaryWeapon, EquipmentSlot_SecondaryOther ]
+    eis <- uses (self.equipment) (Equipment.excludeSlots ?? exs)
     es  <- catMaybes <$> mapM queryById eis
     let ss = mapMaybe (view (entity.oracleStats)) es
     bs <- use $ self.baseStats

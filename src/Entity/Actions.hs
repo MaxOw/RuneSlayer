@@ -290,10 +290,13 @@ addItems notify is = prepItems
     >>= stuffIntoContainers
     >>= \ds -> do
     mapM_ dropItem ds
-    when (not $ null ds) notify
+    when (shouldNotify ds) notify
     flagUpdate UpdateOnce_Equipment
     where
     prepItems = catMaybes <$> mapM (\(e, ms) -> fmap (,ms) <$> queryById e) is
+    shouldNotify [] = False
+    shouldNotify ds = any (\x -> Set.member (x^.entityId) iss) ds
+    iss = Set.fromList $ map (view _1) is
 
 stuffIntoContainers
     :: HasEquipment x Equipment
@@ -317,13 +320,12 @@ stuffIntoContainers ls = do
 -- TODO: combine this with fitIntoContainer function from Passive module
 -- to account for volume (and weight in the future).
 stuffInto
-    :: HasEquipment x Equipment
-    => EntityWithId
+    :: EntityWithId
     -> [EntityWithId]
     -> Update x [EntityWithId]
 stuffInto eq is = do
     let alwd = eq^.entity.oraclePassiveType.*.containerType.*.allowKinds
-    let (allowedItems, otherItems) = splitAllowedItems alwd is
+    let (allowedItems, otherItems) = splitAllowedItems (view entity) alwd is
     mapM_ (flip passItemTo eq) allowedItems
     return otherItems
     where
@@ -367,14 +369,11 @@ getRootLocation = do
 useSelfId :: Update x EntityId
 useSelfId = use $ context.selfId
 
-splitAllowedItems
-    :: Set PassiveKind
-    -> [EntityWithId]
-    -> ([EntityWithId], [EntityWithId])
-splitAllowedItems k = List.partition properKind
+splitAllowedItems :: (a -> Entity) -> Set PassiveKind -> [a] -> ([a], [a])
+splitAllowedItems f k = List.partition properKind
     where
-    properKind x = let ks = x^?entity.oraclePassiveType.traverse.passiveKind
-        in fmap (not . Set.null . Set.intersection k) ks == Just True
+    properKind x = let ks = (f x)^?oraclePassiveType.traverse.passiveKind
+        in fmap (not . Set.disjoint k) ks == Just True
 
 equipItems
     :: HasEquipment x Equipment

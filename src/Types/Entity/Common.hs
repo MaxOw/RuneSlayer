@@ -7,6 +7,7 @@ module Types.Entity.Common
     ) where
 
 import Delude
+import Data.Fixed
 import Data.Collider (CollisionShape)
 import qualified Prelude
 import Text.Printf
@@ -85,8 +86,9 @@ newtype Defence = Defence { unDefence :: Int    }
 newtype Speed    = Speed    { unSpeed    :: Float }
     deriving (Generic, Num, Fractional, Default, Show, ToJSON, FromJSON)
 
-newtype Volume   = Volume   { unVolume   :: Float }
-    deriving (Generic, Default, Show, Num, Eq, Ord, ToJSON, FromJSON)
+newtype Volume   = Volume   { unVolume   :: Centi }
+    deriving (Generic, Show, Num, Eq, Ord, ToJSON, FromJSON)
+instance Default Volume where def = 0
 
 newtype Duration = Duration Float
     deriving (Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
@@ -105,7 +107,7 @@ instance Default EntityDebugFlags
 --------------------------------------------------------------------------------
 
 -- make volume in liters. litre = 1000 cm^3
-volumeL :: Float -> Volume
+volumeL :: Centi -> Volume
 volumeL = Volume
 
 distanceInMeters :: Float -> Distance

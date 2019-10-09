@@ -15,6 +15,8 @@ data EquipmentSlot
    | EquipmentSlot_Feet
    | EquipmentSlot_PrimaryWeapon
    | EquipmentSlot_PrimaryOther
+   | EquipmentSlot_SecondaryWeapon
+   | EquipmentSlot_SecondaryOther
    deriving (Show, Eq, Ord, Generic)
 instance ToJSON EquipmentSlot where
     toEncoding = genericToEncoding customOptionsJSON

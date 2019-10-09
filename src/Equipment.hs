@@ -5,11 +5,11 @@ module Equipment
     , create
     , hasSlot, hasId
     , lookupSlot
-    , insert
+    , insert, alter
     , deleteAll
     , deleteId
     , emptySlots
-    , selectSlots
+    , selectSlots, excludeSlots
     , contentList, slotsList
     ) where
 
@@ -38,6 +38,16 @@ insert k v e = if hasSlot k e
     then e & content %~ Bimap.insert k v
     else e
 
+alter :: (Maybe EntityId -> Maybe EntityId) -> EquipmentSlot -> Equipment -> Equipment
+alter f k e = if hasSlot k e
+    then e & content %~ bimapAlter f k
+    else e
+
+bimapAlter :: (Ord k, Ord a) => (Maybe a -> Maybe a) -> k -> Bimap k a -> Bimap k a
+bimapAlter f k b = case f $ Bimap.lookup k b of
+    Nothing -> Bimap.delete k b
+    Just nv -> Bimap.insert k nv b
+
 deleteAll :: Equipment -> Equipment
 deleteAll = set content Bimap.empty
 
@@ -52,6 +62,11 @@ emptySlots e = Set.difference ss ks
 
 contentList :: Equipment -> [EntityId]
 contentList = Bimap.elems . view content
+
+excludeSlots :: Equipment -> [EquipmentSlot] -> [EntityId]
+excludeSlots eq r
+    = Map.elems $ flip Map.withoutKeys (Set.fromList r)
+    $ Bimap.toMap $ view content eq
 
 selectSlots :: Equipment -> [EquipmentSlot] -> [EntityId]
 selectSlots eq r

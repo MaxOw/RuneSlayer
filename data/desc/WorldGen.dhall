@@ -36,6 +36,7 @@ let chestLoadoutStart
       , loadout.count 3 item.healthPotion
       , loadout.containerWithCount item.quiver 15 item.arrow
       , loadout.containerWithCount item.quiver 15 item.arrow
+      , loadout.containerWithCount item.quiver 15 item.arrow
       ]
 
 let chestLoadout0

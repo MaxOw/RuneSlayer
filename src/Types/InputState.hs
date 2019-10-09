@@ -150,6 +150,8 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
 
         , InputStr "g" ExecuteAttack
 
+        , InputStr "ss" SwapWeapon
+
         , InputStr "mm" (SetAttackMode AttackMode_Manual)
         , InputStr "ma" (SetAttackMode AttackMode_Auto)
 
@@ -175,6 +177,8 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
 
         , InputStr "f" SelectItemToFocus
         , InputStr "u" UseFocusedItem
+
+        , InputStr "ss" SwapWeapon
         ]
 
     , InputGroup StoryDialogMode

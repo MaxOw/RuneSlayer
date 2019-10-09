@@ -53,6 +53,7 @@ data InputAction
    | PickupAllItems
    | DropAllItems
    | ExecuteAttack
+   | SwapWeapon
    | SetAttackMode AttackMode
    | StartRunicMode
    | SelectItemToPickUp

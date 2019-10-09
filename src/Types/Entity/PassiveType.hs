@@ -23,7 +23,7 @@ data PassiveKind
    | PassiveKind_Projectile
    | PassiveKind_Arrow
    | PassiveKind_Item
-   deriving (Eq, Ord, Generic)
+   deriving (Eq, Ord, Generic, Show)
 
 newtype PassiveTypeName = PassiveTypeName { unPassiveTypeName :: Text }
     deriving (Show, Eq, Hashable, Generic, ToJSON, FromJSON)

@@ -23,6 +23,8 @@ let EquipmentSlot =
   | Feet
   | PrimaryWeapon
   | PrimaryOther
+  | SecondaryWeapon
+  | SecondaryOther
   >
 
 let AgentKind =

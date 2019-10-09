@@ -20,7 +20,6 @@ import GameState.Query (canFitIntoContainer)
 import InputState
 import InputKeymap (keyToChar)
 import GameState
-import GameState.Query
 import Focus
 
 import Entity
@@ -133,6 +132,7 @@ handleActivation = \case
     PickupAllItems       -> pickupAllItems
     DropAllItems         -> dropAllItems
     ExecuteAttack        -> executeAttack
+    SwapWeapon           -> swapWeapon
     SetAttackMode     m  -> setAttackMode m
     StartRunicMode       -> Runes.startRunicMode
     SelectItemToPickUp   -> selectItemToPickUp
@@ -269,12 +269,12 @@ debugRunAnimation :: AnimationKind -> Game ()
 debugRunAnimation = actOnFocusedEntity . EntityAction_RunAnimation
 
 pickupAllItems :: Game ()
-pickupAllItems = do
-    es <- fmap (view entityId) <$> focusItemsInRange
-    cs <- fmap (view entityId) <$> focusItemsInContainer
+pickupAllItems = withFocusEntityWithId $ \fe -> do
+    es <- focusItemsInRange
+    cs <- focusItemsInContainer
     case es <> cs of
         [] -> Messages.addInfo "No items nearby."
-        is -> mapM_ pickupItem is
+        is -> mapM_ pickupItem =<< filterFitItems fe is
 
 dropAllItems :: Game ()
 dropAllItems = do
@@ -283,6 +283,9 @@ dropAllItems = do
 
 executeAttack :: Game ()
 executeAttack = actOnFocusedEntity EntityAction_ExecuteAttack
+
+swapWeapon :: Game ()
+swapWeapon = actOnFocusedEntity EntityAction_SwapWeapon
 
 setAttackMode :: AttackMode -> Game ()
 setAttackMode = actOnPlayer . PlayerAction_SetAttackMode

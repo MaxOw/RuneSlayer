@@ -27,6 +27,8 @@ let defaultEquipmentSlots =
   , EquipmentSlot.Feet
   , EquipmentSlot.PrimaryWeapon
   , EquipmentSlot.PrimaryOther
+  , EquipmentSlot.SecondaryWeapon
+  , EquipmentSlot.SecondaryOther
   ]
 
 let defaultAgent =

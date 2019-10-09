@@ -11,6 +11,8 @@ module GameState
     , isDebugFlagOn
     , pickupItem, dropItem
     , passItemTo, passItemToSlot
+    , lookupEntity, lookupEntities
+    , filterFitItems
     ) where
 
 import Delude
@@ -19,16 +21,15 @@ import qualified Data.Set as Set
 import Engine (EngineState, userState)
 import Types (Game, GameWire(..), St)
 import Types.Entity (Entity)
-import Types.Entity.Common (EntityId, defaultDelta)
+import Types.Entity.Common (defaultDelta)
 import Types.GameState
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
-import Types.Equipment
-import Focus
 
 import InputState.Actions (inspectContent, showStoryDialog)
 import GameState.Actions
+import GameState.Query
 
 import qualified Tutorial
 import qualified Messages
@@ -107,16 +108,3 @@ getGameOverScreen = use $ userState.gameState.ff#gameOverScreen
 
 isDebugFlagOn :: DebugFlag -> Game Bool
 isDebugFlagOn x = uses (userState.debugFlags) (Set.member x)
-
-pickupItem :: EntityId -> Game ()
-pickupItem eid = withFocusId $ passItemTo eid
-
-dropItem :: EntityId -> Game ()
-dropItem e = actOnEntity e $ EntityAction_SelfPassTo Nothing Nothing
-
-passItemTo :: EntityId -> EntityId -> Game ()
-passItemTo e t = actOnEntity e $ EntityAction_SelfPassTo (Just t) Nothing
-
-passItemToSlot :: EntityId -> EntityId -> EquipmentSlot -> Game ()
-passItemToSlot e t s = actOnEntity e $ EntityAction_SelfPassTo (Just t) (Just s)
-

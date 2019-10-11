@@ -3,6 +3,7 @@ module Types.WorldGen where
 import Delude
 import Engine.Common.Types (Size)
 import Types.Entity (Entity)
+import Types.Entity.Common  (Location)
 import Types.Entity.TileSet (TileSetName)
 import Types.Entity.Passive (PassiveTypeName)
 import Types.Entity.Agent   (AgentTypeName)
@@ -23,6 +24,7 @@ data WorldGenConfig = WorldGenConfig
    , field_coveringLayers  :: [CoveringLayer]
    , field_items           :: [Spawn PassiveTypeName EntityAction]
    , field_units           :: [Spawn AgentTypeName   EntityAction]
+   , field_startLocation   :: Location
    } deriving (Generic)
 instance HasSize WorldGenConfig (Size Float)
 
@@ -45,6 +47,7 @@ instance Default WorldGenConfig where
         , field_coveringLayers  = def
         , field_items           = def
         , field_units           = def
+        , field_startLocation   = def
         }
 
 instance Default WorldGenOutput

@@ -1,13 +1,13 @@
 module Entity.Actions
     ( EntityAction (..)
     -- ActOn Actions
-    , setMoveVector
+    , setMoveVelocity
     , distanceToEntity
     , toggleDebugFlag
     , handleOnUpdate
 
     -- Update Actions
-    , integrateLocation
+    , integrateLocation, nextFrameLocation
     , vectorToEntity
     , moveTowards, orientTowards
     , selectAnimation
@@ -38,7 +38,7 @@ module Entity.Actions
 
     -- Queries
     , queryInRange, queryInRadius
-    , queryById, queryByTag, queryPlayer
+    , queryById, queryByTag -- , queryPlayer
     , shouldDie
     , useSelfId
 
@@ -88,11 +88,11 @@ import qualified Data.Collider.Types as Collider
 --------------------------------------------------------------------------------
 -- ActOn Actions
 
-setMoveVector
+setMoveVelocity
     :: HasVelocity s Velocity
     => HasMaxSpeed s Speed
     => V2D -> s -> s
-setMoveVector moveVector s = s
+setMoveVelocity moveVector s = s
     & velocity .~ velocityFromSpeed moveVector (s^.maxSpeed)
 
 distanceToEntity
@@ -121,11 +121,19 @@ integrateLocation
     :: HasVelocity s Velocity
     => HasLocation s Location
     => Update s ()
-integrateLocation = do
+integrateLocation = self.location <~ nextFrameLocation
+
+nextFrameLocation
+    :: HasVelocity s Velocity
+    => HasLocation s Location
+    => Update s Location
+nextFrameLocation = do
     vel <- use (self.velocity)
-    self.location %= upd defaultDelta vel
+    loc <- use (self.location)
+    return $ upd defaultDelta vel loc
     where
     upd (Duration t) (Velocity v) (Location l) = Location $ l ^+^ (v^*t)
+
 
 vectorToEntity
     :: HasLocation s Location
@@ -143,7 +151,7 @@ moveTowards
     => HasMaxSpeed s Speed
     => HasEntity e Entity
     => e -> Update s ()
-moveTowards e = whenJustM (vectorToEntity e) $ \v -> self %= setMoveVector v
+moveTowards e = whenJustM (vectorToEntity e) $ \v -> self %= setMoveVelocity v
 
 orientTowards
     :: HasAnimationState s AnimationState
@@ -515,8 +523,8 @@ queryById eid = EntityIndex.lookupById eid =<< use (context.entities)
 queryByTag :: EntityIndexTag -> Update s (Maybe EntityWithId)
 queryByTag t = EntityIndex.lookupByTag t =<< use (context.entities)
 
-queryPlayer :: Update s (Maybe EntityWithId)
-queryPlayer = queryByTag EntityIndexTag_Player
+-- queryPlayer :: Update s (Maybe EntityWithId)
+-- queryPlayer = queryByTag EntityIndexTag_Player
 
 shouldDie :: HasHealth x Health => Update x Bool
 shouldDie = uses (self.health._Wrapped) (<=0)

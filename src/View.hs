@@ -108,8 +108,8 @@ renderGame _delta st = do
     whenM ((MapEditorMode ==) <$> getMode) $
         Engine.draw gameProjM . T.scale viewScale =<< MapEditor.renderSelected
 
-    let conv = locationToLayout viewPos viewScale
-    whenJustM focusEntity $ const $ do
+    whenM ((StoryMode /=) <$> getMode) $ whenJustM focusEntity $ const $ do
+        let conv = locationToLayout viewPos viewScale
         Engine.drawLayout =<< overlayLayout conv
         Engine.drawLayout =<< gameMenuLayout
     whenJustM gameOverScreenLayout Engine.drawLayout

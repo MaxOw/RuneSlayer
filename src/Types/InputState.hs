@@ -16,7 +16,6 @@ import Types.InputAction as Types.InputState
 import Types.InputKeymap as Types.InputState
 import InputKeymap
 
-import Data.Zipper (Zipper)
 import Data.Vector (Vector)
 
 --------------------------------------------------------------------------------
@@ -64,13 +63,6 @@ data InventoryState = InventoryState
 
 instance Default InventoryState
 
-data StoryDialogState = StoryDialogState
-    { field_title       :: Text
-    , field_entityId    :: EntityId
-    , field_dialogPages :: Zipper Text
-    } deriving (Generic)
-instance HasEntityId StoryDialogState EntityId
-
 data InputState = InputState
    { field_mode           :: InputMode
    , field_hist           :: Seq Keypress
@@ -81,7 +73,6 @@ data InputState = InputState
    , field_selectState    :: Maybe SelectState
    , field_visiblePanels  :: Set PanelName
    , field_inventoryState :: InventoryState
-   , field_storyDialog    :: Maybe StoryDialogState
    } deriving (Generic)
 
 type InputStateM = StateT InputState IO
@@ -90,7 +81,7 @@ type InputStateM = StateT InputState IO
 
 defaultInputState :: InputState
 defaultInputState = InputState
-    { field_mode           = def
+    { field_mode           = StoryMode
     , field_hist           = def
     , field_active         = def
     , field_inputString    = def
@@ -99,7 +90,6 @@ defaultInputState = InputState
     , field_selectState    = def
     , field_visiblePanels  = defaultVisiblePanels
     , field_inventoryState = def
-    , field_storyDialog    = def
     }
 
 defaultVisiblePanels :: Set PanelName
@@ -142,7 +132,7 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
         , InputStr "Daf" (DebugRunAnimation Animation.Fire)
         , InputStr "Dad" (DebugRunAnimation Animation.Die)
 
-        , InputStr "q" FastQuit
+        , InputStr "Q" FastQuit
 
         , InputStr "yy" PickupAllItems
         -- , InputStr "yi" SelectItemToPickUp
@@ -184,6 +174,12 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
     , InputGroup StoryDialogMode
         [ InputKey Key'Escape InputAction_Nothing
         , InputKey Key'Space  InputAction_NextPage
+        , InputStr "Q" FastQuit
+        ]
+
+    , InputGroup StoryMode
+        [ InputKey Key'Escape InputAction_Nothing
+        , InputStr "Q" FastQuit
         ]
 
     , InputGroup MapEditorMode
@@ -197,7 +193,7 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
         , InputStr "m" (MapEditorAction MapEditorAction_NextCategory)
         , InputKey Key'Space (MapEditorAction MapEditorAction_PlaceEntity)
 
-        , InputStr "q" FastQuit
+        , InputStr "Q" FastQuit
         ]
     ]
 

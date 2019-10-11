@@ -269,7 +269,7 @@ debugRunAnimation :: AnimationKind -> Game ()
 debugRunAnimation = actOnFocusedEntity . EntityAction_RunAnimation
 
 pickupAllItems :: Game ()
-pickupAllItems = withFocusEntityWithId $ \fe -> do
+pickupAllItems = withFocus $ \fe -> do
     es <- focusItemsInRange
     cs <- focusItemsInContainer
     case es <> cs of

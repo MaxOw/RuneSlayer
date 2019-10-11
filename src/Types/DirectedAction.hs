@@ -4,10 +4,9 @@ import Delude
 import Types.Entity.Common
 import Types.EntityAction
 import Types.Entity.Passive    (PassiveTypeName)
-import Types.Entity.Agent      (AgentTypeName)
+import Types.Entity.Agent      (AgentTypeName, ScriptName)
 import Types.Entity.Projectile (Projectile)
 import Types.Entity.Effect     (EffectKind)
-import Types.Entity.Script     (StoryDialog)
 
 --------------------------------------------------------------------------------
 
@@ -32,9 +31,10 @@ data WorldAction
    = WorldAction_SpawnEntity SpawnEntity SpawnEntityOpts
    -- Open inventory/contents inspection window of [EntityId] for player
    | WorldAction_InspectContent EntityId
-   | WorldAction_StoryDialog EntityId StoryDialog
+   | WorldAction_StartDialog EntityId
    | WorldAction_Message Message
    | WorldAction_MarkTarget (Maybe EntityId)
+   | WorldAction_RegisterNPC ScriptName EntityId
    | WorldAction_GameOver
 
 --------------------------------------------------------------------------------

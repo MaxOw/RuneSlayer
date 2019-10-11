@@ -46,11 +46,6 @@ instance Show EntityValue where
         EntityValue_SetStatus    s -> "Set status: " <> show s
         EntityValue_UnsetStatus  s -> "Unset status: " <> show s
 
-data DialogAction
-   = DialogAction_Start    -- ^ Start a conversation with given NPC.
-   | DialogAction_NextPage -- ^ Move dialog progression to next page.
-   deriving (Show, Generic)
-
 data FiredProjectileOpts = FiredProjectileOpts
    { field_location    :: Location
    , field_direction   :: V2D
@@ -61,6 +56,7 @@ data FiredProjectileOpts = FiredProjectileOpts
 
 data EntityAction
    = EntityAction_SetMoveVector V2D
+   | EntityAction_MoveTo Location
    | EntityAction_SetValue EntityValue
    | EntityAction_ToggleDebug EntityDebugFlag
    | EntityAction_RunAnimation AnimationKind
@@ -100,9 +96,6 @@ data EntityAction
 
    -- tell entity to create and equip/contain given loadout.
    | EntityAction_AddLoadout [LoadoutEntry (Spawn PassiveTypeName EntityAction)]
-
-   -- send entity DialogAction (actions used when communicating with NPCs)
-   | EntityAction_Dialog DialogAction
    deriving (Show, Generic)
 makePrisms ''EntityAction
 

@@ -12,7 +12,7 @@ import Data.FullMap (FullMap)
 
 data EntityIndexTag
    = EntityIndexTag_Camera
-   | EntityIndexTag_Player
+   | EntityIndexTag_Focus
    deriving (Eq, Ord)
 
 data EntityIndexConfig = EntityIndexConfig

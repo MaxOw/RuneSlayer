@@ -102,7 +102,7 @@ let npcBertram = defaultHumanNPCAgent //
     , attackRange = 2 -- meters
     , defence     = 1 -- 100
     , maxHealth   = 10 -- 2000
-    , maxSpeed    = constants.fastWalkingSpeed
+    , maxSpeed    = constants.baseWalkingSpeed
     }
   , equipmentSlots = constants.defaultEquipmentSlots
 

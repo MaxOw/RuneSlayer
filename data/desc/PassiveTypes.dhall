@@ -149,6 +149,7 @@ let healthPotion = defaultItemType //
       [ action "Use" [ useEffect.heal 5, useEffect.transformInto names.emptyFlask ]
       ]
   , primaryInteraction = Some "Use"
+  , labelOffset = [0.0, 0.8]
   }
 
 let bag = defaultItemType //

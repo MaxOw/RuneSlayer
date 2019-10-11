@@ -27,13 +27,14 @@ import Types.Debug (DebugFlag(..))
 import Types.EntityAction
 import Types.DirectedAction
 
-import InputState.Actions (inspectContent, showStoryDialog)
+import InputState.Actions (inspectContent)
 import GameState.Actions
 import GameState.Query
 
 import qualified Tutorial
 import qualified Messages
 import qualified EntityIndex
+import qualified Story
 
 --------------------------------------------------------------------------------
 
@@ -52,6 +53,7 @@ updateGameState = do
 
     gs actions .= []
 
+    Story.update
     Tutorial.update
     Messages.update
     where
@@ -65,9 +67,10 @@ handleWorldAction :: WorldAction -> Game (Maybe (Entity, SpawnEntityOpts))
 handleWorldAction = \case
     WorldAction_SpawnEntity s opts -> fmap (,opts) <$> spawnEntity s
     WorldAction_InspectContent tid -> nop $ inspectContent tid
-    WorldAction_StoryDialog eid sd -> nop $ showStoryDialog eid sd
+    WorldAction_StartDialog    eid -> nop $ Story.startDialog eid
     WorldAction_Message        msg -> nop $ handleMessage msg
     WorldAction_MarkTarget    mtid -> nop $ markTarget mtid
+    WorldAction_RegisterNPC sc eid -> nop $ Story.registerNPC sc eid
     WorldAction_GameOver           -> nop $ startGameOver
     where
     nop x = x >> return Nothing

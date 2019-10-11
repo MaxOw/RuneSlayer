@@ -90,6 +90,14 @@ let placeChest
   → λ(a : EntityAction)
   → makeItem item.woodenChest [ actions.setLocation x y, a ]
 
+let placeFullQuiver
+  = λ(x : Double)
+  → λ(y : Double)
+  → makeItem item.quiver
+    [ actions.setLocation x y
+    , actions.addLoadoutCount 15 item.arrow
+    ]
+
 let items =
   [ placeChest  -0.3   5.3 chestLoadoutStart
   , placeChest   5.5  31.0 chestLoadout0
@@ -104,17 +112,17 @@ let items =
   , placeAt -3.4  3.6 item.woodChoopingBlock
   , placeAt  2.1  3.7 item.treeStump
 
-  , placeAt 24.3 -5.1 item.quiver
-  , placeAt -21.5 -18.9 item.quiver
-  , placeAt -6.6 -23.1 item.quiver
+  , placeFullQuiver 24.3 -5.1
+  , placeFullQuiver -21.5 -18.9
+  , placeFullQuiver -6.6 -23.1
   , placeAt 2.0 -29.1 item.healthPotion
   , placeAt 20.3 -43.0 item.barrel
   , placeAt 21.2 -44.3 item.healthPotion
-  , placeAt 20.1 -43.8 item.quiver
-  , placeAt 4.7 -42.4 item.quiver
+  , placeFullQuiver 20.1 -43.8
+  , placeFullQuiver 4.7 -42.4
   , placeAt -9.5 -60.9 item.healthPotion
-  , placeAt -21.8 -49.9 item.quiver
-  , placeAt -39.3 -36.9 item.quiver
+  , placeFullQuiver -21.8 -49.9
+  , placeFullQuiver -39.3 -36.9
   , placeAt -11.3 9.9 item.healthPotion
 
 
@@ -322,7 +330,7 @@ let units =
   , spawnAt -9.3 10.2 agent.spider
 
   , makeUnit agent.npcBertram
-    [ actions.setLocation 1.2 2.6
+    [ actions.setLocation 1.2 3.6
     , npcBertramLoadout
     ]
   ]
@@ -335,4 +343,5 @@ in
 , coveringLayers = [ grassLayer ]
 , items = items
 , units = units
+, startLocation = { x = 1.2, y = 0.0 }
 }

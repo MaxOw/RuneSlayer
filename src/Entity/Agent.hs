@@ -21,7 +21,6 @@ import Entity
 import Entity.HasField
 import Entity.Utils
 import Entity.Actions
-import Entity.Script
 
 import ResourceManager (Resources, lookupAnimation)
 import qualified Equipment
@@ -38,6 +37,7 @@ actOn x a = x & case a of
     -- Handle here:
     EntityAction_ToggleDebug       f -> toggleDebugFlag f
     EntityAction_RunAnimation      k -> setAnimationKind k
+    EntityAction_MoveTo            l -> setMoveTo l
     EntityAction_SetMoveVector     v -> setMoveVector v
     EntityAction_SelfHeal          h -> selfHeal h
     EntityAction_SetValue          v -> handleSetValue v
@@ -53,10 +53,17 @@ actOn x a = x & case a of
     EntityAction_UseItem          {} -> handleOnUpdate a
 
     EntityAction_AddLoadout       {} -> handleOnUpdate a
-    EntityAction_Dialog           {} -> handleOnUpdate a
     EntityAction_Interact         {} -> handleOnUpdate a
     _ -> id
     where
+    setMoveTo l
+        = set moveTo (Just l)
+        . set target Nothing
+
+    setMoveVector v
+        = set moveTo Nothing
+        . setMoveVelocity v
+
     selfHeal h _ = x & health %~
         (\ch -> min (x^.fullStats.maxHealth) (ch+h))
 
@@ -67,7 +74,7 @@ actOn x a = x & case a of
 
     handleSetValue ev _ = case ev of
         EntityValue_Location     v -> x & location .~ v
-        EntityValue_Direction    _ -> x
+        EntityValue_Direction    d -> x & animationState.current.direction .~ d
         EntityValue_Animation    _ -> x
         EntityValue_SetStatus    s -> x & status %~ Set.insert s
         EntityValue_UnsetStatus  s -> x & status %~ Set.delete s
@@ -86,15 +93,13 @@ actOn x a = x & case a of
 
 update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
 update x ctx = runUpdate x ctx $ do
-    setupScript
     decideAction
-    stepScript
-
     updatePlayerStatus -- This is a bit... not ideal.
     updateActiveAnimation
     updateTimer
     updateDelayedActions
     integrateLocationWhenWalking
+    updateMoveTo
     separateCollision
 
     allMatch _EntityAction_AddItem (addItems notify . toList)
@@ -118,21 +123,29 @@ decideAction = useAgentKind >>= \case
         autoTargetMark
         runicActions
 
-    enemyActions eunit = do
+    whenNoToMove = whenNothingM_ (use $ self.moveTo)
+    enemyActions eunit = whenNoToMove $ do
         self.velocity .= 0
         autoTarget
         pursueOrAttackTarget eunit
         spreadOut
 
     npcActions = do
-        self.velocity .= 0
-        autoTarget
-        whenJustM getTarget $ \targetEntity -> do
-            attackRange <- getAttackRange
-            dist <- fromMaybe (1/0) <$> distanceToEntity targetEntity
-            when (dist < attackRange) $ do
-                orientTowards targetEntity
-                executeAttack
+        unlessM (use $ self.ff#npcRegistered) $ do
+            registerSelf
+            self.ff#npcRegistered .= True
+        whenNoToMove $ do
+            self.velocity .= 0
+            autoTarget
+            whenJustM getTarget $ \targetEntity -> do
+                attackRange <- getAttackRange
+                dist <- fromMaybe (1/0) <$> distanceToEntity targetEntity
+                when (dist < attackRange) $ do
+                    orientTowards targetEntity
+                    executeAttack
+
+    registerSelf = whenJustM (use $ self.agentType.ff#scriptName) $ \sn ->
+        addWorldAction . WorldAction_RegisterNPC sn =<< useSelfId
 
     -- Get target or cleanup when current target is dead.
     getTarget = use (self.target) >>= \case
@@ -388,6 +401,22 @@ integrateLocationWhenWalking = do
     k <- use $ self.animationState.current.kind
     when (k == Animation.Walk) integrateLocation
 
+updateMoveTo :: Update Agent ()
+updateMoveTo = whenJustM (use $ self.moveTo) $ \moveLoc -> do
+    loc <- use $ self.location
+    let dir = Unwrapped moveLoc - Unwrapped loc
+    let dis = norm dir
+    self %= setMoveVelocity dir
+    nloc <- nextFrameLocation
+    let ndis = norm $ Unwrapped moveLoc - Unwrapped nloc
+    if dis <= ndis
+    then do
+        self.location .= moveLoc
+        self.velocity .= 0
+        self.moveTo   .= Nothing
+    else do
+        self.animationState.current.direction %= Animation.vecToDir dir
+
 getAggroTarget :: Update Agent (Maybe EntityWithId)
 getAggroTarget = do
     trange <- use $ self.agentType.ff#autoTargetRange
@@ -434,7 +463,6 @@ processAction = \case
     EntityAction_RemoveItem     i -> removeItem i
     EntityAction_AddLoadout     l -> mapM_ addLoadoutEntry l
     EntityAction_PlayerAction   a -> processPlayerAction a
-    EntityAction_Dialog         d -> updateScript d
     EntityAction_Interact     n e -> interact e n
     _ -> return ()
 
@@ -458,7 +486,7 @@ performInteractionEffect t = \case
     where
     talkTo = do
         whenJustM (queryById t) orientTowards
-        updateScript DialogAction_Start
+        addWorldAction . WorldAction_StartDialog =<< useSelfId
 
 processPlayerAction :: PlayerAction -> Update Agent ()
 processPlayerAction = \case

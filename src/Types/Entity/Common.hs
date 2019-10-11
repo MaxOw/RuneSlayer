@@ -142,7 +142,7 @@ speedInMetersPerSecond = Speed
 --------------------------------------------------------------------------------
 
 isWithinDistance :: Distance -> Location -> Location -> Bool
-isWithinDistance d a b = distance (a^._Wrapped) (b^._Wrapped) <= (d^._Wrapped)
+isWithinDistance d a b = calcDistance a b <= d
 
 calcDistance :: Location -> Location -> Distance
 calcDistance = Wrapped .: distance `on` Unwrapped

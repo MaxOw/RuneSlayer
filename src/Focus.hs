@@ -16,13 +16,16 @@ import InputState.Actions
 
 --------------------------------------------------------------------------------
 
+-- I need to change nameing convention here because it's getting confusing...
+focus :: Game (Maybe EntityWithId)
+focus = lookupByTag EntityIndexTag_Focus =<< use (gameState.entities)
+
+focusEntityId :: Game (Maybe EntityId)
+focusEntityId = fmap (view entityId) <$> focus
+
 -- Get focused entity (if any)
 focusEntity :: Game (Maybe Entity)
-focusEntity = do
-    mfi <- use $ gameState.focusId
-    case mfi of
-        Nothing -> return Nothing
-        Just fi -> fmap (view entity) <$> lookupEntity fi
+focusEntity = fmap (view entity) <$> focus
 
 -- Get location of a focused entity (if any)
 focusLocation :: Game (Maybe Location)
@@ -35,15 +38,11 @@ cameraLocation = do
     mei <- lookupByTag EntityIndexTag_Camera eix
     return (view (entity.oracleLocation) =<< mei)
 
-focusEntityId :: Game (Maybe EntityId)
-focusEntityId = use (gameState.focusId)
-
 withFocusId :: (EntityId -> Game ()) -> Game ()
 withFocusId = whenJustM focusEntityId
 
-withFocusEntityWithId :: (EntityWithId -> Game ()) -> Game ()
-withFocusEntityWithId = whenJustM $ runMaybeT $
-    MaybeT . lookupEntity =<< MaybeT (use $ gameState.focusId)
+withFocus :: (EntityWithId -> Game ()) -> Game ()
+withFocus = whenJustM focus
 
 focusEntityKindInRange :: EntityKind -> Distance -> Game [EntityWithId]
 focusEntityKindInRange k d = focusLocation >>= \case

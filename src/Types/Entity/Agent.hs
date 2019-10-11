@@ -8,12 +8,16 @@ import Types.Entity.ZIndex
 import Types.Entity.Animation
 import Types.Entity.Passive
 import Types.Entity.Reactivity
-import Types.Entity.Script
 import Types.Equipment
 import Types.Skills.Runes (RunicPoints)
 import Data.Timer (Timer)
 
 --------------------------------------------------------------------------------
+
+data ScriptName
+   = ScriptName_Bertram
+   | ScriptName_Default
+   deriving (Eq, Ord, Generic)
 
 data TimerType
    = Timer_Attack
@@ -45,6 +49,7 @@ instance Default AgentKind where def = AgentKind_Enemy
 
 data AgentType = AgentType
    { field_name               :: AgentTypeName
+   , field_scriptName         :: Maybe ScriptName
    , field_corpse             :: Maybe PassiveTypeName
    , field_reactivity         :: Map ReactivCategory ReactivValue
    , field_autoTargetRange    :: Distance
@@ -59,7 +64,6 @@ data AgentType = AgentType
    , field_unitType           :: Maybe UnitType
 
    , field_agentKind          :: AgentKind
-   , field_scriptName         :: Maybe ScriptName
 
    , field_interactions       :: Map InteractionName [InteractionEffect]
    , field_primaryInteraction :: Maybe InteractionName
@@ -102,9 +106,11 @@ data Agent = Agent
    , field_maxRunicPoints     :: RunicPoints
 
    , field_agentType          :: AgentType
-   , field_script             :: Script
+
+   , field_moveTo             :: Maybe Location
 
    , field_canAttackTarget    :: Bool
+   , field_npcRegistered      :: Bool
    } deriving (Generic)
 instance HasMaxSpeed Agent Speed where
     maxSpeed = ff#fullStats.ff#maxSpeed
@@ -127,6 +133,9 @@ data PlayerStatus = PlayerStatus
 
 instance ToJSON   UnitType where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON UnitType where parseJSON  = genericParseJSON  customOptionsJSON
+
+instance ToJSON   ScriptName where toEncoding = genericToEncoding customOptionsJSON
+instance FromJSON ScriptName where parseJSON  = genericParseJSON  customOptionsJSON
 
 instance ToJSON   AgentKind where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON AgentKind where parseJSON  = genericParseJSON  customOptionsJSON
@@ -153,15 +162,12 @@ baseStats = ff#baseStats
 fullStats :: Lens' Agent Stats
 fullStats = ff#fullStats
 
-script :: Lens' Agent Script
-script = ff#script
+moveTo :: Lens' Agent (Maybe Location)
+moveTo = ff#moveTo
 
 runicPoints :: Lens' Agent RunicPoints
 runicPoints = ff#runicPoints
 
 agentKind :: Lens' AgentType AgentKind
 agentKind = ff#agentKind
-
-scriptName :: Lens' AgentType (Maybe ScriptName)
-scriptName = ff#scriptName
 

@@ -18,6 +18,7 @@ data InputMode
    | StatusMode StatusMenu
    | RunicMode
    | SpaceMode
+   | StoryMode
    | MapEditorMode
    deriving (Show, Eq, Ord, Generic)
 instance Default InputMode where def = NormalMode

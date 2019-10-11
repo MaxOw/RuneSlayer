@@ -28,10 +28,9 @@ import qualified Data.Vector as Vector
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
-import qualified Data.Zipper as Zipper
 
-import Engine (userState, EngineState, Key)
-import Types (Game, St)
+import Engine (userState, Key)
+import Types (Game)
 import Types.EntityAction
 import Types.Entity.Common (EntityId)
 import Types.Entity.PassiveType (InteractionName)
@@ -40,6 +39,7 @@ import Types.Equipment
 import InputState.Actions
 import GameState
 import Focus
+import qualified Story
 
 --------------------------------------------------------------------------------
 
@@ -158,7 +158,7 @@ handleSelectKind s selseq = do
         vs = v^.values
 
 selectPickup :: EntityId -> Game ()
-selectPickup eid = withFocusEntityWithId $ \fe -> do
+selectPickup eid = withFocus $ \fe -> do
     mapM_ pickupItem =<< filterFitItems fe =<< lookupEntities [eid]
     selectFocus eid
 
@@ -213,15 +213,5 @@ isPanelVisible pname = zoomInputState $ uses visiblePanels (Set.member pname)
 
 nextPage :: Game ()
 nextPage = getMode >>= \case
-    StatusMode StatusMenu_StoryDialog -> storyNextPage
-    _                                 -> return ()
-    where
-    storyNextPage = whenJustM (use storyDialog) $ \sd -> do
-        actOnEntity (sd^.entityId) $ EntityAction_Dialog DialogAction_NextPage
-        if Zipper.isRightmost $ sd^.ff#dialogPages
-        then storyDialog .= Nothing >> inputActionEscape
-        else storyDialog.traverse.ff#dialogPages %= Zipper.right
-
-    storyDialog :: Lens' (EngineState St) (Maybe StoryDialogState)
-    storyDialog = userState.inputState.ff#storyDialog
-
+    StoryDialogMode -> Story.nextPage
+    _               -> return ()

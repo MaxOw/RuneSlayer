@@ -7,7 +7,6 @@ import Types.Entity.TileSet
 import Types.Entity.Animation
 import Types.Entity.Passive
 import Types.Entity.Agent
-import Types.Entity.Script
 
 data Resources = Resources
    { field_imgMap        :: HashMap Text Img
@@ -16,7 +15,6 @@ data Resources = Resources
    , field_tileSetMap    :: HashMap TileSetName TileSet
    , field_agentsMap     :: HashMap AgentTypeName AgentType
    , field_animationsMap :: HashMap AnimationName Animation
-   , field_dialogMap     :: HashMap StoryDialogName StoryDialog
    } deriving (Generic)
 instance Default Resources
 instance HasResources Resources Resources where resources = id
@@ -29,6 +27,3 @@ agentsMap = ff#agentsMap
 
 passiveMap :: Lens' Resources (HashMap PassiveTypeName PassiveType)
 passiveMap = ff#passiveMap
-
-dialogMap :: Lens' Resources (HashMap StoryDialogName StoryDialog)
-dialogMap = ff#dialogMap

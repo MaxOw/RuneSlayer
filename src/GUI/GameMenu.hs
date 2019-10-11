@@ -3,10 +3,10 @@ module GUI.GameMenu where
 import Delude
 import qualified Data.Set as Set
 import qualified Data.Map as Map
-import qualified Data.Zipper as Zipper
 
 import Engine
-import qualified Engine.Layout.Alt as Alt
+import Engine.Layout.Alt (Layout)
+import qualified Engine.Layout.Alt as Layout
 
 import Types
 import Types.Entity.Common (Location)
@@ -27,36 +27,37 @@ import GUI.Layout
 import qualified Tutorial
 import qualified Messages
 import qualified Runes
+import qualified Story
 
 --------------------------------------------------------------------------------
 
-gameMenuLayout :: Game Alt.Layout
-gameMenuLayout = Alt.composition . catMaybes <$> sequence
-    [ Just <$> statusPanesLayout
+gameMenuLayout :: Game Layout
+gameMenuLayout = Layout.composition <$> sequence
+    [ statusPanesLayout
     , overlayMenuLayout ]
     where
     overlayMenuLayout = getMode >>= \case
         StatusMode m -> statusMenuLayout m
-        RunicMode    -> Just <$> Runes.display
+        RunicMode    -> Runes.display
      -- SpaceMode    -> spaceMenuLayout
-        _            -> return Nothing
+        _            -> return mempty
 
 --------------------------------------------------------------------------------
 
-overlayLayout :: (Location -> V2 Float) -> Game Alt.Layout
-overlayLayout conv = Alt.composition . catMaybes <$> sequence
+overlayLayout :: (Location -> V2 Float) -> Game Layout
+overlayLayout conv = Layout.composition . catMaybes <$> sequence
     [ Just <$> Messages.displayLocated conv
     , interactionOverlay conv
     , attackOverlay conv
     ]
 
-interactionOverlay :: (Location -> V2 Float) -> Game (Maybe Alt.Layout)
+interactionOverlay :: (Location -> V2 Float) -> Game (Maybe Layout)
 interactionOverlay conv = runMaybeT $ do
     (e, _) <- MaybeT focusNearestInteractionInRange
     n      <- MaybeT $ pure $ e^.entity.oraclePrimaryInteraction
     MaybeT $ overlayLabelFor conv NormalMode Interact e (Unwrapped n)
 
-attackOverlay :: (Location -> V2 Float) -> Game (Maybe Alt.Layout)
+attackOverlay :: (Location -> V2 Float) -> Game (Maybe Layout)
 attackOverlay conv = runMaybeT $ do
     f <- MaybeT $ focusEntity
     s <- MaybeT $ pure $ f^.oraclePlayerStatus
@@ -70,7 +71,7 @@ overlayLabelFor
     :: HasEntity e Entity
     => (Location -> V2 Float)
     -> InputMode -> InputAction -> e -> Text
-    -> Game (Maybe Alt.Layout)
+    -> Game (Maybe Layout)
 overlayLabelFor conv m act (view entity -> e) lab = do
     rightMode <- (m ==) <$> getMode
     case e^.oracleLocation of
@@ -86,8 +87,8 @@ moveOverhead = over (_Wrapped._y) (+unitHeight)
     where
     unitHeight = 1.7
 
-statusPanesLayout :: Game Alt.Layout
-statusPanesLayout = Alt.composition . catMaybes <$> sequence
+statusPanesLayout :: Game Layout
+statusPanesLayout = Layout.composition . catMaybes <$> sequence
  -- [ rIf GroundPreviewPanel    groundPreviewPanelLayout
     [ pure Nothing
     , rIf StatusPanel statusPanelLayout
@@ -101,12 +102,12 @@ statusPanesLayout = Alt.composition . catMaybes <$> sequence
             True  -> renderFunc
             False -> pure Nothing
 
-gameOverScreenLayout :: Game (Maybe Alt.Layout)
+gameOverScreenLayout :: Game (Maybe Layout)
 gameOverScreenLayout = getGameOverScreen >>= \case
     Nothing -> return Nothing
     Just gs -> return $ Just $ layout_gameOverScreen gs
 
-statusPanelLayout :: Game (Maybe Alt.Layout)
+statusPanelLayout :: Game (Maybe Layout)
 statusPanelLayout = do
     ir <- not . null <$> focusItemsInRange
     withPlayerStatus $ \ps ->
@@ -132,7 +133,7 @@ withPlayerStatus f = do
         Nothing -> return Nothing
         Just ps -> return $ Just $ f ps
 
-actionsMenu :: Game (Maybe Alt.Layout)
+actionsMenu :: Game (Maybe Layout)
 actionsMenu = do
     fmap layout_actionsMenu <$> getHintMap
     where
@@ -154,17 +155,6 @@ actionsMenu = do
     toName Nothing  a = show a
     toName (Just n) a = unInteractionName a <> " " <> n
 
-storyDialog :: Game (Maybe Alt.Layout)
-storyDialog = do
-    msd <- use $ userState.inputState.ff#storyDialog
-    ksq <- showActionKeySeqs StoryDialogMode InputAction_NextPage
-    case msd of
-        Nothing -> return Nothing
-        Just sd -> return $ Just $ layout_storyDialog $ def
-            & title   .~ sd^.title
-            & content .~ fromMaybe "" (Zipper.focus $ sd^.ff#dialogPages)
-            & ff#nextPageKey .~ ksq
-
 --------------------------------------------------------------------------------
 
 {-
@@ -183,8 +173,8 @@ spaceMenuLayout = return $ layoutBox desc []
 
 --------------------------------------------------------------------------------
 
-statusMenuLayout :: StatusMenu -> Game (Maybe Alt.Layout)
+statusMenuLayout :: StatusMenu -> Game Layout
 statusMenuLayout m = case m of
-    StatusMenu_Inventory   -> Just <$> inventoryLayout
-    StatusMenu_StoryDialog -> storyDialog
+    StatusMenu_Inventory   -> inventoryLayout
+    StatusMenu_StoryDialog -> Story.display
 

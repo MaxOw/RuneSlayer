@@ -17,7 +17,6 @@ import Types.InputState (defaultInputState)
 import Types.Entity (EntityIndex)
 import Types.Config
 import Types.St
-import Types.Entity.Common
 import Entity.Agent (makeAgent)
 import Types.ResourceManager
 import Types.DirectedAction
@@ -26,7 +25,6 @@ import WorldGen
 import Types.EntityAction (Spawn, EntityAction)
 import Types.Entity.Agent (AgentTypeName)
 import Types.Entity.Passive (PassiveTypeName)
-import Types.Entity.Script (StoryDialogName, StoryDialog)
 import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
@@ -43,6 +41,7 @@ import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
 import qualified Tutorial
 import qualified Runes
 import qualified MapEditor
+import qualified Story
 
 descPath :: FilePath
 descPath = "data/desc"
@@ -70,20 +69,20 @@ initSt = do
     let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items
 
     pli <- loadDhall descPath "Player.dhall"
-    pid <- EntityIndex.insert (playerEntity rs pli) eix
+    let ploc = wgconf^.ff#startLocation
+    pid <- EntityIndex.insert (playerEntity rs pli ploc) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
-    EntityIndex.addTag EntityIndexTag_Player pid eix
+    EntityIndex.addTag EntityIndexTag_Focus  pid eix
     liftIO . GLFW.showWindow =<< use (graphics.context)
     return $ execState ?? st $ do
-        gameState.focusId        .= Just pid
         gameState.actions        .= spawnUnits <> spawnItems
         gameState.mapEditorState .= mes
         resources                .= rs
         overview                 .= rnd
         config                   .= conf
     where
-    playerEntity rs pli = toEntity $ makeAgent rs pli
-        & location .~ locM 0 0
+    playerEntity rs pli ploc = toEntity $ makeAgent rs pli
+        & location .~ ploc
         & collisionShape .~ Just (Collider.circle 0 0.3)
 
     overview = ff#overview
@@ -120,26 +119,18 @@ loadResources conf = case conf^.debugMode of
         us <- loadDhallList "UnitTypes.dhall"
         as <- loadDhallMap  "Animations.dhall"
 
-        dialogs <- loadDialogs
-        -- mapM_ print dialogs
-
         let res = def
                 & imgMap        .~ HashMap.fromList rs
                 & spriteMap     .~ ss
                 & tileSetMap    .~ buildMap ts
                 & passiveMap    .~ buildMap ps
                 & agentsMap     .~ buildMap us
-                & dialogMap     .~ dialogs
         let pr = fmap (Animation.makeAnimation res)
                $ HashMap.fromList
                $ map (over _1 AnimationName)
                $ HashMap.toList as
         return $ res
             & animationsMap .~ pr
-
-loadDialogs :: Engine us (HashMap StoryDialogName StoryDialog)
-loadDialogs = do
-    HashMap.fromList <$> inputAuto descPath "./Script/StoryDialog.dhall"
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
@@ -219,15 +210,16 @@ initBaseSt conf eix = do
 initGameState :: Config -> EntityIndex -> Engine u GameState
 initGameState conf eix = do
     rs <- Runes.init =<< loadRuneSet conf
+    ss <- Story.init
     return $ GameState
         { field_entities       = eix
         , field_actions        = []
-        , field_focusId        = Nothing
         , field_targetId       = Nothing
         , field_gameScale      = 64
         , field_frameCount     = 0
         , field_gameOverScreen = Nothing
         , field_tutorialState  = Tutorial.defaultTutorialState
+        , field_storyState     = ss
         , field_systemMessages = def
         , field_runesState     = rs
         , field_mapEditorState = def

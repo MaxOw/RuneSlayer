@@ -1,13 +1,11 @@
 module InputState.Actions where
 
 import Delude
-import qualified Data.Zipper as Zipper
 import qualified Data.Text as Text
 
 import Engine (userState)
 import Types (Game)
 import Types.Entity (EntityWithId)
-import Types.Entity.Script (StoryDialog)
 import Types.Entity.Common (EntityId)
 import Types.InputState
 import GameState.Query
@@ -42,17 +40,6 @@ getInventoryContainer = do
         Just ic -> lookupEntity ic
 
 --------------------------------------------------------------------------------
-
-showStoryDialog :: EntityId -> StoryDialog -> Game ()
-showStoryDialog eid sd = do
-    setMode StoryDialogMode
-    zoomInputState $ ff#storyDialog .= Just sds
-    where
-    sds = StoryDialogState
-        { field_title       = sd^.title
-        , field_entityId    = eid
-        , field_dialogPages = Zipper.fromList $ sd^.ff#dialogPages
-        }
 
 showActionKeySeqs :: InputMode -> InputAction -> Game Text
 showActionKeySeqs m a = uses (userState.inputState.inputKeymap)

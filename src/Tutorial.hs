@@ -29,7 +29,7 @@ import Focus (focusEntityId)
 --------------------------------------------------------------------------------
 
 defaultTutorialState :: TutorialState
-defaultTutorialState  = def
+defaultTutorialState = def
 
 restart :: Game ()
 restart = do
@@ -196,7 +196,7 @@ tutorialAttack = makeTransition checkStepDone pageDesc
                 [ "Now assuming you have bow and quiver with arrows equipped "
                 , "(or maybe some other weapon) and have enough runic points "
                 , "loaded to be able to attack, you can move within attack "
-                , "range of the enemy and press ", kattack, " to ", f "attack. "
+                , "range to the enemy and press ", kattack, " to ", f "attack. "
                 ]
         return $ def
             & title   .~ titleText

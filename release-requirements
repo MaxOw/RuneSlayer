@@ -24,7 +24,6 @@ Requirements for first release: v0.1
 * Load entity types from files (Json/Dhall)                                  [X]
 * Load resource files. (Json/Dhall)                                          [X]
 
-* Save/Load map description. (What format?)                                  [ ]
 * World actions.                                                             [X]
 * Named entity types.                                                        [X]
 * Improve spawn mechanics.                                                   [X]
@@ -38,7 +37,6 @@ Requirements for first release: v0.1
   - Add items stats.                                                         (#)
 
 * Player health & dying.                                                     [X]
-* Make effects an entity.                                                    [X]
 * Add action delays.                                                         [X]
 
 * Enemy actions.                                                             [X]
@@ -103,6 +101,7 @@ Requirements for first release: v0.1
 * Sqlite powered, nix-like immutable data storage.                           [ ]
 * Make all dhall files Interpretable instead of going via JSON.              [ ]
   - Put all resources into single DataIndex type loaded from Index.dhall     ( )
+* Save/Load map description. (What format?)                                  [ ]
 
 * Add help commands/window.                                                  [ ]
 

@@ -8,9 +8,8 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
 import Engine.Graphics.Utils (delObject)
 import Graphics.GL (glDeleteTextures)
-import Engine (RenderAction, Img, userState, texture, context)
+import Engine (Img, userState, texture, context, getTime)
 import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
-import qualified Diagrams.TwoD.Transform as T
 import Engine.Types (Engine, graphics)
 import Types.GameState
 import Types.InputState (defaultInputState)
@@ -42,50 +41,73 @@ import qualified Tutorial
 import qualified Runes
 import qualified MapEditor
 import qualified Story
+-- import qualified Schema
+
+-- import Types.Schema.WorldMap ()
+-- import Criterion.Measurement (secs)
 
 descPath :: FilePath
 descPath = "data/desc"
 
+printTimer :: MonadIO m => Float -> String -> m ()
+printTimer _st _msg = do
+    _ed <- getTime
+    -- putStrLn $ msg <> ": " <> secs (realToFrac $ ed - st)
+    return ()
+
 initSt :: Engine () St
 initSt = do
+    timer0 <- getTime
     conf   <- loadDhall "" "Config.dhall"
-    wgconf <- inputAuto descPath "./WorldGen.dhall"
+    printTimer timer0 "Timer0A"
+    wgconf <- inputAuto @WorldGenConfig descPath "./WorldGen.dhall"
+    printTimer timer0 "Timer0"
 
+    timer1 <- getTime
     eix <- EntityIndex.new $ def & size .~ (wgconf^.size)
     st <- initBaseSt conf eix
+    printTimer timer1 "Timer1"
 
+    timer2 <- getTime
     loadFonts
     rs <- loadResources conf
     Engine.fullyUpdateAtlas
     Engine.setDefaultFonts ["Arial"] 10
+    printTimer timer2 "Timer2"
+
     let mes = MapEditor.init rs
 
+    timerWG <- getTime
     let world = generateWorld rs wgconf
-    rnd <- makeRenderOverview world
+    -- rnd <- makeRenderOverview world
     whenNothing_ (conf^.debugMode) $
         forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
+    printTimer timerWG "TimerWG"
 
     let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units
     let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items
 
+    timer3 <- getTime
     pli <- loadDhall descPath "Player.dhall"
     let ploc = wgconf^.ff#startLocation
     pid <- EntityIndex.insert (playerEntity rs pli ploc) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
     EntityIndex.addTag EntityIndexTag_Focus  pid eix
+    printTimer timer3 "Timer3"
+    printTimer timer0 "Timer All"
     liftIO . GLFW.showWindow =<< use (graphics.context)
     return $ execState ?? st $ do
         gameState.actions        .= spawnUnits <> spawnItems
         gameState.mapEditorState .= mes
         resources                .= rs
-        overview                 .= rnd
+     -- overview                 .= rnd
         config                   .= conf
     where
     playerEntity rs pli ploc = toEntity $ makeAgent rs pli
         & location .~ ploc
         & collisionShape .~ Just (Collider.circle 0 0.3)
 
-    overview = ff#overview
+    -- overview = ff#overview
     mapEditorState = ff#mapEditorState
 
 loadRuneSet :: MonadIO m => Config -> m RuneSet
@@ -96,12 +118,14 @@ loadRuneSet conf = do
         Nothing -> error $ "Unable to load RuneSet: " <> rsname
         Just rp -> buildRuneSet <$> loadDhall descPath rp
 
+{-
 makeRenderOverview :: WorldGenOutput -> Engine us RenderAction
 makeRenderOverview out = case out^.overviewImage of
     Nothing -> return mempty
     Just oi -> do
         img <- Engine.addImageToAtlas oi
         return $ T.scale 4 $ Engine.renderImg img
+-}
 
 loadResources :: Config -> Engine us Resources
 loadResources conf = case conf^.debugMode of
@@ -162,13 +186,11 @@ loadResource r = do
 loadFonts :: Engine us ()
 loadFonts = do
     loadFontFamily "Arial" ".ttf"
-    loadFontBase "SourceHanSerif" "-Regular.otf"
+    loadFontBase "SourceHanSerif-Regular.otf"
 
-loadFontBase :: FontName -> Text -> Engine us ()
-loadFontBase fname ext = void $ Engine.loadFontFamily fname $ def
-    & fontBase .~ mkFontPath fname ""
-    where
-    mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
+loadFontBase :: FontName -> Engine us ()
+loadFontBase fname = void $ Engine.loadFontFamily fname $ def
+    & fontBase .~ toString ("data/fonts/" <> fname)
 
 loadFontFamily :: FontName -> Text -> Engine us ()
 loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def

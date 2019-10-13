@@ -13,7 +13,7 @@ import Dhall.Instances ()
 
 --------------------------------------------------------------------------------
 
-inputAutoSettings :: (MonadIO m, Interpret t)
+inputAutoSettings :: (Interpret t, MonadIO m)
     => InputSettings -> FilePath -> Text -> m t
 inputAutoSettings ses rdir
     = liftIO . inputWithSettings ss (autoWith customDhallOpts)
@@ -22,7 +22,7 @@ inputAutoSettings ses rdir
     -- full = prdr <> "/" <> fpath
     ss = ses & rootDirectory .~ prdr
 
-inputAuto :: (MonadIO m, Interpret t) => FilePath -> Text -> m t
+inputAuto :: (Interpret t, MonadIO m) => FilePath -> Text -> m t
 inputAuto = inputAutoSettings defaultInputSettings
 
 customDhallOpts :: InterpretOptions

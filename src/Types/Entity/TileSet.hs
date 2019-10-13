@@ -9,19 +9,19 @@ data Edge
    | Edge_Left
    | Edge_Top
    | Edge_Right
-   deriving (Eq, Enum, Bounded)
+   deriving (Eq, Enum, Bounded, Generic)
 
 data Corner
    = Corner_BottomRight
    | Corner_BottomLeft
    | Corner_TopLeft
    | Corner_TopRight
-   deriving (Eq, Enum, Bounded)
+   deriving (Eq, Enum, Bounded, Generic)
 
 data Cross
    = Cross_TopLeftBottomRight
    | Cross_BottomLeftTopRight
-   deriving (Eq, Enum, Bounded)
+   deriving (Eq, Enum, Bounded, Generic)
 
 data TileRole
    = TileRole_Full
@@ -31,7 +31,7 @@ data TileRole
    | TileRole_OuterCorner Corner
    | TileRole_InnerCorner Corner
    | TileRole_Cross Cross
-   deriving (Eq)
+   deriving (Eq, Generic)
 
 instance Default TileRole where def = TileRole_Full
 

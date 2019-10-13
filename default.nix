@@ -19,6 +19,7 @@ let ghc = nixpkgs.haskell.packages.${compiler}.override {
         dhall-json      = dontCheck super.dhall-json_1_3_0;
         # higgledy        = loadUrl self cabal://higgledy-0.3.0.0;
         higgledy        = loadLocal self "higgledy";
+        winery          = loadLocal self "winery";
       };
     };
 

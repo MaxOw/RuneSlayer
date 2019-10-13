@@ -25,12 +25,13 @@ import Data.Array.Repa (Array, D, DIM2, Z(..), (:.)(..), Source)
 import Data.Array.Repa.Repr.Vector (V)
 import qualified Data.Array.Repa as Repa
 import qualified Data.Array.Repa.Specialised.Dim2 as Repa
-import qualified Color
-import qualified Data.Colour.Palette.ColorSet as Palette
+-- import qualified Color
+-- import qualified Data.Colour.Palette.ColorSet as Palette
 
 import Random.Utils (runRandom, randomListSelect, uniformRange, randomDirection)
 import Data.Hashable (hash)
 
+-- import Types.Schema.WorldMap (PlaceTileAt(..), WorldMap)
 import Types.WorldGen
 import WorldGen.Utils
 
@@ -38,8 +39,23 @@ import WorldGen.Utils
 
 generateWorld :: Resources -> WorldGenConfig -> WorldGenOutput
 generateWorld rs conf = def
-    & entities      .~ Vector.fromList (tiles <> statics)
-    & overviewImage .~ Just (imgToImage fullImg)
+    & entities .~ Vector.fromList (tiles <> statics)
+
+{-
+    & entities .~ tes
+    where
+    tes = Vector.mapMaybe (tileToEntity rs) $ view (ff#tiles)
+        $ generateWorldMap rs conf
+
+tileToEntity :: Resources -> PlaceTileAt -> Maybe Entity
+tileToEntity rs p = (\x -> mkLocRole x (p^.ff#location) (p^.ff#tileRole)) <$> ts
+    where
+    ts = lookupTileSet (p^.ff#tileSet) rs
+
+generateWorldMap :: Resources -> WorldGenConfig -> WorldMap
+generateWorldMap rs conf = def
+    & ff#tiles .~ Vector.fromList tiles
+-}
 
 --------------------------------------------------------------------------------
 
@@ -49,25 +65,24 @@ generateWorld rs conf = def
 
     seed = conf^.ff#seed
 
-    fullImg = foldr genLayer baseImg prepLayers
-
-    baseImg = boolToImg landColor baseColor baseMap
+    -- fullImg = foldr genLayer baseImg prepLayers
+    -- baseImg = boolToImg landColor baseColor baseMap
 
     baseMap = generateLandmass conf
     mkLayerBoolMap i = generateLayer conf i baseMap
     layerBoolMaps = map mkLayerBoolMap $ zipWith const [1..] layers
-    genLayer (l,c) = colorImg c l
+    -- genLayer (l,c) = colorImg c l
 
     layers        = conf^.ff#coveringLayers
     layerTilesets = layers^..traverse.ff#tileset.to (requireTileSet rs)
-    prepLayers    = zip layerBoolMaps $ zipWith tsColor defColors layerTilesets
+    -- prepLayers    = zip layerBoolMaps $ zipWith tsColor defColors layerTilesets
     statics       = concat $ zipWith (placeStatics rs seed pp) layers layerBoolMaps
 
-    defColors = map Color.colourConvert Palette.infiniteWebColors
+    -- defColors = map Color.colourConvert Palette.infiniteWebColors
 
-    tsColor d t = fromMaybe d $ Color.fromColorDesc =<< t^.color
-    baseColor = tsColor Color.blue baseTileSet
-    landColor = tsColor Color.peru landTileSet
+    -- tsColor d t = fromMaybe d $ Color.fromColorDesc =<< t^.color
+    -- baseColor = tsColor Color.blue baseTileSet
+    -- landColor = tsColor Color.peru landTileSet
 
     baseTileSet = requireTileSetM rs $ conf^.ff#baseTileSet
     landTileSet = requireTileSetM rs $ conf^.ff#baseLandTileSet
@@ -97,6 +112,21 @@ generateWorld rs conf = def
     tiles = buildEntities pp $ downselectTileSets outRoles
 
 --------------------------------------------------------------------------------
+
+buildEntities :: V2 Int -> RepaD2 [(TileRole, TileSet)] -> [Entity]
+buildEntities pp = concat . Repa.toList . Repa.map f . addOffset pp
+    where
+    f (v, ls) = map (\(tr, ts) -> mkLocRole ts (conv v) tr) ls
+    conv v = Location $ fromIntegral <$> v
+
+{-
+buildTiles :: V2 Int -> RepaD2 [(TileRole, TileSet)] -> [PlaceTileAt]
+buildTiles pp = concat . Repa.toList . Repa.map f . addOffset pp
+    where
+    f (v, ls) = map (\(tr, ts) -> PlaceTileAt (ts^.name) tr $ conv v) ls
+    conv v = Location $ fromIntegral <$> v
+    -- f (v, ls) = map (\(tr, ts) -> mkLocRole ts v tr) ls
+-}
 
 placeStatics
     :: Resources -> Int -> V2 Int -> CoveringLayer -> RepaBool -> [Entity]
@@ -133,11 +163,6 @@ downselectTileSets = Repa.map f
         where
         fulls = filter (\x -> fst x == TileRole_Full) is
         topz = viaNonEmpty head $ sortOn (view (_2.zindex)) fulls
-
-buildEntities :: V2 Int -> RepaD2 [(TileRole, TileSet)] -> [Entity]
-buildEntities pp = concat . Repa.toList . Repa.map f . addOffset pp
-    where
-    f (v, ls) = map (\(tr, ts) -> mkLocRole ts v tr) ls
 
 --------------------------------------------------------------------------------
 
@@ -194,8 +219,6 @@ clamp2 es (a, b) = Repa.clampToBorder2 es $ Repa.ix2 a b
 
 --------------------------------------------------------------------------------
 
-mkLocRole :: TileSet -> V2 Int -> TileRole -> Entity
-mkLocRole ts pos r = toEntity . set location loc $ makeTile r ts
-    where
-    loc = Location $ fmap fromIntegral pos
+mkLocRole :: TileSet -> Location -> TileRole -> Entity
+mkLocRole ts loc r = toEntity . set location loc $ makeTile r ts
 

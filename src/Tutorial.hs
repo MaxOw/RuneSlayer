@@ -56,7 +56,8 @@ handleTutorialStep = \case
     TutorialStep_PickingUpItems -> tutorialPickingUpItems
     TutorialStep_Interaction    -> tutorialInteraction
     TutorialStep_Inventory      -> tutorialInventory
-    TutorialStep_Runes          -> tutorialRunes
+    TutorialStep_RunesStatus    -> tutorialRunesStatus
+    TutorialStep_RunicMode      -> tutorialRunicMode
     TutorialStep_Attack         -> tutorialAttack
     TutorialStep_Done           -> tutorialDone
 
@@ -161,15 +162,34 @@ tutorialInteraction = makeTransition checkStepDone pageDesc
             & title   .~ titleText
             & content .~ contentText
 
-tutorialRunes :: Game ()
-tutorialRunes = makeTransition checkStepDone pageDesc
+tutorialRunesStatus :: Game ()
+tutorialRunesStatus = makeTransition checkStepDone pageDesc
+    where
+    checkStepDone = andM
+        [ checkActivated $ SetMode RunicStatusMode
+        , isNormalMode ]
+    pageDesc = do
+        let titleText = "Runes (Status)."
+        krunic <- keyActivatedPart NormalMode $ SetMode RunicStatusMode
+        kesc <- keyActivatedPart RunicStatusMode $ InputAction_Escape
+        let contentText =
+                [ "Press ", krunic, " to show you the status of all runes "
+                , "you've learned so far."
+                , "Pressing ", kesc, " should take you back out."
+                ]
+        return $ def
+            & title   .~ titleText
+            & content .~ contentText
+
+tutorialRunicMode :: Game ()
+tutorialRunicMode = makeTransition checkStepDone pageDesc
     where
     checkStepDone = andM
         [ checkActivated StartRunicMode
         , isNormalMode
         , currentStepSatisified ]
     pageDesc = do
-        let titleText = "Runes."
+        let titleText = "Runic Mode."
         krunic <- keyActivatedPart NormalMode StartRunicMode
         f <- makeTaskPart
         let contentText =
@@ -239,7 +259,7 @@ handleAction (DirectedEntityAction _ act) = case act of
     EntityAction_PlayerAction (PlayerAction_UpdateRune _ True) -> satisfyRunes
     _ -> return ()
     where
-    satisfyRunes = satisfy TutorialStep_Runes
+    satisfyRunes = satisfy TutorialStep_RunicMode
     satisfyFor p x = whenFocus p $ satisfy x
     whenFocus p = whenM ((p ==) <$> focusEntityId)
     satisfy x = tutorialState.satisfied %= Set.insert x

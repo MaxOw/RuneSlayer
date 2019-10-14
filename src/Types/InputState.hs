@@ -147,7 +147,8 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
 
         , InputStr "M" (SetMode MapEditorMode)
 
-        , InputStr "r" StartRunicMode
+        , InputStr "rr" StartRunicMode
+        , InputStr "rs" (SetMode RunicStatusMode)
 
         , InputStr "f" Interact
         , InputStr "F" SelectInteraction

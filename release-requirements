@@ -62,10 +62,10 @@ Requirements for first release: v0.1
 
 * Initial island.                                                            [X]
 
-* Learning mechanics                                                         [ ]
+* Learning mechanics                                                         [X]
   - Runic levels.                                                            (#)
   - Runic points.                                                            (#)
-  - Display runes status.                                                    ( )
+  - Display runes status.                                                    (#)
 
 * Loadouts                                                                   [X]
   - Loadout descriptions.                                                    (#)

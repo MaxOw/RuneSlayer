@@ -1,6 +1,7 @@
 module GUI.Layout (module GUI.Layout) where
 
 import Delude
+import qualified Data.Text as Text
 import Engine.Layout.Alt hiding (left)
 import Types.GUI
 import Types.EntityAction (AttackMode(..))
@@ -9,6 +10,7 @@ import Text.Printf
 
 import GUI.Layout.Inventory as GUI.Layout
 import GUI.Layout.Common    as GUI.Layout
+import qualified GUI.Style as Style
 
 import qualified Color
 
@@ -45,8 +47,8 @@ layout_statusPanel s
     healthAndRunes = hcat [ healthL, runesL ]
         & width .~ 300 @@ px
 
-    healthL = layout_healthStatus $ s^.ff#health
-    runesL  = layout_runicStatus  $ s^.ff#runes
+    healthL = layout_healthPointsStatus $ s^.ff#health
+    runesL  = layout_runicPointsStatus  $ s^.ff#runes
 
 --------------------------------------------------------------------------------
 
@@ -58,11 +60,11 @@ layout_pointsStatus f c s = txt
 
     msg = toText @String $ printf f (s^.ff#points) (s^.ff#maxPoints)
 
-layout_healthStatus :: StatusPoints -> Layout
-layout_healthStatus = layout_pointsStatus "%d/%d HP" warningColor
+layout_healthPointsStatus :: StatusPoints -> Layout
+layout_healthPointsStatus = layout_pointsStatus "%d/%d HP" warningColor
 
-layout_runicStatus :: StatusPoints -> Layout
-layout_runicStatus = layout_pointsStatus "%d/%d RP" Color.blue
+layout_runicPointsStatus :: StatusPoints -> Layout
+layout_runicPointsStatus = layout_pointsStatus "%d/%d RP" Color.blue
 
 --------------------------------------------------------------------------------
 
@@ -164,4 +166,41 @@ layout_runicMode desc = vseprel (8 @@ px)
     fs = makeFs 10 Color.black
     fsC = makeFs 10
     bg = Color.withOpacity Color.lightgray 0.6
+
+--------------------------------------------------------------------------------
+
+layout_runesStatus :: RunesStatus -> Layout
+layout_runesStatus rs = box ins
+    & align     .~ Center
+    & size.each .~ 0.8 @@ fill
+    where
+    ins = hcat [ leftside, rightside ]
+
+    leftside
+        = set align TopLeft
+        . setDefaultPadding
+        . vlist (30 @@ px)
+        . map (layout_runeStatus mm)
+        $ rs^.ff#runes
+
+    mm = rs^.ff#maxMastery
+
+    rightside = mempty
+
+layout_runeStatus :: Int -> RuneStatus -> Layout
+layout_runeStatus mm r = hseprel (8 @@ px)
+    [ (100 @@ px  , rname)
+    , (  1 @@ fill, answers)
+    , (100 @@ px  , progressBar pct Color.green)
+    , (40  @@ px  , mastery) ]
+    where
+    rname   = textline fs  (r^.name)   & align .~ MiddleLeft
+    answers = textline fsi answersText & align .~ MiddleLeft
+    mastery = textline fs  masteryText & align .~ MiddleRight
+    answersText = Text.unwords $ r^.ff#answers
+    masteryText = show (r^.ff#mastery) <> "/" <> show mm
+    pct = fromIntegral (r^.ff#mastery) / fromIntegral mm
+    -- textStyled [(fs, r^.name), (fsi, mconcat $ r^.ff#answers)]
+    fs  = makeFsAC 10 Style.textPrimaryColor
+    fsi = makeFsAC 10 Style.textSecondaryColor
 

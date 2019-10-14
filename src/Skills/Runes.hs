@@ -12,6 +12,7 @@ module Skills.Runes
     -- , getRunesByKind
     , runeSetByLevel
     , runeSetByName
+    , maxMasteryLevel
     -- , getRunesByKindAndLevel
     {-
     , getNextRune

@@ -27,6 +27,15 @@ warningColor = Color.red
 
 --------------------------------------------------------------------------------
 
+progressBar :: Float -> Color -> Layout
+progressBar pt c = border1 c
+    ( hrel [ (pp @@ fill, fillColor c), (rp @@ fill, mempty) ])
+    & padding.each .~ 4 @@ px
+    & align .~ Center
+    where
+    pp = max 0 $ min 1 $ pt
+    rp = 1 - pp
+
 box :: Layout -> Layout
 box x = border1 Color.gray $ composition [ fillColorA bg, x ]
     where bg = Color.withOpacity Color.black 0.6

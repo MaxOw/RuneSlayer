@@ -87,3 +87,17 @@ data Inventory = Inventory
    , field_keys        :: [KeyInfo]
    } deriving (Generic)
 
+--------------------------------------------------------------------------------
+
+data RuneStatus = RuneStatus
+   { field_name    :: Text
+   , field_answers :: [Text]
+   , field_mastery :: Int
+   } deriving (Generic)
+
+data RunesStatus = RunesStatus
+   { field_runes      :: [RuneStatus]
+   , field_maxMastery :: Int
+   } deriving (Generic)
+instance Default RunesStatus
+

@@ -11,7 +11,8 @@ data TutorialStep
    | TutorialStep_PickingUpItems
    | TutorialStep_Inventory
    | TutorialStep_Interaction
-   | TutorialStep_Runes
+   | TutorialStep_RunesStatus
+   | TutorialStep_RunicMode
    | TutorialStep_Attack
    | TutorialStep_Done
    deriving (Eq, Ord, Enum, Bounded, Generic)

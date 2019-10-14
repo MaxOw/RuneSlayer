@@ -1,9 +1,11 @@
 module Runes
     ( init
+    , getMasteryList
     , inputHandler
     , display
     , startRunicMode
     , clearLastResult
+    , maxMasteryLevel
     ) where
 
 import Delude hiding (init)
@@ -16,7 +18,7 @@ import Types.GameState (gameState)
 import Types.InputState
 import Types.Runes
 import Types.Skills.Runes
-import Skills.Runes (isCorrectAnswer, updateRuneMastery)
+import Skills.Runes (isCorrectAnswer, updateRuneMastery, maxMasteryLevel)
 
 import Data.Generics.Product.Subtype (smash, upcast)
 import qualified Data.IxSet.Typed as IxSet
@@ -41,6 +43,9 @@ init rs = do
 
 -- addKnownRunes :: RuneSet -> Game ()
 -- addKnownRunes rs = runesState.mastery %= addToMasterySet rs
+
+getMasteryList :: Game [RuneMastery]
+getMasteryList = uses (runesState.mastery) $ IxSet.toAscList (Proxy @MasteryLevel)
 
 addToMasterySet :: RuneSet -> MasterySet -> MasterySet
 addToMasterySet = IxSet.insertList . map uprune . toList

@@ -55,7 +55,8 @@ instance Indexable RuneIxs Rune where
 
 instance FromJSON Rune where parseJSON = genericParseJSON customOptionsJSON
 
-newtype MasteryLevel = MasteryLevel Int deriving (Default, Data, Eq, Ord, Num)
+newtype MasteryLevel = MasteryLevel Int
+    deriving (Generic, Default, Data, Eq, Ord, Num)
 newtype SuccessCount = SuccessCount Int deriving (Default, Data, Eq, Ord, Num)
 newtype FailureCount = FailureCount Int deriving (Default, Data, Eq, Ord, Num)
 newtype     UseCount =     UseCount Int deriving (Default, Data, Eq, Ord, Num)
@@ -109,3 +110,7 @@ instance Default RunicLevel where
         , field_count    = 0
         }
 
+--------------------------------------------------------------------------------
+
+instance Wrapped MasteryLevel
+instance Rewrapped MasteryLevel MasteryLevel

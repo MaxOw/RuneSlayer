@@ -155,6 +155,18 @@ actionsMenu = do
     toName Nothing  a = show a
     toName (Just n) a = unInteractionName a <> " " <> n
 
+runicStatusLayout :: Game Layout
+runicStatusLayout = do
+    ml <- Runes.getMasteryList
+    return $ layout_runesStatus $ def
+        & ff#runes .~ map conv ml
+        & ff#maxMastery .~ Unwrapped Runes.maxMasteryLevel
+    where
+    conv x = Layout.RuneStatus
+        (x^.ff#runeId)
+        (x^.ff#answers)
+        (x^.ff#masteryLevel._Wrapped)
+
 --------------------------------------------------------------------------------
 
 {-
@@ -177,4 +189,5 @@ statusMenuLayout :: StatusMenu -> Game Layout
 statusMenuLayout m = case m of
     StatusMenu_Inventory   -> inventoryLayout
     StatusMenu_StoryDialog -> Story.display
+    StatusMenu_Runes       -> runicStatusLayout
 

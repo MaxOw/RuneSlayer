@@ -186,11 +186,11 @@ loadResource r = do
 loadFonts :: Engine us ()
 loadFonts = do
     loadFontFamily "Arial" ".ttf"
-    loadFontBase "SourceHanSerif-Regular.otf"
+    loadFontBase "SourceHanSerif" "-Regular" ".otf"
 
-loadFontBase :: FontName -> Engine us ()
-loadFontBase fname = void $ Engine.loadFontFamily fname $ def
-    & fontBase .~ toString ("data/fonts/" <> fname)
+loadFontBase :: FontName -> Text -> Text -> Engine us ()
+loadFontBase fname ftype ext = void $ Engine.loadFontFamily fname $ def
+    & fontBase .~ toString ("data/fonts/" <> fname <> ftype <> ext)
 
 loadFontFamily :: FontName -> Text -> Engine us ()
 loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def

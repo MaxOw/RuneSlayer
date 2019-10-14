@@ -10,6 +10,7 @@ import Types.MapEditor (MapEditorAction)
 data StatusMenu
    = StatusMenu_Inventory
    | StatusMenu_StoryDialog
+   | StatusMenu_Runes
    -- | StatusMenu_Stats
    deriving (Show, Eq, Ord, Generic)
 
@@ -25,6 +26,7 @@ instance Default InputMode where def = NormalMode
 
 pattern InventoryMode   = StatusMode StatusMenu_Inventory
 pattern StoryDialogMode = StatusMode StatusMenu_StoryDialog
+pattern RunicStatusMode = StatusMode StatusMenu_Runes
 
 data MoveDirection
    = MoveUp

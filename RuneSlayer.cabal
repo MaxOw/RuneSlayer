@@ -61,6 +61,7 @@ Executable RuneSlayer
     StrictData
 
   build-depends : base >= 4.5 && < 5.0
+                , primitive
                 , relude
                 , data-default
                 , lens

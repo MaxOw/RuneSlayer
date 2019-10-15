@@ -13,6 +13,7 @@ module Skills.Runes
     , runeSetByLevel
     , runeSetByName
     , maxMasteryLevel
+    , masteryToProbWeight
     -- , getRunesByKindAndLevel
     {-
     , getNextRune
@@ -65,6 +66,11 @@ getMasteryRatio m = conv m / conv maxMasteryLevel
     where
     conv (MasteryLevel x) = fromIntegral x
 -}
+
+masteryToProbWeight :: MasteryLevel -> Float
+masteryToProbWeight (MasteryLevel x) = fromIntegral (vv*vv)
+    where
+    vv = Unwrapped maxMasteryLevel + 1 - x
 
 selectRune :: UTCTime -> RunicLevel -> Maybe RuneName
 selectRune _curtime rl = getFirstProper runesList

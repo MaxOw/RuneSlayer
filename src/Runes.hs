@@ -18,7 +18,9 @@ import Types.GameState (gameState)
 import Types.InputState
 import Types.Runes
 import Types.Skills.Runes
-import Skills.Runes (isCorrectAnswer, updateRuneMastery, maxMasteryLevel)
+import Skills.Runes
+    (isCorrectAnswer, updateRuneMastery, maxMasteryLevel, masteryToProbWeight)
+import Random.Utils
 
 import Data.Generics.Product.Subtype (smash, upcast)
 import qualified Data.IxSet.Typed as IxSet
@@ -95,15 +97,14 @@ startRunicMode = do
 selectNextRune :: Game ()
 selectNextRune = whenNothingM_ (use currentRune) $ do
     rs <- use runesState
-    let ls = levRunesList (rs^.mastery)
     let lu = rs^.lastRuneName
-    currentRune .= (upcast <$> getFirstProper lu ls)
+    let ft = maybe id (\r -> filter (\x -> x^.name /= r)) lu
+    let ls = ft $ levRunesList (rs^.mastery)
+    fr <- runRandomIO $ uniformSelectWeighted $ map toProb ls
+    currentRune .= (upcast <$> fr)
     where
     levRunesList = IxSet.toAscList (Proxy @MasteryLevel)
-    getFirstProper lu = \case
-        []      -> Nothing
-        (a:[])  -> Just a
-        (a:b:_) -> Just $ if Just (a^.name) == lu then b else a
+    toProb x = (masteryToProbWeight $ x^.ff#masteryLevel, x)
 
 display :: Game Layout
 display = do

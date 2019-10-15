@@ -8,15 +8,24 @@ import Control.Monad.ST
 -- import System.Random (StdGen, mkStdGen)
 import qualified System.Random.MWC as MWC
 import qualified Data.Vector.Unboxed as Vector
+import System.IO.Unsafe (unsafePerformIO)
+import Control.Monad.Primitive
 
 --------------------------------------------------------------------------------
 
 -- type RandomST a = forall s. MWC.GenST s -> ST s a
 
-type RandomST a = forall s. ReaderT (MWC.GenST s) (ST s) a
+type RandomP m a = ReaderT (MWC.Gen (PrimState m)) m a
+type RandomIO  a = ReaderT MWC.GenIO IO a
+type RandomST  a = forall s. ReaderT (MWC.GenST s) (ST s) a
 
-liftRandom :: (forall s. MWC.GenST s -> ST s a) -> RandomST a
-liftRandom = ReaderT
+-- This is probably not thread-safe...
+{-# NoInline genIO #-}
+genIO :: MWC.GenIO
+genIO = unsafePerformIO MWC.createSystemRandom
+
+-- liftRandomST :: (forall s. MWC.GenST s -> ST s a) -> RandomST a
+-- liftRandomST = ReaderT
 
 {-
 pureRandomSeed :: MWC.Seed
@@ -35,22 +44,26 @@ withRandomSeed f = do
 
 randomFromSeed :: [Word32] -> RandomST a -> a
 randomFromSeed s f = runST $ do
-    runReaderT (do {_ <- uniform :: RandomST Int; f})
+    runReaderT (do {_ <- uniform @Int; f})
     =<< MWC.initialize (Vector.fromList s)
 
 runRandom :: Integral i => i -> RandomST a -> a
 runRandom s = randomFromSeed [fromIntegral s]
 
-uniform :: MWC.Variate a => RandomST a
+runRandomIO :: MonadIO m => RandomIO a -> m a
+runRandomIO r = liftIO $ runReaderT r genIO
+
+uniform :: (MWC.Variate a, PrimMonad m) => RandomP m a
 uniform = ReaderT MWC.uniform
 
-uniformRange :: MWC.Variate a => (a,a) -> RandomST a
+uniformRange :: (MWC.Variate a, PrimMonad m) => (a,a) -> RandomP m a
 uniformRange r = ReaderT $ \gen -> MWC.uniformR r gen
 
 -- This is an inefficient O(n) weighted selection for one-off useage.
 -- If you need something more efficient (for multiple selection situations) use
 -- CondensedTable functionality from mwc-random package.
-uniformSelectWeighted :: [(Float, a)] -> RandomST (Maybe a)
+uniformSelectWeighted :: forall a m. PrimMonad m
+    => [(Float, a)] -> RandomP m (Maybe a)
 uniformSelectWeighted = sel . filter ((>0) . fst)
     where
     sel []       = return Nothing
@@ -66,12 +79,12 @@ uniformSelectWeighted = sel . filter ((>0) . fst)
             | r < c+p   = Just a
             | otherwise = go (c+p) r as
 
-randomDirection :: RandomST V2D
+randomDirection :: PrimMonad m => RandomP m V2D
 randomDirection = do
     r <- ReaderT MWC.uniform
     return $ rotate (r @@ turn) unitX
 
-randomListSelect :: [a] -> RandomST (Maybe a)
+randomListSelect :: forall a m. PrimMonad m => [a] -> RandomP m (Maybe a)
 randomListSelect ls = do
     let l = length ls
     r <- uniformRange (0, l-1)

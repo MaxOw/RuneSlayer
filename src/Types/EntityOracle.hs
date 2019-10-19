@@ -4,6 +4,7 @@ module Types.EntityOracle where
 import Delude
 import Types.Entity.Agent
 import Types.Entity.Reactivity
+import Types.Collider (Shape, CollideWith)
 import Types.Equipment
 import Types.Entity.Common
 import Types.Entity.Passive
@@ -18,8 +19,10 @@ data EntityQuery a where
      EntityQuery_Content            :: EntityQuery [EntityId]
      EntityQuery_Volume             :: EntityQuery Volume
      EntityQuery_MaxVolume          :: EntityQuery Volume
+     EntityQuery_StandingWeight     :: EntityQuery Weight
      EntityQuery_FittingSlots       :: EntityQuery (Set EquipmentSlot)
-     EntityQuery_CollisionShape     :: EntityQuery CollisionShape
+     EntityQuery_CollisionShape     :: EntityQuery Shape
+     EntityQuery_CollisionBits      :: EntityQuery (BitSet32 CollideWith)
      EntityQuery_Reactivity         :: EntityQuery (Map ReactivCategory ReactivValue)
      EntityQuery_ItemAnimation      :: EntityQuery AnimationName
      EntityQuery_BehindBody         :: EntityQuery Bool

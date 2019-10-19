@@ -10,8 +10,11 @@ import Types.EntityAction
 import Types.Entity.PassiveType
 import Types.Entity.Animation
 import Types.Entity.Common
+import Types.Collider (Shape, CollideWith)
 -- import Types.Entity.ZIndex
 import Types.Entity.Animation (Direction)
+import Data.BitSet (BitSet32)
+import Entity.HasField
 
 --------------------------------------------------------------------------------
 
@@ -25,7 +28,12 @@ data Passive = Passive
    , field_direction       :: Maybe Direction
    , field_animationState  :: AnimationState
    , field_animation       :: Animation
+   , field_collisionShape  :: Maybe Shape
    } deriving (Generic)
+instance HasStandingWeight Passive Weight where
+    standingWeight = passiveType.ff#standingWeight
+instance HasCollisionBits Passive (BitSet32 CollideWith) where
+    collisionBits = passiveType.ff#collisionBits
 
 --------------------------------------------------------------------------------
 

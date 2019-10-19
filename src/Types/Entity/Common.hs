@@ -2,13 +2,10 @@
 {-# Language TemplateHaskell #-}
 module Types.Entity.Common
     ( module Types.Entity.Common
-
-    , CollisionShape
     ) where
 
 import Delude
 import Data.Fixed
-import Data.Collider (CollisionShape)
 import qualified Prelude
 import Text.Printf
 
@@ -63,7 +60,7 @@ type V2D = V2 Float
 -- type Basic a = (Generic a, Default a)
 
 newtype Location = Location { unLocation :: V2D    }
-    deriving (Generic, Default, ToJSON, FromJSON)
+    deriving (Eq, Generic, Default, ToJSON, FromJSON)
 
 instance Show Location where
     show (Location (V2 x y)) = printf "(Location x=%.2f y=%.2f)" x y
@@ -94,6 +91,9 @@ newtype Duration = Duration Float
     deriving (Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
 
 newtype Probability = Probability { unProbability :: Float }
+    deriving (Show, Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
+
+newtype Weight = Weight { unWeight :: Float }
     deriving (Show, Generic, Default, Num, Fractional, Eq, Ord, ToJSON, FromJSON)
 
 --------------------------------------------------------------------------------
@@ -158,21 +158,13 @@ maxEffectSpawnDistance = disM 20
 
 --------------------------------------------------------------------------------
 
-instance Wrapped Location
-instance Rewrapped Location Location
-instance Wrapped Distance
-instance Rewrapped Distance Distance
-instance Wrapped Velocity
-instance Rewrapped Velocity Velocity
-instance Wrapped Health
-instance Rewrapped Health Health
-instance Wrapped AttackPower
-instance Rewrapped AttackPower AttackPower
-instance Wrapped Defence
-instance Rewrapped Defence Defence
-instance Wrapped Speed
-instance Rewrapped Speed Speed
-instance Wrapped Volume
-instance Rewrapped Volume Volume
-instance Wrapped Duration
-instance Rewrapped Duration Duration
+instance Wrapped Location    ; instance Rewrapped Location    Location
+instance Wrapped Distance    ; instance Rewrapped Distance    Distance
+instance Wrapped Velocity    ; instance Rewrapped Velocity    Velocity
+instance Wrapped Health      ; instance Rewrapped Health      Health
+instance Wrapped AttackPower ; instance Rewrapped AttackPower AttackPower
+instance Wrapped Defence     ; instance Rewrapped Defence     Defence
+instance Wrapped Speed       ; instance Rewrapped Speed       Speed
+instance Wrapped Volume      ; instance Rewrapped Volume      Volume
+instance Wrapped Duration    ; instance Rewrapped Duration    Duration
+instance Wrapped Weight      ; instance Rewrapped Weight      Weight

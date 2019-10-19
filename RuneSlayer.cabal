@@ -23,6 +23,9 @@ Executable RuneSlayer
     -- -fno-warn-unused-imports
     -fno-warn-missing-pattern-synonym-signatures
     -fwarn-identities
+    -funbox-small-strict-fields
+    -- -funbox-strict-fields
+    -- -fstatic-argument-transformation
     -Werror=missing-fields
     -Werror=incomplete-patterns
 
@@ -94,7 +97,7 @@ Executable RuneSlayer
                 , free
 
                 , linear
-                , Carnot == 0.1.24.0
+                , Carnot == 0.1.25.0
                 , gl
                 , colour
                 , palette

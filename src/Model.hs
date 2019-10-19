@@ -14,16 +14,13 @@ import InputState
 --------------------------------------------------------------------------------
 
 integrate :: Integrator
-integrate _time = unlessDebugMode $ do -- getMenuState >>= \case
+integrate _time = do -- getMenuState >>= \case
     updateWires
     updateGameState
     preformActiveActions
     zoomGameState $ frameCount += 1
 
 --------------------------------------------------------------------------------
-
-unlessDebugMode :: Game () -> Game ()
-unlessDebugMode = whenNothingM_ (use $ userState.config.debugMode)
 
 updateWires :: Game ()
 updateWires

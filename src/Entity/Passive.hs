@@ -22,7 +22,7 @@ import ResourceManager (Resources, lookupPassive)
 import Entity.Animation
     (AnimationProgression(..), makeStaticAnimation, renderAnimation)
 
-import qualified Data.Collider as Collider
+import qualified Collider
 
 --------------------------------------------------------------------------------
 
@@ -48,11 +48,12 @@ actOn x a = x & case a of
         | otherwise = x
 
     handleSetValue ev = case ev of
-        EntityValue_Location     v -> location  .~ Just v
-        EntityValue_Direction    v -> direction .~ Just v
-        EntityValue_Animation    v -> animation .~ v
+        EntityValue_Location     v -> set location  (Just v)
+        EntityValue_Direction    v -> set direction (Just v)
+        EntityValue_Animation    v -> set animation v
         EntityValue_SetStatus    _ -> id
         EntityValue_UnsetStatus  _ -> id
+
 
     setAnimationKind k _ = x
         & animationState.current.kind .~ k
@@ -194,9 +195,8 @@ fitIntoContainer ees = do
 --------------------------------------------------------------------------------
 
 render :: Passive -> RenderContext -> RenderAction
-render x ctx = maybeLocate x $ withZIndex x
-    $ addRenderOffset $ renderComposition
-    [ itemRenderAction
+render x ctx = maybeLocate x $ withZIndex x $ renderComposition
+    [ addRenderOffset $ itemRenderAction
     , renderDebug
     ]
     where
@@ -206,9 +206,11 @@ render x ctx = maybeLocate x $ withZIndex x
     renderDebug
         = renderComposition $ map snd
         $ filter (\(f, _) -> Set.member f $ ctx^.debugFlags)
-        [ (DebugFlag_ShowDynamicBoundingBoxes, renderBBox itemBBox)
-        -- , (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
+        [ (DebugFlag_ShowDynamicBoundingBoxes, addRenderOffset $ renderBBox itemBBox)
+        , (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
         ]
+
+    cs = x^.passiveType.ff#collisionShape
 
     itemBBox = BBox (-0.5) (0.5)
 
@@ -220,6 +222,9 @@ oracle x = \case
     EntityQuery_FittingSlots       -> Just $ x^.passiveType.fittingSlots
     EntityQuery_PassiveType        -> Just $ x^.passiveType
     EntityQuery_Content            -> Just $ x^.content
+    EntityQuery_CollisionShape     -> mshc
+    EntityQuery_CollisionBits      -> Just $ x^.collisionBits
+    EntityQuery_StandingWeight     -> Just 10000 -- $ x^.standingWeight
     EntityQuery_MaxVolume          -> x^?passiveType.containerType.traverse.maxVolume
     EntityQuery_ItemAnimation      -> x^.passiveType.animation
     EntityQuery_BehindBody         -> x^.passiveType.behindBody
@@ -235,6 +240,11 @@ oracle x = \case
     showName = if x^?passiveType.containerType.traverse.showCount == Just True
         then nn <> " (" <> show ct <> ")"
         else nn
+
+    mshc = Collider.locateShape <$> mloc <*> mcol
+    mloc = x^.location
+    mcol = x^.passiveType.collisionShape
+
 
 toKind :: Passive -> EntityKind
 toKind x
@@ -259,6 +269,6 @@ passiveToEntity = makeEntity $ EntityParts
 
 makePassive :: Resources -> PassiveType -> Passive
 makePassive rs t = def
-    & passiveType  .~ t
-    & animation .~ makeStaticAnimation (renderAppearance rs $ t^.appearance)
+    & passiveType .~ t
+    & animation   .~ makeStaticAnimation (renderAppearance rs $ t^.appearance)
 

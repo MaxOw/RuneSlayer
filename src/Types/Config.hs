@@ -1,6 +1,8 @@
 module Types.Config where
 
 import Delude
+import Dhall (Interpret)
+import Data.BitSet
 
 --------------------------------------------------------------------------------
 
@@ -9,14 +11,19 @@ data DebugMode
    | DebugMode_Nothing
    deriving (Generic)
 
+data ConfigDebugFlag
+   = ConfigDebugFlag_NoStory
+   | ConfigDebugFlag_NoTutorial
+   deriving (Generic, Enum)
+
 data Config = Config
-   { field_debugMode :: Maybe DebugMode
-   , field_runeSet   :: Text
+   { field_debugFlags :: BitSet32 ConfigDebugFlag
+   , field_runeSet    :: Text
    } deriving (Generic)
 
 --------------------------------------------------------------------------------
 
 instance Default Config
-
-instance FromJSON DebugMode where parseJSON  = genericParseJSON  customOptionsJSON
-instance FromJSON Config    where parseJSON  = genericParseJSON  customOptionsJSON
+instance Interpret ConfigDebugFlag
+instance Interpret DebugMode
+instance Interpret Config

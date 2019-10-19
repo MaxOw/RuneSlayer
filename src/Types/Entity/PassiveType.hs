@@ -7,6 +7,8 @@ import Types.Entity.Common
 import Types.Entity.Animation
 import Types.Entity.Appearance
 import Types.Equipment
+import Types.Collider (Shape, CollideWith)
+import Data.BitSet (BitSet32)
 
 --------------------------------------------------------------------------------
 
@@ -91,6 +93,9 @@ data PassiveType = PassiveType
    , field_zindex             :: Word32
    , field_renderOffset       :: Maybe V2D
    , field_labelOffset        :: Maybe V2D -- Needed when drawing UI labels, et c.
+   , field_collisionShape     :: Maybe Shape
+   , field_collisionBits      :: BitSet32 CollideWith
+   , field_standingWeight     :: Weight
    } deriving (Generic)
 
 data ContainerType = ContainerType
@@ -101,25 +106,16 @@ data ContainerType = ContainerType
 
 --------------------------------------------------------------------------------
 
-instance ToJSON a => ToJSON (LoadoutEntry a) where
-    toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON a => FromJSON (LoadoutEntry a) where
     parseJSON = genericParseJSON customOptionsJSON
 
-instance ToJSON a => ToJSON (SelectionEntry a) where
-    toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON a => FromJSON (SelectionEntry a) where
     parseJSON = genericParseJSON customOptionsJSON
 
-instance ToJSON a => ToJSON (Range a) where
-    toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON a => FromJSON (Range a) where
     parseJSON = genericParseJSON customOptionsJSON
 
-instance ToJSON PassiveKind where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON PassiveKind where parseJSON = genericParseJSON customOptionsJSON
-
-instance ToJSON WeaponKind where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON WeaponKind where parseJSON = genericParseJSON customOptionsJSON
 
 instance Wrapped PassiveTypeName
@@ -129,15 +125,11 @@ instance Default PassiveTypeName
 instance Wrapped InteractionName
 instance Rewrapped InteractionName InteractionName
 
-instance ToJSON InteractionEffect where
-    toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON InteractionEffect where
     parseJSON = genericParseJSON customOptionsJSON
 
 instance Default PassiveType
-instance ToJSON PassiveType where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON PassiveType where parseJSON = genericParseJSON customOptionsJSON
 
 instance Default ContainerType
-instance ToJSON ContainerType where toEncoding = genericToEncoding customOptionsJSON
 instance FromJSON ContainerType where parseJSON = genericParseJSON customOptionsJSON

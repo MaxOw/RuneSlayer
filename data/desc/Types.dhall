@@ -74,6 +74,17 @@ let LoadoutEntry
   , selection   : List (SelectionEntry t)
   }
 
+let BaseShape =
+  < Circle : { Circle : Double }
+  >
+
+let CollisionShape =
+  -- < BaseShape : { BaseShape : BaseShape }
+  < BaseShape : { BaseShape : Double }
+  >
+
+let CollideWith = < High | Low >
+
 let LocationP = { x : Double, y : Double }
 
 let EntityValue =
@@ -114,4 +125,7 @@ in
 , EntityValue       = EntityValue
 , EntityActionF     = EntityActionF
 , EntityAction      = EntityAction
+, BaseShape         = BaseShape
+, CollisionShape    = CollisionShape
+, CollideWith       = CollideWith
 }

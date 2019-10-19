@@ -6,11 +6,13 @@ let appearance = ./Appearance.dhall
 let useEffect  = ./InteractionEffect.dhall
 let names      = ./PassiveNames.dhall
 let constants  = ./Constants.dhall
+let collision  = ./CollisionShape.dhall
 
 let Entry             = types.Entry
 let PassiveTypeName   = types.PassiveTypeName
 let Sprite            = types.Sprite
 let ContainerType     = types.ContainerType
+let CollideWith       = types.CollideWith
 let PassiveKind       = enums.PassiveKind
 let WeaponKind        = enums.WeaponKind
 let EquipmentSlot     = enums.EquipmentSlot
@@ -31,6 +33,8 @@ let defaultItemType =
   , interactions       = [] : List InteractionEntry
   , primaryInteraction = None Text
   , zindex             = 0
+  , standingWeight     = 10000.0
+  , collisionBits      = [] : List CollideWith
   }
 
 let action =
@@ -187,7 +191,10 @@ let woodenChest_common = defaultStaticType //
     , allowKinds = [ PassiveKind.Item ]
     , showCount  = False
     }
-  , labelOffset = [0.0, 0.8]
+  , labelOffset = [0.0, 1.2]
+  , renderOffset = [0.0, 0.4]
+  , collisionShape = collision.translate 0.0 0.2 (collision.circle 0.4)
+  , collisionBits  = [ CollideWith.Low ]
   }
 
 let inspectActionName = "Inspect"
@@ -245,6 +252,9 @@ let tree = defaultStaticType //
   , volume = 15000
   , appearance = treeAppearance
   , interactions = [ action "Cut down" [ useEffect.deleteSelf ] ]
+  , renderOffset = [0.0, 0.4]
+  , collisionShape = collision.translate 0.0 0.15 (collision.circle 0.3)
+  , collisionBits  = [ CollideWith.Low, CollideWith.High ]
   }
 
 --------------------------------------------------------------------------------
@@ -260,13 +270,27 @@ let makeDeco =
 let campfire = makeDeco names.campfire sprites.campfire // { zindex = 0 }
 let firepit  = makeDeco names.firepit  sprites.firepit
 
-let firewoodPileBig   = makeDeco names.firewoodPileBig   sprites.firewoodPileBig
-let firewoodPile      = makeDeco names.firewoodPile      sprites.firewoodPile
-let firewoodPileSmall = makeDeco names.firewoodPileSmall sprites.firewoodPileSmall
 let firewood          = makeDeco names.firewood          sprites.firewood
-let woodChoopingBlock = makeDeco names.woodChoopingBlock sprites.woodChoopingBlock
-let treeStump         = makeDeco names.treeStump         sprites.treeStump
-let barrel            = makeDeco names.barrel            sprites.barrel
+let firewoodPile      = makeDeco names.firewoodPile      sprites.firewoodPile
+let firewoodPileBig   = makeDeco names.firewoodPileBig   sprites.firewoodPileBig
+let firewoodPileSmall = makeDeco names.firewoodPileSmall sprites.firewoodPileSmall //
+  { collisionShape = collision.translate 0.0 -0.25 (collision.circle 0.3)
+  , collisionBits  = [ CollideWith.Low ]
+  }
+
+let woodChoopingBlock = makeDeco names.woodChoopingBlock sprites.woodChoopingBlock //
+  { collisionShape = collision.translate -0.1 -0.25 (collision.circle 0.3)
+  , collisionBits  = [ CollideWith.Low ]
+  }
+let treeStump = makeDeco names.treeStump sprites.treeStump //
+  { collisionShape = collision.translate 0.0 -0.15 (collision.circle 0.3)
+  , collisionBits  = [ CollideWith.Low ]
+  }
+let barrel = makeDeco names.barrel sprites.barrel //
+  { renderOffset = [0.0, 0.4]
+  , collisionShape = collision.translate 0.0 0.0 (collision.circle 0.4)
+  , collisionBits  = [ CollideWith.Low ]
+  }
 
 --------------------------------------------------------------------------------
 

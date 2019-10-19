@@ -1,11 +1,13 @@
 let passives   = ./PassiveNames.dhall
 let types      = ./Types.dhall
 let enums      = ./Enums.dhall
+let collision  = ./CollisionShape.dhall
 
 let EquipmentSlot     = enums.EquipmentSlot
 let Reactivity        = enums.Reactivity
 let Entry             = types.Entry
 let InteractionEffect = types.InteractionEffect
+let CollideWith       = types.CollideWith
 let InteractionEntry  = Entry Text (List InteractionEffect)
 
 let defaultStats =
@@ -37,6 +39,7 @@ let defaultAgent =
   , equipmentSlots     = [] : List EquipmentSlot
   , interactions       = [] : List InteractionEntry
   , primaryInteraction = None Text
+  , collisionBits      = [] : List CollideWith
   }
 
 let defaultHumanAgent = defaultAgent //
@@ -49,6 +52,9 @@ let defaultHumanAgent = defaultAgent //
   , labelOffset     = [0.0, 1.7]
 
   , equipmentSlots  = defaultEquipmentSlots
+  , collisionShape  = collision.circle 0.4
+  , collisionBits   = [ CollideWith.Low, CollideWith.High ]
+  , standingWeight  = 100.0
   }
 
 in

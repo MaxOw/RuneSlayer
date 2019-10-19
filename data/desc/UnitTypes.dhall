@@ -5,6 +5,7 @@ let enums       = ./Enums.dhall
 let constants   = ./Constants.dhall
 let names       = ./AgentNames.dhall
 let interaction = ./InteractionEffect.dhall
+let collision   = ./CollisionShape.dhall
 
 let Entry             = types.Entry
 let AgentKind         = enums.AgentKind
@@ -12,6 +13,7 @@ let ScriptName        = enums.ScriptName
 let EquipmentSlot     = enums.EquipmentSlot
 let Reactivity        = enums.Reactivity
 let InteractionEffect = types.InteractionEffect
+let CollideWith       = types.CollideWith
 let InteractionEntry  = Entry Text (List InteractionEffect)
 
 let defaultStats = constants.defaultStats
@@ -55,6 +57,10 @@ let bat = defaultEnemyAgent //
 
   , renderOffset = [0.0, 0.8]
   , labelOffset  = [0.0, 1.9]
+
+  , collisionShape = collision.circle 0.3
+  , collisionBits  = [ CollideWith.High ]
+  , standingWeight = 10.0
   }
 
 let spider = defaultEnemyAgent //
@@ -78,6 +84,10 @@ let spider = defaultEnemyAgent //
     , pursueRange = 10  -- meters
     }
   , labelOffset = [0.0, 0.8]
+
+  , collisionShape = collision.translate 0.0 -0.1 (collision.circle 0.6)
+  , collisionBits  = [ CollideWith.Low ]
+  , standingWeight = 400.0
   }
 
 let action =
@@ -110,6 +120,7 @@ let npcBertram = defaultHumanNPCAgent //
     [ action "Talk to" [ interaction.talkTo ]
     ]
   , primaryInteraction = Some "Talk to"
+  , standingWeight = 1000.0
   }
 
 in

@@ -1,4 +1,11 @@
 
+let DebugFlag =
+  < NoTutorial
+  | NoStory
+  >
+
+in
 { runeSet = "japanese"
--- , debugMode = Some "WorldGen"
+, debugFlags = [DebugFlag.NoTutorial, DebugFlag.NoStory]
+-- , debugFlags = [] : List DebugFlag
 }

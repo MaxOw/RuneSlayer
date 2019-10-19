@@ -10,7 +10,10 @@ import Types.Entity.Passive
 import Types.Entity.Reactivity
 import Types.Equipment
 import Types.Skills.Runes (RunicPoints)
+import Types.Collider (Shape, CollideWith)
+import Entity.HasField
 import Data.Timer (Timer)
+import Data.BitSet (BitSet32)
 
 --------------------------------------------------------------------------------
 
@@ -69,7 +72,12 @@ data AgentType = AgentType
    , field_primaryInteraction :: Maybe InteractionName
 
    , field_labelOffset        :: Maybe V2D -- Needed when drawing UI labels, et c.
+
+   , field_collisionShape     :: Maybe Shape
+   , field_collisionBits      :: BitSet32 CollideWith
+   , field_standingWeight     :: Weight
    } deriving (Generic)
+instance HasStandingWeight AgentType Weight
 
 data DelayedActionType
    = DelayedActionType_Attack EntityId AttackPower
@@ -95,7 +103,7 @@ data Agent = Agent
    , field_equipment          :: Equipment
    , field_debugFlags         :: EntityDebugFlags
    , field_updateOnce         :: Set UpdateOnce
-   , field_collisionShape     :: Maybe CollisionShape
+   , field_collisionShape     :: Maybe Shape
    , field_status             :: Set EntityStatus
    , field_attackMode         :: AttackMode
    , field_delayedActions     :: [DelayedAction]
@@ -116,6 +124,10 @@ instance HasMaxSpeed Agent Speed where
     maxSpeed = ff#fullStats.ff#maxSpeed
 instance HasAnimateWhenStopped Agent Bool where
     animateWhenStopped = agentType.ff#animateWhenStopped
+instance HasStandingWeight Agent Weight where
+    standingWeight = agentType.ff#standingWeight
+instance HasCollisionBits Agent (BitSet32 CollideWith) where
+    collisionBits = agentType.ff#collisionBits
 
 -- Agent fields needed when displaying UI
 data PlayerStatus = PlayerStatus
@@ -131,17 +143,10 @@ data PlayerStatus = PlayerStatus
 
 --------------------------------------------------------------------------------
 
-instance ToJSON   UnitType where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON UnitType where parseJSON  = genericParseJSON  customOptionsJSON
-
-instance ToJSON   ScriptName where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON ScriptName where parseJSON  = genericParseJSON  customOptionsJSON
-
-instance ToJSON   AgentKind where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON AgentKind where parseJSON  = genericParseJSON  customOptionsJSON
-
-instance ToJSON   AgentType where toEncoding = genericToEncoding customOptionsJSON
-instance FromJSON AgentType where parseJSON  = genericParseJSON  customOptionsJSON
+instance FromJSON UnitType   where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON ScriptName where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON AgentKind  where parseJSON = genericParseJSON customOptionsJSON
+instance FromJSON AgentType  where parseJSON = genericParseJSON customOptionsJSON
 
 instance Default UnitType
 instance Default AgentType

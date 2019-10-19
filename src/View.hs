@@ -14,7 +14,6 @@ import Graphics.GL
 
 import Types (Graphics, Renderer)
 import Types.Entity.Common
-import Types.Config
 import Types.St
 import Types.MenuState
 import Types.GameState (gameState)
@@ -45,11 +44,9 @@ import qualified Data.Colour.Names as Color
 --------------------------------------------------------------------------------
 
 renderView :: Renderer
-renderView delta st = case st^.config.debugMode of
-    Just dm -> renderDebugMode dm delta st
-    Nothing -> case st^.menuState of
-        MainMenu -> renderMainMenu delta st
-        InGame   -> renderGame     delta st
+renderView delta st = case st^.menuState of
+    MainMenu -> renderMainMenu delta st
+    InGame   -> renderGame     delta st
 
 renderMainMenu :: Renderer
 renderMainMenu delta st = do
@@ -136,6 +133,7 @@ locationToLayout :: V2 Float -> Float -> Location -> V2 Float
 locationToLayout camPos s loc = (v - camPos)^*s
     where v = Unwrapped loc
 
+{-
 --------------------------------------------------------------------------------
 -- Debug Render Modes
 
@@ -154,6 +152,7 @@ renderWorldGen _delta st = do
     Engine.swapBuffers
 
 --------------------------------------------------------------------------------
+-}
 
 renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  x = x

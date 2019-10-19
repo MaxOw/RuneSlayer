@@ -42,6 +42,8 @@ import Data.Aeson     as All
     ( ToJSON(..), FromJSON(..), ToJSONKey(..), FromJSONKey(..)
     , genericToEncoding, genericParseJSON)
 
+import Data.BitSet    as All (BitSet32, BitSet64)
+
 -- import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Encoding as Aeson
 

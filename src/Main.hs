@@ -8,7 +8,7 @@ import qualified Engine
 import Controller (handleEvent)
 import Model      (integrate)
 import View       (renderView)
-import Game       (initSt, endSt)
+import Game       (initSt, setupSt, endSt)
 import Reload.Utils (reacquire)
 
 import qualified Version
@@ -23,6 +23,7 @@ main = do
 
     Engine.igniteEngine win $ Ignition
         { initializer      = initSt
+        , stateSetup       = setupSt
         , eventHandler     = handleEvent
         , renderer         = renderView
         , integrator       = integrate

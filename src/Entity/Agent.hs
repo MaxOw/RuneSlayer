@@ -24,6 +24,7 @@ import Entity.Actions
 
 import ResourceManager (Resources, lookupAnimation)
 import qualified Equipment
+import qualified Collider
 
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
@@ -400,6 +401,9 @@ integrateLocationWhenWalking :: Update Agent ()
 integrateLocationWhenWalking = do
     k <- use $ self.animationState.current.kind
     when (k == Animation.Walk) integrateLocation
+    loc <- use $ self.location
+    cs <- use $ self.agentType.collisionShape
+    self.collisionShape .= (Collider.locateShape loc <$> cs)
 
 updateMoveTo :: Update Agent ()
 updateMoveTo = whenJustM (use $ self.moveTo) $ \moveLoc -> do
@@ -577,7 +581,7 @@ render x ctx = withZIndex x $ locate x $ renderComposition
         [ (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
         ]
 
-    cs = x^.collisionShape
+    cs = x^.agentType.collisionShape
 
     rangeScale = defaultPickupRange^._Wrapped
     renderPickupRange = T.scale rangeScale $ renderShape $ def
@@ -590,7 +594,9 @@ oracle x = \case
     EntityQuery_Location           -> Just $ x^.location
     EntityQuery_Equipment          -> Just $ x^.equipment
     EntityQuery_AgentType          -> Just $ x^.agentType
-    EntityQuery_CollisionShape     -> locate x <$> x^.collisionShape
+    EntityQuery_CollisionShape     -> x^.collisionShape
+    EntityQuery_CollisionBits      -> Just $ x^.collisionBits
+    EntityQuery_StandingWeight     -> Just $ x^.standingWeight
     EntityQuery_Reactivity         -> agentReactivity
     EntityQuery_Status             -> Just $ x^.status
     EntityQuery_PlayerStatus       -> Just $ upcast x

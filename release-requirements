@@ -3,14 +3,12 @@
 ## Version 0.1 #################################################################
 Requirements for first release: v0.1
 
-## General
-
 * Main Menu.                                                                 [ ]
 * Fix scroller lag.                                                          [X]
 * Benchmark and speedup rendering pipeline.                                  [X]
 
 * Declarative config via Dhall.                                              [ ]
-  - Debug modes.                                                             (#)
+  - Debug flags.                                                             (#)
   - Keymaps.                                                                 ( )
 
 * Improve layout rendering.                                                  [X]
@@ -18,8 +16,6 @@ Requirements for first release: v0.1
   - Add text/layout caching                                                  (#)
 
 * Remove template haskell for record fields generation.                      [X]
-
-## Game/Gameplay
 
 * Load entity types from files (Json/Dhall)                                  [X]
 * Load resource files. (Json/Dhall)                                          [X]
@@ -88,9 +84,14 @@ Requirements for first release: v0.1
   - Initiate communication with NPCs.                                        (#)
   - AddRune EntityAction from NPC Script.                                    (#)
 
-* Enemy units:                                                               [#]
+* Enemy units:                                                               [X]
   - Gore Bats                                                                (#)
   - Shadow Spiders                                                           (#)
+
+* Collisions:                                                                [ ]
+  - Dynamic/Passive Collisions                                               (#)
+  - Collision BitSets                                                        (#)
+  - Static Collisions/index                                                  ( )
 
 ## Version 0.2 #################################################################
 

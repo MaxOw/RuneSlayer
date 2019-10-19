@@ -5,6 +5,7 @@ module Story
     , registerNPC
     , startDialog
     , nextPage
+    , noStory
     , display
     ) where
 
@@ -161,6 +162,11 @@ makeStoryStep step startStep updateStep endStep = do
 
 nextStoryStep :: Game ()
 nextStoryStep = storyState.currentStep %= nextStop
+
+noStory :: Game ()
+noStory = do
+    storyState.currentStep .= StoryStep_Done
+    inputActionEscape
 
 display :: Game Layout
 display = do

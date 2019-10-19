@@ -69,8 +69,8 @@ import Types.Entity.Animation (AnimationState, AnimationKind)
 import Types.Entity.Reactivity (ReactivCategory)
 import qualified Entity.Animation as Animation
 import Entity.Utils
+import Entity.HasField
 import Types.EntityIndex (EntityIndexTag(..))
-import qualified Diagrams.TwoD.Transform as T
 import qualified EntityIndex
 import qualified Equipment
 import Types.Equipment
@@ -82,8 +82,11 @@ import Data.Hashable (hash)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 import ResourceManager (Resources, renderSprite)
-import qualified Data.Collider as Collider
-import qualified Data.Collider.Types as Collider
+import Types.Collider (Shape, CollideWith)
+import Data.BitSet (BitSet32)
+import qualified Data.BitSet as BitSet
+import qualified Collider
+-- import qualified Data.Collider.Types as Collider
 
 --------------------------------------------------------------------------------
 -- ActOn Actions
@@ -255,22 +258,35 @@ checkTimeUp tt = do
 
 separateCollision
     :: HasLocation s Location
-    => HasCollisionShape s (Maybe CollisionShape)
+    => HasCollisionShape s (Maybe Shape)
+    => HasCollisionBits  s (BitSet32 CollideWith)
+    => HasStandingWeight s Weight
     => Update s ()
 separateCollision = do
-    ss <- queryInRange EntityKind_Passive maxCollisionBBoxSize
+    sid <- useSelfId
+    let excludeSelf = filter (\x -> x^.entityId /= sid)
+    ds <- excludeSelf <$> queryInRange EntityKind_Dynamic maxCollisionBBoxSize
+    ps <- queryInRange EntityKind_Passive maxCollisionBBoxSize
+    let ss = ps <> ds
+    stw <- uses (self.standingWeight) (max 1)
     mc <- use $ self.collisionShape
-    x <- use self
-    let mlc = locate x <$> mc
-    let ms = ss^..traverse.entity.oracleCollisionShape
-    let svs = mapMaybe (mCol mlc) ms
+    cb <- use $ self.collisionBits
+    let ms = ss^..traverse.entity.to shapeAndStandingWeight
+    let svs = sortOn (Down . norm) $ take 3 $ mapMaybe (mCol cb stw mc) ms
     whenJust (viaNonEmpty head svs) $ \v -> self.location._Wrapped -= v
     where
+    shapeAndStandingWeight x = (,,)
+        <$> x^.oracleCollisionShape
+        <*> x^.oracleStandingWeight
+        <*> x^.oracleCollisionBits
     maxCollisionBBoxSize = Distance 4
-    mCol ma mb = do
+    mCol acb asw ma mb = do
         a <- ma
-        b <- mb
-        Collider.collide a b
+        (b, bsw, bcb) <- mb
+        let rel = Unwrapped $ min 1.0 $ bsw/asw
+        if rel > 0.2 && not (BitSet.null $ BitSet.intersection acb bcb)
+        then (rel*^) <$> Collider.separateShapes a b
+        else Nothing
 
 --------------------------------------------------------------------------------
 
@@ -487,14 +503,9 @@ renderBBox bb = renderSimpleBox $ def
     & border.each.color .~ Color.opaque Color.gray
     & border.each.width .~ (1/32)
 
-renderCollisionShape :: Maybe CollisionShape -> RenderAction
-renderCollisionShape cs = monoidJust cs $ \case
-    Collider.Circle d -> renderShape $ def
-        & shapeType .~ SimpleCircle
-        & color     .~ Color.withOpacity Color.red 0.3
-        & T.scale     (d^.radius)
-        & translate (d^.center._Wrapped)
-        & zindex    .~ 10000
+renderCollisionShape :: Maybe Shape -> RenderAction
+renderCollisionShape Nothing  = mempty
+renderCollisionShape (Just s) = Collider.renderShape s
 
 --------------------------------------------------------------------------------
 -- Queries

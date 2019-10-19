@@ -1,5 +1,5 @@
 module Game
-    ( initSt, endSt
+    ( initSt, setupSt, endSt
     ) where
 
 import Delude hiding (context)
@@ -34,7 +34,6 @@ import EntityIndex (EntityIndexTag(..))
 import qualified Graphics.UI.GLFW as GLFW
 
 import qualified Engine.Graphics.Scroller.Cells as Scroller
-import qualified Data.Collider as Collider
 
 import Dhall.Utils (dhallToMap, loadDhall, inputAuto)
 import qualified Tutorial
@@ -42,6 +41,8 @@ import qualified Runes
 import qualified MapEditor
 import qualified Story
 -- import qualified Schema
+
+import qualified Data.BitSet as BitSet
 
 -- import Types.Schema.WorldMap ()
 -- import Criterion.Measurement (secs)
@@ -58,7 +59,7 @@ printTimer _st _msg = do
 initSt :: Engine () St
 initSt = do
     timer0 <- getTime
-    conf   <- loadDhall "" "Config.dhall"
+    conf <- inputAuto @Config "" "./Config.dhall"
     printTimer timer0 "Timer0A"
     wgconf <- inputAuto @WorldGenConfig descPath "./WorldGen.dhall"
     printTimer timer0 "Timer0"
@@ -80,8 +81,7 @@ initSt = do
     timerWG <- getTime
     let world = generateWorld rs wgconf
     -- rnd <- makeRenderOverview world
-    whenNothing_ (conf^.debugMode) $
-        forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
+    forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
     printTimer timerWG "TimerWG"
 
     let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units
@@ -105,10 +105,16 @@ initSt = do
     where
     playerEntity rs pli ploc = toEntity $ makeAgent rs pli
         & location .~ ploc
-        & collisionShape .~ Just (Collider.circle 0 0.3)
 
     -- overview = ff#overview
     mapEditorState = ff#mapEditorState
+
+setupSt :: Game ()
+setupSt = do
+    whenFlag ConfigDebugFlag_NoTutorial Tutorial.skipAll
+    whenFlag ConfigDebugFlag_NoStory    Story.noStory
+    where
+    whenFlag f = whenM $ uses (userState.config.debugFlags) (BitSet.member f)
 
 loadRuneSet :: MonadIO m => Config -> m RuneSet
 loadRuneSet conf = do
@@ -128,33 +134,26 @@ makeRenderOverview out = case out^.overviewImage of
 -}
 
 loadResources :: Config -> Engine us Resources
-loadResources conf = case conf^.debugMode of
-    Just _m -> do
-        ts <- loadDhallList "TileSets.dhall"
-        ps <- loadDhallList "PassiveTypes.dhall"
-        return $ def
-            & tileSetMap .~ buildMap ts
-            & passiveMap .~ buildMap ps
-    Nothing -> do
-        rs <- loadAllPaths
-        ss <- loadDhallMap  "Sprites.dhall"
-        ts <- loadDhallList "TileSets.dhall"
-        ps <- loadDhallList "PassiveTypes.dhall"
-        us <- loadDhallList "UnitTypes.dhall"
-        as <- loadDhallMap  "Animations.dhall"
+loadResources _conf = do
+    rs <- loadAllPaths
+    ss <- loadDhallMap  "Sprites.dhall"
+    ts <- loadDhallList "TileSets.dhall"
+    ps <- loadDhallList "PassiveTypes.dhall"
+    us <- loadDhallList "UnitTypes.dhall"
+    as <- loadDhallMap  "Animations.dhall"
 
-        let res = def
-                & imgMap        .~ HashMap.fromList rs
-                & spriteMap     .~ ss
-                & tileSetMap    .~ buildMap ts
-                & passiveMap    .~ buildMap ps
-                & agentsMap     .~ buildMap us
-        let pr = fmap (Animation.makeAnimation res)
-               $ HashMap.fromList
-               $ map (over _1 AnimationName)
-               $ HashMap.toList as
-        return $ res
-            & animationsMap .~ pr
+    let res = def
+            & imgMap        .~ HashMap.fromList rs
+            & spriteMap     .~ ss
+            & tileSetMap    .~ buildMap ts
+            & passiveMap    .~ buildMap ps
+            & agentsMap     .~ buildMap us
+    let pr = fmap (Animation.makeAnimation res)
+            $ HashMap.fromList
+            $ map (over _1 AnimationName)
+            $ HashMap.toList as
+    return $ res
+        & animationsMap .~ pr
 
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))

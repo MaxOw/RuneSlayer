@@ -5,7 +5,10 @@ module Entity.Tile
     ) where
 
 import Delude
+import qualified Data.Map as Map
 import Data.Hashable (hash)
+
+import Collider
 
 import Types.Entity.Tile
 import Entity.Utils
@@ -32,8 +35,13 @@ render x ctx
 
 oracle :: Tile -> EntityQuery a -> Maybe a
 oracle x = \case
-    EntityQuery_Location -> Just $ x^.location
-    _                    -> Nothing
+    EntityQuery_Location       -> Just $ x^.location
+    EntityQuery_CollisionShape -> locateShape (x^.location) <$> roleShape
+    EntityQuery_CollisionBits  -> Just $ x^.tileSet.ff#collisionBits
+    _                          -> Nothing
+    where
+    roleShape = Map.lookup (x^.role) tss
+    TileSetShapes tss = x^.tileSet.ff#collisionShapes
 
 --------------------------------------------------------------------------------
 

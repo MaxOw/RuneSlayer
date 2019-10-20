@@ -13,13 +13,15 @@ import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine, graphics)
 import Types.GameState
 import Types.InputState (defaultInputState)
-import Types.Entity (EntityIndex)
+import Types.Entity.Common (EntityKind(..))
+import Types.Entity (EntityIndex, Entity)
 import Types.Config
 import Types.St
 import Entity.Agent (makeAgent)
 import Types.ResourceManager
 import Types.DirectedAction
 import EntityLike
+import Entity
 import WorldGen
 import Types.EntityAction (Spawn, EntityAction)
 import Types.Entity.Agent (AgentTypeName)
@@ -82,6 +84,7 @@ initSt = do
     let world = generateWorld rs wgconf
     -- rnd <- makeRenderOverview world
     forM_ (world^.entities) $ \e -> EntityIndex.insert e eix
+    forM_ (world^.entities) $ addStaticShape eix
     printTimer timerWG "TimerWG"
 
     let spawnUnits = map spawnAgentToAction   $ wgconf^.ff#units
@@ -108,6 +111,15 @@ initSt = do
 
     -- overview = ff#overview
     mapEditorState = ff#mapEditorState
+
+addStaticShape :: EntityIndex -> Entity -> Engine us ()
+addStaticShape eix e = when (entityKind e == EntityKind_Tile) $ do
+    let mp = e^?oracleLocation.traverse._Wrapped
+    let ms = e^.oracleCollisionShape
+    let mb = e^.oracleCollisionBits
+    whenJust ((,,) <$> mp <*> ms <*> mb) $ \(p, s, b) -> do
+        let v = StaticShape p s b
+        when (not $ BitSet.null b) $ EntityIndex.insertStaticShape v eix
 
 setupSt :: Game ()
 setupSt = do

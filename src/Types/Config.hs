@@ -2,7 +2,6 @@ module Types.Config where
 
 import Delude
 import Dhall (Interpret)
-import Data.BitSet
 
 --------------------------------------------------------------------------------
 

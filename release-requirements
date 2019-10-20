@@ -88,10 +88,10 @@ Requirements for first release: v0.1
   - Gore Bats                                                                (#)
   - Shadow Spiders                                                           (#)
 
-* Collisions:                                                                [ ]
+* Collisions:                                                                [X]
   - Dynamic/Passive Collisions                                               (#)
   - Collision BitSets                                                        (#)
-  - Static Collisions/index                                                  ( )
+  - Static Collisions/index                                                  (#)
 
 ## Version 0.2 #################################################################
 

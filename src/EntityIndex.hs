@@ -10,6 +10,9 @@ module EntityIndex
     , lookupById
     , lookupByTag
     , lookupManyById
+
+    , insertStaticShape
+    , lookupStaticShapesInRange
     ) where
 
 import Delude
@@ -50,6 +53,7 @@ new conf = do
             EntityKind_Tile    -> sTile
             EntityKind_Passive -> sPassive
             EntityKind_Dynamic -> sDynamic
+    sShapes <- SpatialIndex.createGrid g
     lRef <- newIORef Nothing
     dRef <- newIORef mempty
     aRef <- newIORef mempty
@@ -61,6 +65,7 @@ new conf = do
         , field_dynamicIndex        = dRef
         , field_activatedSet        = aRef
         , field_spatialIndex        = FullMap.build f
+        , field_staticShapes        = sShapes
         , field_tags                = tRef
         }
 
@@ -266,6 +271,10 @@ insert e eix = do
     writeIORef (eix^.lastId) (Just newId)
     return newId
 
+insertStaticShape :: MonadIO m => StaticShape -> EntityIndex -> m ()
+insertStaticShape ss eix =
+    SpatialIndex.insert (ss^.center) ss (eix^.ff#staticShapes)
+
 addTag :: MonadIO m => EntityIndexTag -> EntityId -> EntityIndex -> m ()
 addTag t eid eix = modifyIORef (eix^.ff#tags) $ Map.insert t eid
 
@@ -307,6 +316,10 @@ lookupInRadius k loc d eix =
     where
     queryRange = makeRangeSquare loc d
     isInRadius x = maybe False (isWithinDistance d loc) (x^.entity.oracleLocation)
+
+lookupStaticShapesInRange :: MonadQ m => RangeBBox -> EntityIndex -> m [StaticShape]
+lookupStaticShapesInRange r eix =
+    liftQ $ Q $ SpatialIndex.lookup r (eix^.ff#staticShapes)
 
 makeRangeSquare :: Location -> Distance -> RangeBBox
 makeRangeSquare loc d = mkBBoxCenter (loc^._Wrapped) (pure . (*2) $ d^._Wrapped)

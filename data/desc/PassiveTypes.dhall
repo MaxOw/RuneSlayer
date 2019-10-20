@@ -193,7 +193,8 @@ let woodenChest_common = defaultStaticType //
     }
   , labelOffset = [0.0, 1.2]
   , renderOffset = [0.0, 0.4]
-  , collisionShape = collision.translate 0.0 0.2 (collision.circle 0.4)
+  -- , collisionShape = collision.translate 0.0 0.2 (collision.circle 0.4)
+  , collisionShape = collision.translate 0.0 0.2 (collision.rect 1.0 0.6)
   , collisionBits  = [ CollideWith.Low ]
   }
 

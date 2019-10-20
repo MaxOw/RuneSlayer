@@ -76,11 +76,11 @@ let LoadoutEntry
 
 let BaseShape =
   < Circle : { Circle : Double }
+  | Rect   : { Rect : { width : Double, height : Double } }
   >
 
 let CollisionShape =
-  -- < BaseShape : { BaseShape : BaseShape }
-  < BaseShape : { BaseShape : Double }
+  < BaseShape : { BaseShape : BaseShape }
   >
 
 let CollideWith = < High | Low >

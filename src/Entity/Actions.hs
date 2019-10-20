@@ -272,14 +272,16 @@ separateCollision = do
     mc <- use $ self.collisionShape
     cb <- use $ self.collisionBits
     let ms = ss^..traverse.entity.to shapeAndStandingWeight
-    let svs = sortOn (Down . norm) $ take 3 $ mapMaybe (mCol cb stw mc) ms
+    ssr <- map toTrip <$> queryStaticShapesInRange maxCollisionBBoxSize
+    let svs = sortOn (Down . norm) $ take 5 $ mapMaybe (mCol cb stw mc) (ssr <> ms)
     whenJust (viaNonEmpty head svs) $ \v -> self.location._Wrapped -= v
     where
     shapeAndStandingWeight x = (,,)
         <$> x^.oracleCollisionShape
         <*> x^.oracleStandingWeight
         <*> x^.oracleCollisionBits
-    maxCollisionBBoxSize = Distance 4
+    toTrip s = Just (s^.ff#shape, Weight $ 1/0, s^.ff#mask)
+    maxCollisionBBoxSize = Distance 3
     mCol acb asw ma mb = do
         a <- ma
         (b, bsw, bcb) <- mb
@@ -517,6 +519,14 @@ queryInRange k (Distance d) = do
     Location l <- use $ self.location
     let rng = mkBBoxCenter l (pure $ d*2)
     EntityIndex.lookupInRange k rng =<< use (context.entities)
+
+queryStaticShapesInRange
+    :: HasLocation x Location
+    => Distance -> Update x [StaticShape]
+queryStaticShapesInRange (Distance d) = do
+    Location l <- use $ self.location
+    let rng = mkBBoxCenter l (pure $ d*2)
+    EntityIndex.lookupStaticShapesInRange rng =<< use (context.entities)
 
 queryInRadius
     :: HasLocation x Location

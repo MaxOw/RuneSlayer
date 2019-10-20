@@ -19,7 +19,7 @@ import Types.MenuState
 import Types.GameState (gameState)
 import Types.Debug
 import Entity
-import EntityIndex (lookupInRange)
+import EntityIndex (lookupInRange, lookupStaticShapesInRange)
 import GameState (isDebugFlagOn)
 import InputState (getMode, InputMode(..))
 
@@ -41,6 +41,8 @@ import qualified Engine.Layout.Alt as Engine (drawLayout)
 import qualified Data.Colour       as Color
 import qualified Data.Colour.Names as Color
 
+import qualified Collider
+
 --------------------------------------------------------------------------------
 
 renderView :: Renderer
@@ -56,7 +58,7 @@ renderMainMenu delta st = do
 renderGame :: Renderer
 renderGame _delta st = do
     zoomOutScrollerDebug   <- isDebugFlagOn DebugFlag_ZoomOutScroller
-    showDynamicBBoxesDebug <- isDebugFlagOn DebugFlag_ShowDynamicBoundingBoxes
+ -- showDynamicBBoxesDebug <- isDebugFlagOn DebugFlag_ShowDynamicBoundingBoxes
     hideScrollerDebug      <- isDebugFlagOn DebugFlag_HideScroller
 
     renderScroller <- if hideScrollerDebug
@@ -87,16 +89,15 @@ renderGame _delta st = do
     es <- lookupInRange EntityKind_Dynamic viewRange $ st^.gameState.entities
     is <- lookupInRange EntityKind_Passive viewRange $ st^.gameState.entities
 
-    -- let esc = length es
-    -- whenChanged_ esc $ \x -> putStrLn $ "Number of Dynamics in range: " <> show x
-
+    renderCollisionShapes <- debugRenderCollisionShapes st
     Engine.draw viewProjM $ renderComposition
         [ mempty
         , renderUnless hideScrollerDebug renderScroller
         , T.scale viewScale $ renderComposition
             [ renderMark
             , renderEntities (es <> is) st
-            , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
+         -- , renderIf showDynamicBBoxesDebug $ renderBBoxesDebug es st
+            , renderCollisionShapes
             ]
         , renderViewportDebug zoomOutScrollerDebug viewportPos viewportSize
         -- , setZIndexAtLeast 20000 $ st^.ff#overview
@@ -112,6 +113,21 @@ renderGame _delta st = do
     whenJustM gameOverScreenLayout Engine.drawLayout
 
     Engine.swapBuffers
+
+debugRenderCollisionShapes :: St -> Game RenderAction
+debugRenderCollisionShapes st = do
+    viewPos <- cameraPos
+    showCollisionShapes <- isDebugFlagOn DebugFlag_ShowCollisionShapes
+    if showCollisionShapes
+    then do
+        let collRange = mkBBoxCenter viewPos (pure 3)
+        ss <- lookupStaticShapesInRange collRange $ st^.gameState.entities
+        -- let esc = length ss
+        -- whenChanged_ esc $ \x ->
+            -- putStrLn $ "Number of Static Shapes in range: " <> show x
+        let rs = map (Collider.renderShape . view (ff#shape)) ss
+        return $ renderComposition rs
+    else return mempty
 
 makeRenderMark :: Game RenderAction
 makeRenderMark = do
@@ -154,9 +170,9 @@ renderWorldGen _delta st = do
 --------------------------------------------------------------------------------
 -}
 
-renderIf :: Bool -> RenderAction -> RenderAction
-renderIf True  x = x
-renderIf False _ = mempty
+-- renderIf :: Bool -> RenderAction -> RenderAction
+-- renderIf True  x = x
+-- renderIf False _ = mempty
 
 renderUnless :: Bool -> RenderAction -> RenderAction
 renderUnless False x = x
@@ -171,8 +187,8 @@ renderViewportDebug True  p s = renderShape $ def
     & T.scaleY (s^.height)
     & T.translate p
 
-renderBBoxesDebug :: HasEntity e Entity => [e] -> St -> RenderAction
-renderBBoxesDebug _ _ = mempty
+-- renderBBoxesDebug :: HasEntity e Entity => [e] -> St -> RenderAction
+-- renderBBoxesDebug _ _ = mempty
 
 renderEntities :: HasEntity e Entity => [e] -> St -> RenderAction
 renderEntities es st = Engine.renderComposition rs

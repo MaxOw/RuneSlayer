@@ -217,7 +217,8 @@ render x ctx = maybeLocate x $ withZIndex x $ renderComposition
 oracle :: Passive -> EntityQuery a -> Maybe a
 oracle x = \case
     EntityQuery_Location           -> x^.location
-    EntityQuery_Name               -> Just showName
+    EntityQuery_Name               -> Just passiveName
+    EntityQuery_DisplayName        -> Just prettyPassiveName
     EntityQuery_Volume             -> Just $ x^.passiveType.volume
     EntityQuery_FittingSlots       -> Just $ x^.passiveType.fittingSlots
     EntityQuery_PassiveType        -> Just $ x^.passiveType
@@ -235,11 +236,13 @@ oracle x = \case
     EntityQuery_PrimaryInteraction -> x^.passiveType.primaryInteraction
     _                              -> Nothing
     where
-    nn = x^.passiveType.name._Wrapped
+    passiveName = x^.passiveType.name._Wrapped
     ct = x^.content.to length
-    showName = if x^?passiveType.containerType.traverse.showCount == Just True
-        then nn <> " (" <> show ct <> ")"
-        else nn
+    showCountOn = fromMaybe False $ x^?passiveType.containerType.traverse.showCount
+    dispName = fromMaybe (prettyName passiveName) $ x^.passiveType.displayName
+    prettyPassiveName = if showCountOn
+        then dispName <> " (" <> show ct <> ")"
+        else dispName
 
     mshc = Collider.locateShape <$> mloc <*> mcol
     mloc = x^.location

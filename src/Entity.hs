@@ -36,6 +36,7 @@ oracleGetter q = to (flip entityOracle q)
     oracle/**/N = oracleGetter EntityQuery_/**/N
 
 MakeOracleGetter(Name               , Text)
+MakeOracleGetter(DisplayName        , Text)
 MakeOracleGetter(Location           , Location)
 MakeOracleGetter(Equipment          , Equipment)
 MakeOracleGetter(PassiveType        , PassiveType)

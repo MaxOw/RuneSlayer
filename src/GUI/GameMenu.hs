@@ -148,7 +148,7 @@ actionsMenu = do
     toDesc ((eid, a), h) = lookupEntity eid >>= \case
         Nothing -> return Nothing
         Just  e -> return $ Just $ Layout.ActionHint
-            { field_actionName = toName (e^.entity.oracleName) a
+            { field_actionName = toName (e^.entity.oracleDisplayName) a
             , field_actionHint = toText h
             }
 

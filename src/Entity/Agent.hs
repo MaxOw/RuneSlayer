@@ -590,7 +590,8 @@ render x ctx = withZIndex x $ locate x $ renderComposition
 
 oracle :: Agent -> EntityQuery a -> Maybe a
 oracle x = \case
-    EntityQuery_Name               -> Just $ unAgentTypeName $ x^.agentType.name
+    EntityQuery_Name               -> Just agentName
+    EntityQuery_DisplayName        -> Just prettyAgentName
     EntityQuery_Location           -> Just $ x^.location
     EntityQuery_Equipment          -> Just $ x^.equipment
     EntityQuery_AgentType          -> Just $ x^.agentType
@@ -605,6 +606,8 @@ oracle x = \case
     EntityQuery_LabelOffset        -> x^.agentType.labelOffset
     _                              -> Nothing
     where
+    agentName = x^.agentType.name._Wrapped
+    prettyAgentName = fromMaybe (prettyName agentName) $ x^.agentType.displayName
     agentReactivity
         | Set.member EntityStatus_Ignore (x^.status) = Nothing
         | otherwise = Just $ x^.agentType.reactivity

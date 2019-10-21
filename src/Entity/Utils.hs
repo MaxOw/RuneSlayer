@@ -1,10 +1,11 @@
 module Entity.Utils
     ( module Utils
     , renderIf
-    , correctHeight
+    , prettyName
     ) where
 
 import Delude
+import Data.Text.Lens (unpacked)
 import Types.Entity.Common     as Utils
 import Types.Entity            as Utils
 import Entity                  as Utils (makeEntity)
@@ -20,5 +21,9 @@ renderIf :: Bool -> RenderAction -> RenderAction
 renderIf True  a = a
 renderIf False _ = mempty
 
-correctHeight :: Transformable2D t => t -> t
-correctHeight = translateY 0.8 -- TODO: this souldn't be hardcoded
+prettyName :: Text -> Text
+prettyName = over unpacked prettify
+    where
+    prettify    = camelToHuman . dropVariant
+    dropVariant = takeWhile (/= '_')
+

@@ -87,4 +87,4 @@ instance FromJSON TileSetShapes where
     parseJSON x = TileSetShapes . Map.fromList . map fromEntry <$> parseJSON x
         where fromEntry (Entry k v) = (k, v)
 
-
+instance Wrapped TileSetName; instance Rewrapped TileSetName TileSetName

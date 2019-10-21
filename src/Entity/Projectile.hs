@@ -47,6 +47,7 @@ render x ctx = withZIndex x $ locate x $ correctHeight
     $ renderAppearance ctx $ x^.passiveType.appearance
     where
     velocityAngle = view _theta $ T.direction (x^.velocity._Wrapped)
+    correctHeight = translateY 0.8 -- TODO: this souldn't be hardcoded
 
 oracle :: Projectile -> EntityQuery a -> Maybe a
 oracle x = \case

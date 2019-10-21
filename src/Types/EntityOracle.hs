@@ -12,6 +12,7 @@ import Types.Entity.Animation
 
 data EntityQuery a where
      EntityQuery_Name               :: EntityQuery Text
+     EntityQuery_DisplayName        :: EntityQuery Text
      EntityQuery_Location           :: EntityQuery Location
      EntityQuery_Equipment          :: EntityQuery Equipment
      EntityQuery_PassiveType        :: EntityQuery PassiveType

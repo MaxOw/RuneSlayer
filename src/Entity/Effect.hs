@@ -28,7 +28,7 @@ update x ctx = runUpdate x ctx $ do
        | otherwise                      -> self.era   += defaultDelta^._Wrapped
 
 render :: Effect -> RenderContext -> RenderAction
-render x _ctx = withZIndex x $ locate x $ correctHeight $ renderEffect (x^.kind)
+render x _ctx = withZIndex x $ locate x $ renderEffect (x^.kind)
     where
     renderEffect = \case
         HitEffect a -> translateY (x^.era) $ renderHit a

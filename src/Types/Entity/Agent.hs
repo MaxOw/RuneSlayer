@@ -52,6 +52,7 @@ instance Default AgentKind where def = AgentKind_Enemy
 
 data AgentType = AgentType
    { field_name               :: AgentTypeName
+   , field_displayName        :: Maybe Text
    , field_scriptName         :: Maybe ScriptName
    , field_corpse             :: Maybe PassiveTypeName
    , field_reactivity         :: Map ReactivCategory ReactivValue

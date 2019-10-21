@@ -25,6 +25,10 @@ module Delude
     , sortVia
     , sortSelectVia
 
+    , capitalize
+    , splitUpper
+    , camelToHuman
+
     , whenChanged_
 
     , nextStop, precStop
@@ -53,6 +57,7 @@ import qualified Data.Aeson as Aeson
 import Engine.Common.Types
 import Engine.Graphics.Types as All (Color, AlphaColor)
 
+import qualified Data.List  as List
 import qualified Data.Map   as Map
 import qualified Data.Bimap as Bimap
 import qualified Data.HashMap.Strict as HashMap
@@ -61,6 +66,9 @@ import qualified Data.Vector as Vector
 import qualified Data.Set    as Set
 
 import qualified Data.IxSet.Typed as IxSet
+
+import Data.Char (isUpper, toUpper)
+import Data.List.Split
 
 import Diagrams.Core (InSpace, Transformable)
 import Engine (Mat4)
@@ -173,6 +181,15 @@ sortSelectVia f ms
     . mapMaybe (\x -> (,x) <$> Map.lookup (f x) emap)
     where
     emap = Map.fromList $ zip ms [1 :: Int ..]
+
+capitalize :: String -> String
+capitalize = over (ix 0) toUpper
+
+splitUpper :: String -> [String]
+splitUpper = split . keepDelimsL $ whenElt isUpper
+
+camelToHuman :: String -> String
+camelToHuman = List.unwords . map capitalize . splitUpper
 
 --------------------------------------------------------------------------------
 

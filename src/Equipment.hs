@@ -11,12 +11,14 @@ module Equipment
     , emptySlots
     , selectSlots, excludeSlots
     , contentList, slotsList
+    , prettySlot
     ) where
 
 import Delude
-import qualified Data.Map as Map
+import qualified Data.List  as List
+import qualified Data.Map   as Map
 import qualified Data.Bimap as Bimap
-import qualified Data.Set as Set
+import qualified Data.Set   as Set
 
 import Types.Equipment
 import Types.Entity.Common
@@ -75,4 +77,11 @@ selectSlots eq r
 
 slotsList :: Equipment -> [(EquipmentSlot, EntityId)]
 slotsList = Bimap.assocs . view content
+
+prettySlot :: EquipmentSlot -> Text
+prettySlot es = fromString slotName
+    where
+    slotName = camelToHuman . stripPrefix $ show es
+    stripPrefix x = fromMaybe x $ List.stripPrefix "EquipmentSlot_" x
+
 

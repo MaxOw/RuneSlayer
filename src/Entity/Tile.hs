@@ -35,6 +35,8 @@ render x ctx
 
 oracle :: Tile -> EntityQuery a -> Maybe a
 oracle x = \case
+    EntityQuery_Name           -> Just $ x^.tileSet.name._Wrapped
+    EntityQuery_DisplayName    -> Just $ x^.tileSet.name._Wrapped.to prettyName
     EntityQuery_Location       -> Just $ x^.location
     EntityQuery_CollisionShape -> locateShape (x^.location) <$> roleShape
     EntityQuery_CollisionBits  -> Just $ x^.tileSet.ff#collisionBits

@@ -4,7 +4,6 @@ module GUI.Inventory
     ) where
 
 import Delude
-import qualified Data.Text as Text
 import qualified Data.Map as Map
 
 import Types (Game, St)
@@ -88,7 +87,7 @@ inspectedContainer = do
         si <- MaybeT $ pure $ st^.inputState.inventoryState.ff#container
         et <- MaybeT $ lookupEntity si
         cs <- MaybeT $ pure $ et^.entity.oracleContent
-        let tit = (fromMaybe "Container" $ et^.entity.oracleName) <> ": "
+        let tit = (fromMaybe "Container" $ et^.entity.oracleDisplayName) <> ": "
         MaybeT $ Just <$> makeContainer tit ItemMoveTarget_Container cs
 
 itemsOnGround :: Game Container
@@ -111,7 +110,7 @@ toSelectEntry st (mslot, meid) = def
     & isFocused .~ fc
     & content   .~ fmap showEntityName meid
     where
-    slotName = Text.stripPrefix "EquipmentSlot_" . show =<< mslot
+    slotName = Equipment.prettySlot <$> mslot
     mpfx     = fmap toList $ st^?inputState.selectState.traverse.currentPrefix
     mhint    = hintForEntityIdOrSlot st (view entityId <$> meid) mslot
     fc       = fromMaybe False $ isItemFocused st <$> meid
@@ -139,7 +138,7 @@ getFocusedItem = do
     join <$> traverse lookupEntity fi
 
 showEntityName :: HasEntity e Entity => e -> Text
-showEntityName (view entity -> e) = fromMaybe "???" (e^.oracleName)
+showEntityName (view entity -> e) = fromMaybe "???" (e^.oracleDisplayName)
 
 hintForEntityIdOrSlot
     :: St -> Maybe EntityId -> Maybe EquipmentSlot -> Maybe String

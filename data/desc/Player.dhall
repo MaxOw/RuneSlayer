@@ -20,7 +20,7 @@ in constants.defaultHumanAgent //
   { attack      = 1
   , attackRange = 2
   , defence     = 1
-  , maxHealth   = 999 -- 10
+  , maxHealth   = 10
   , maxSpeed    = constants.fastWalkingSpeed
   }
 

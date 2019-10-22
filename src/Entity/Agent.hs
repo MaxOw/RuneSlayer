@@ -129,7 +129,7 @@ decideAction = useAgentKind >>= \case
         self.velocity .= 0
         autoTarget
         pursueOrAttackTarget eunit
-        spreadOut
+        -- spreadOut
 
     npcActions = do
         unlessM (use $ self.ff#npcRegistered) $ do
@@ -166,6 +166,7 @@ decideAction = useAgentKind >>= \case
             then orientTowards targetEntity >> moveTowards targetEntity
             else self.target .= Nothing
 
+{-
     spreadOut = do
         let disperseRange = distanceInMeters 0.5
         es <- queryInRadius EntityKind_Dynamic disperseRange
@@ -175,6 +176,7 @@ decideAction = useAgentKind >>= \case
         let v = sum $ map (negate . normalize) vs
         s <- use $ self.maxSpeed
         self.velocity += velocityFromSpeed v (s*0.3)
+-}
 
 runicActions :: Update Agent ()
 runicActions = do
@@ -445,7 +447,7 @@ autoTargetWith :: (Maybe EntityId -> Update Agent ()) -> Update Agent ()
 autoTargetWith func = do
     newTarget <- fmap (view entityId) <$> getAggroTarget
     currentTarget <- use $ self.target
-    when (newTarget /= currentTarget) $
+    when (newTarget /= currentTarget && isJust newTarget) $
       whenM (isCloserBy 0.1 newTarget currentTarget) $ do
         self.target .= newTarget
         func newTarget
@@ -463,7 +465,7 @@ autoTargetWith func = do
 processAction :: EntityAction -> Update Agent ()
 processAction = \case
     EntityAction_UseItem        i -> useItem i
-    EntityAction_SelfAttacked d _ -> procAttacked d
+    EntityAction_SelfAttacked d a -> procAttacked d a
     EntityAction_RemoveItem     i -> removeItem i
     EntityAction_AddLoadout     l -> mapM_ addLoadoutEntry l
     EntityAction_PlayerAction   a -> processPlayerAction a
@@ -513,8 +515,9 @@ removeItem i = do
     self.equipment %= Equipment.deleteId i
     flagUpdate UpdateOnce_Equipment
 
-procAttacked :: AttackPower -> Update Agent ()
-procAttacked attackPower = do
+procAttacked :: AttackPower -> Maybe EntityId -> Update Agent ()
+procAttacked attackPower mAttackerId = do
+    whenJust mAttackerId $ assign (self.target) . Just
     applyAttackDamage
     whenM shouldDie doDie
     where
@@ -523,7 +526,7 @@ procAttacked attackPower = do
         let ap = Health . max 0 $ (Unwrapped attackPower) - rd
         self.health %= max 0 . subtract ap
         loc <- use $ self.location
-        off <- use $ self.agentType.ff#renderOffset
+        off <- use $ self.agentType.renderOffset
         let rloc = over _Wrapped (+ fromMaybe 0 off) loc
         addHitEffect rloc ap
 
@@ -569,7 +572,7 @@ render x ctx = withZIndex x $ locate x $ renderComposition
     renderDebug = renderComposition $ localDebug <> globalDebug
     renderAnim  = Animation.renderAnimation (x^.animationState) (x^.animation)
 
-    addRenderOffset = fromMaybe id $ fmap translate $ x^.agentType.ff#renderOffset
+    addRenderOffset = fromMaybe id $ fmap translate $ x^.agentType.renderOffset
 
     localDebug = map snd
         $ filter (\(f, _) -> x^.debugFlags.f)

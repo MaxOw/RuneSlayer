@@ -1,6 +1,7 @@
 module GUI.Layout.Inventory where
 
 import Delude
+import Text.Printf
 import qualified Data.Text as Text
 
 import Types.GUI
@@ -84,11 +85,40 @@ layout_selectEntry entry = addLabel $ hseprel (8 @@ px)
     ft = makeFs 12 Color.darkgray
 
 layout_description :: Description -> Layout
-layout_description d = container ins
+layout_description d = vrel lns
     & setDefaultPadding
     where
+    lns = [(40 @@ px  , ins)] <> sts
+       <> [(20 @@ px, mempty), ( 1 @@ fill, des) , (40 @@ px  , ktu)]
     ins = textline ft (d^.name) & align .~ TopCenter
-    ft = makeFs 12 Color.darkgray
+    des = text fs (d^.ff#description) & align .~ TopLeft
+
+    ktu = case d^.ff#action of
+        Nothing            -> mempty
+        Just (KeyInfo k i) -> container $ textStyled
+            [ (fs, "Press"), (fp, k), (fs, "to " <> i <> ".") ]
+            & align .~ BottomLeft
+
+    ft = makeFsAC 12 Style.textPrimaryColor
+    fp = makeFsAC 10 Style.textPrimaryColor
+    fs = makeFsAC 10 Style.textSecondaryColor
+
+    sts = case d^.ff#stats of
+        Nothing -> []
+        Just  s -> catMaybes
+            [ displayStat Color.red    "Attack %+d"     $ s^.ff#attack
+            , displayStat Color.red    "Defence %+d"    $ s^.ff#defence
+            , displayStat Color.red    "Max Health %+d" $ s^.ff#maxHealth
+         -- , displayStat Color.purple "Max Speed %f"   $ s^.ff#maxSpeed
+         -- , displayStat Color.purple "Max Range %f"   $ s^.ff#attackRange
+            ]
+
+    displayStat col f a
+        | ua == 0   = Nothing
+        | otherwise = Just (30 @@ px, statTextline col $ fromString $ printf f ua)
+        where ua = Unwrapped a
+    statTextline col msg = textline (makeFs 10 col) msg & align .~ Center
+
 
 layout_container :: Container -> Layout
 layout_container c = vrel [ (30 @@ px, tit), (1 @@ fill, con) ]

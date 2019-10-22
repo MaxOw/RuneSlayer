@@ -60,6 +60,7 @@ let otherSlots  = [ EquipmentSlot.PrimaryOther,  EquipmentSlot.SecondaryOther  ]
 
 let helmet = defaultItemType //
   { name         = names.helmet
+  , description  = Some "Fully enclosing metal helmet with a pivoting visor."
   , volume       = 1.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , appearance   = appearance.simple sprites.helmet
@@ -70,6 +71,7 @@ let helmet = defaultItemType //
 
 let dagger = defaultItemType //
   { name         = names.dagger
+  , description  = Some "Simple dagger with a leather bound handle."
   , volume       = 0.3
   , passiveKind  = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , weaponKind   = Some WeaponKind.Slashing
@@ -81,6 +83,7 @@ let dagger = defaultItemType //
 
 let spear = defaultItemType //
   { name         = names.spear
+  , description  = Some "Long piece of wood with a pointy metal tip."
   , volume       = 0.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Thrusting
@@ -92,6 +95,7 @@ let spear = defaultItemType //
 
 let sword = defaultItemType //
   { name         = names.sword
+  , description  = "One and a half handed sword. Quite long and simple in design."
   , volume       = 0.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Slashing
@@ -103,6 +107,7 @@ let sword = defaultItemType //
 
 let bow = defaultItemType //
   { name         = names.bow
+  , description  = Some "Straight self bow with bowstring made of rawhide."
   , volume       = 0.5
   , passiveKind  = [ PassiveKind.Item, PassiveKind.BigItem ]
   , weaponKind   = Some WeaponKind.Projecting
@@ -123,6 +128,7 @@ let arrow = defaultItemType //
 
 let quiver = defaultItemType //
   { name         = names.quiver
+  , description  = Some "Simple leather quiver."
   , volume       = 10
   , passiveKind  = [ PassiveKind.Item, PassiveKind.SmallItem, PassiveKind.Container ]
 --, passiveKind  = [ PassiveKind.Item, PassiveKind.Container ]
@@ -139,31 +145,46 @@ let quiver = defaultItemType //
 
 let emptyFlask = defaultItemType //
   { name        = names.emptyFlask
+  , description = Some "Small empty glass flask."
   , volume      = 0.1
   , passiveKind = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , appearance  = appearance.simple sprites.emptyFlask
   }
 
+let healthPotionPower = 5
+let healthPotionDescription = ''
+    Small glass flask containing red liquid. Restores
+    ${Natural/show healthPotionPower} health points on use.
+  ''
 let healthPotion = defaultItemType //
   { name        = names.healthPotion
+  , description = Some healthPotionDescription
   , volume      = 0.1
   , passiveKind = [ PassiveKind.Item, PassiveKind.SmallItem ]
   , appearance  = appearance.simple sprites.healthPotion
   , interactions =
-      [ action "Use" [ useEffect.heal 5, useEffect.transformInto names.emptyFlask ]
+      [ action "Use"
+        [ useEffect.heal healthPotionPower
+        , useEffect.transformInto names.emptyFlask ]
       ]
   , primaryInteraction = Some "Use"
   , labelOffset = [0.0, 0.8]
   }
 
+let bagMaxVolume = 15
+let bagDescription = ''
+    Leather bag with a belt worn sling across over one shoulder.
+    Has volume of up to ${Natural/show bagMaxVolume} liters.
+  ''
 let bag = defaultItemType //
   { name          = names.bag
+  , description   = Some bagDescription
   , volume        = 15
   , passiveKind   = [ PassiveKind.Item, PassiveKind.Container ]
   , appearance    = appearance.simple sprites.bag
   , fittingSlots  = [ EquipmentSlot.Backpack ]
   , containerType = Some
-    { maxVolume  = 15
+    { maxVolume  = bagMaxVolume
     , allowKinds = [ PassiveKind.SmallItem ]
     , showCount  = False
     }

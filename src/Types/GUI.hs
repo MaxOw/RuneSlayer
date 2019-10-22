@@ -2,6 +2,7 @@ module Types.GUI (module Types.GUI) where
 
 import Delude
 
+import Types.Entity.Common (Stats)
 import Types.GUI.Common as Types.GUI
 import Types.EntityAction (AttackMode)
 import Types.Runes (RuneResult)
@@ -64,7 +65,10 @@ data SelectEntry = SelectEntry
 instance Default SelectEntry
 
 data Description = Description
-   { field_name :: Text
+   { field_name        :: Text
+   , field_description :: Text
+   , field_action      :: Maybe KeyInfo
+   , field_stats       :: Maybe Stats
    } deriving (Generic)
 instance Default Description
 

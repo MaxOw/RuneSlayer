@@ -52,7 +52,7 @@ let bat = defaultEnemyAgent //
 
   , unitType = defaultUnitType //
     { attackSpeed = 1  -- seconds
-    , pursueRange = 10 -- meters
+    , pursueRange = 12 -- meters
     }
 
   , renderOffset = [0.0, 0.8]
@@ -81,7 +81,7 @@ let spider = defaultEnemyAgent //
 
   , unitType = defaultUnitType //
     { attackSpeed = 1   -- seconds
-    , pursueRange = 10  -- meters
+    , pursueRange = 12  -- meters
     }
   , labelOffset = [0.0, 0.8]
 
@@ -108,10 +108,10 @@ let npcBertram = defaultHumanNPCAgent //
     ]
 
   , stats = defaultStats //
-    { attack      = 100
+    { attack      = 20
     , attackRange = 2 -- meters
-    , defence     = 1 -- 100
-    , maxHealth   = 10 -- 2000
+    , defence     = 1
+    , maxHealth   = 100
     , maxSpeed    = constants.baseWalkingSpeed
     }
   , equipmentSlots = constants.defaultEquipmentSlots

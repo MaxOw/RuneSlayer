@@ -79,6 +79,7 @@ data LoadoutEntry a = LoadoutEntry
 data PassiveType = PassiveType
    { field_name               :: PassiveTypeName
    , field_displayName        :: Maybe Text
+   , field_description        :: Maybe Text
    , field_volume             :: Volume
    , field_passiveKind        :: Set PassiveKind
    , field_weaponKind         :: Maybe WeaponKind

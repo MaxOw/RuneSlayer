@@ -37,6 +37,7 @@ oracleGetter q = to (flip entityOracle q)
 
 MakeOracleGetter(Name               , Text)
 MakeOracleGetter(DisplayName        , Text)
+MakeOracleGetter(Description        , Text)
 MakeOracleGetter(Location           , Location)
 MakeOracleGetter(Equipment          , Equipment)
 MakeOracleGetter(PassiveType        , PassiveType)

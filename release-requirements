@@ -76,6 +76,7 @@ Requirements for first release: v0.1
   - Inventory keys info.                                                     (#)
 
 * Add System Messages.                                                       [X]
+* Display stats and description of focused item in inventory.                [X]
 
 * NPCs.                                                                      [X]
   - Add NPC Agent Kind.                                                      (#)

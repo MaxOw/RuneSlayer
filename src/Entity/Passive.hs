@@ -201,7 +201,7 @@ render x ctx = maybeLocate x $ withZIndex x $ renderComposition
     ]
     where
     itemRenderAction = renderAnimation (x^.animationState) (x^.animation)
-    addRenderOffset = fromMaybe id $ fmap translate $ x^.passiveType.ff#renderOffset
+    addRenderOffset = fromMaybe id $ fmap translate $ x^.passiveType.renderOffset
 
     renderDebug
         = renderComposition $ map snd
@@ -210,7 +210,7 @@ render x ctx = maybeLocate x $ withZIndex x $ renderComposition
         , (DebugFlag_ShowCollisionShapes, renderCollisionShape cs)
         ]
 
-    cs = x^.passiveType.ff#collisionShape
+    cs = x^.passiveType.collisionShape
 
     itemBBox = BBox (-0.5) (0.5)
 
@@ -219,6 +219,7 @@ oracle x = \case
     EntityQuery_Location           -> x^.location
     EntityQuery_Name               -> Just passiveName
     EntityQuery_DisplayName        -> Just prettyPassiveName
+    EntityQuery_Description        -> x^.passiveType.description
     EntityQuery_Volume             -> Just $ x^.passiveType.volume
     EntityQuery_FittingSlots       -> Just $ x^.passiveType.fittingSlots
     EntityQuery_PassiveType        -> Just $ x^.passiveType

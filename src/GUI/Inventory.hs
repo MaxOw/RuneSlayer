@@ -29,9 +29,10 @@ inventoryLayout = do
     cs <- getContainers
     st <- use userState
     ks <- getInventoryKeysInfo
+    uk <- showActionKeySeqs InventoryMode UseFocusedItem
     return $ layout_inventory $ Inventory
         { field_equipment   = map (toSelectEntry st) eq
-        , field_description = fmap toDescription fi
+        , field_description = fmap (toDescription uk) fi
         , field_containers  = cs
         , field_keys        = ks
         }
@@ -115,9 +116,13 @@ toSelectEntry st (mslot, meid) = def
     mhint    = hintForEntityIdOrSlot st (view entityId <$> meid) mslot
     fc       = fromMaybe False $ isItemFocused st <$> meid
 
-toDescription :: EntityWithId -> Description
-toDescription e = def
-    & name .~ showEntityName e
+toDescription :: Text -> EntityWithId -> Description
+toDescription uk eid = execState ?? def $ do
+    let e = eid^.entity
+    ff#name        .= showEntityName eid
+    ff#description .= fromMaybe "" (e^.oracleDescription)
+    ff#action      .= (KeyInfo uk . Unwrapped <$> e^.oraclePrimaryInteraction)
+    ff#stats       .= e^.oracleStats
 
 getEquipmentList :: Game [(Maybe EquipmentSlot, Maybe EntityWithId)]
 getEquipmentList = focusEntity >>= \case

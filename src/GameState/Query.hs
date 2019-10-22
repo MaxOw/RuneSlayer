@@ -1,12 +1,15 @@
 module GameState.Query where
 
 import Delude
-import qualified Data.Set  as Set
+import qualified Data.Set    as Set
+import qualified Data.BitSet as BitSet
+import Engine (userState)
 
 import Types (Game)
 import Types.GameState (gameState)
 import Types.Entity (Entity)
 import Types.Entity.Common (Volume)
+import Types.Config (ConfigDebugFlag)
 
 import EntityIndex
 import Entity
@@ -52,4 +55,7 @@ lookupEntity :: EntityId -> Game (Maybe EntityWithId)
 lookupEntity i = do
     es <- use $ gameState.entities
     EntityIndex.lookupById i es
+
+isConfigDebugFlagOn :: ConfigDebugFlag -> Game Bool
+isConfigDebugFlagOn = uses (userState.config.debugFlags) . BitSet.member
 

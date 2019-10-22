@@ -18,6 +18,14 @@ data TutorialStep
    deriving (Eq, Ord, Enum, Bounded, Generic)
 instance Default TutorialStep where def = TutorialStep_Start
 
+data TutorialReq
+   = TutorialReq_PickUpItem
+   | TutorialReq_TalkToBertram
+   | TutorialReq_InspectChest
+   | TutorialReq_LoadRune
+   | TutorialReq_Attack
+   deriving (Eq, Ord)
+
 data TimerType
    = TimerType_MinPageTime
    | TimerType_MaxPageTime
@@ -48,7 +56,7 @@ instance Default TutorialPage
 
 data TutorialState = TutorialState
    { field_activatedInputActions :: Set InputAction
-   , field_satisfied             :: Set TutorialStep
+   , field_satisfied             :: Set TutorialReq
    , field_currentStep           :: TutorialStep
    , field_currentPage           :: Maybe TutorialPage
    , field_timer                 :: Timer TimerType
@@ -58,7 +66,7 @@ instance Default TutorialState
 activatedInputActions :: Lens' TutorialState (Set InputAction)
 activatedInputActions = ff#activatedInputActions
 
-satisfied :: Lens' TutorialState (Set TutorialStep)
+satisfied :: Lens' TutorialState (Set TutorialReq)
 satisfied = ff#satisfied
 
 currentStep :: Lens' TutorialState TutorialStep

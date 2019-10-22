@@ -30,6 +30,7 @@ import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
 
+import GameState.Query (isConfigDebugFlagOn)
 -- import qualified Resource
 import qualified EntityIndex
 import EntityIndex (EntityIndexTag(..))
@@ -126,7 +127,7 @@ setupSt = do
     whenFlag ConfigDebugFlag_NoTutorial Tutorial.skipAll
     whenFlag ConfigDebugFlag_NoStory    Story.noStory
     where
-    whenFlag f = whenM $ uses (userState.config.debugFlags) (BitSet.member f)
+    whenFlag = whenM . isConfigDebugFlagOn
 
 loadRuneSet :: MonadIO m => Config -> m RuneSet
 loadRuneSet conf = do

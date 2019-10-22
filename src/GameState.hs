@@ -8,7 +8,7 @@ module GameState
     , actOnWorld
     , getGameOverScreen
 
-    , isDebugFlagOn
+    , isDebugFlagOn, isConfigDebugFlagOn
     , pickupItem, dropItem
     , passItemTo, passItemToSlot
     , lookupEntity, lookupEntities

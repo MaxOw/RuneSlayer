@@ -14,6 +14,7 @@ import Engine.Layout.Alt (Layout)
 
 import Engine (EngineState)
 import Types (Game, St)
+import Types.Config (ConfigDebugFlag(..))
 import Types.Entity (DirectedEntityAction)
 import Types.GameState (gameState)
 import Types.InputState (InputMode(..))
@@ -21,8 +22,11 @@ import Types.InputAction
 import Types.EntityAction
 import Types.Entity.Common (defaultDelta, timeInSeconds, Duration)
 import Types.Tutorial
+import Types.Entity.Agent hiding (TimerType)
+import Entity
 import Tutorial.Layout (layout_tutorialPage)
 import InputState.Actions (showActionKeySeqs, getMode)
+import GameState.Query (lookupEntity, isConfigDebugFlagOn)
 import qualified Data.Timer as Timer
 import Focus (focusEntityId)
 
@@ -65,7 +69,8 @@ tutorialStart :: Game ()
 tutorialStart = whenM welcomeDialogDone nextTutorialStep
     where
     welcomeDialogDone = andM
-        [ checkActivated InputAction_NextPage
+        [ orM [ checkActivated InputAction_NextPage
+              , isConfigDebugFlagOn ConfigDebugFlag_NoStory ]
         , isNormalMode ]
 
 keyActivatedPart :: InputMode -> InputAction -> Game ContentPart
@@ -74,10 +79,8 @@ keyActivatedPart m k = do
     ks <- checkActivated k
     return $ ckeys ks kt
 
-makeTaskPart :: Game (Text -> ContentPart)
-makeTaskPart = do
-    s <- currentStepSatisified
-    return $ ctask s
+makeTaskPart :: TutorialReq -> Game (Text -> ContentPart)
+makeTaskPart req = ctask <$> isSatisfied req
 
 tutorialMovement :: Game ()
 tutorialMovement = makeTransition checkStepDone pageDesc
@@ -110,11 +113,11 @@ tutorialPickingUpItems = makeTransition checkStepDone pageDesc
     where
     checkStepDone = andM
         [ checkActivated PickupAllItems
-        , currentStepSatisified ]
+        , isSatisfied TutorialReq_PickUpItem ]
     pageDesc = do
         let titleText = "Picking things up."
         kpai <- keyActivatedPart NormalMode PickupAllItems
-        f <- makeTaskPart
+        f <- makeTaskPart TutorialReq_PickUpItem
         let contentText =
                 [ "You can press ", kpai, " to pickup all nearby items. "
                 , f "Try moving near that bow over there and picking it up."
@@ -147,16 +150,19 @@ tutorialInteraction = makeTransition checkStepDone pageDesc
     where
     checkStepDone = andM
         [ checkActivated Interact
+        , checkActivated InputAction_Escape
         , isNormalMode
-        , currentStepSatisified ]
+        , isSatisfied TutorialReq_TalkToBertram
+        , isSatisfied TutorialReq_InspectChest ]
     pageDesc = do
         let titleText = "Interactions."
         ksac <- keyActivatedPart NormalMode Interact
-        f <- makeTaskPart
+        fb <- makeTaskPart TutorialReq_TalkToBertram
+        fc <- makeTaskPart TutorialReq_InspectChest
         let contentText =
                 [ "Press ", ksac, " to interact with NPCs and the environment."
-                , f "Try striking a conversation with Bertram or inspecting "
-                , f "the contents of that chest."
+                , fb "Try striking a conversation with Bertram",  "and"
+                , fc "inspecting the contents of that chest."
                 ]
         return $ def
             & title   .~ titleText
@@ -187,11 +193,11 @@ tutorialRunicMode = makeTransition checkStepDone pageDesc
     checkStepDone = andM
         [ checkActivated StartRunicMode
         , isNormalMode
-        , currentStepSatisified ]
+        , isSatisfied TutorialReq_LoadRune ]
     pageDesc = do
         let titleText = "Runic Mode."
         krunic <- keyActivatedPart NormalMode StartRunicMode
-        f <- makeTaskPart
+        f <- makeTaskPart TutorialReq_LoadRune
         let contentText =
                 [ "Press ", krunic, " to start runic mode. "
                 , "By answering questions about the runes you've learned, "
@@ -207,11 +213,11 @@ tutorialAttack = makeTransition checkStepDone pageDesc
     where
     checkStepDone = andM
         [ checkActivated ExecuteAttack
-        , currentStepSatisified ]
+        , isSatisfied TutorialReq_Attack ]
     pageDesc = do
         let titleText = "Attacking enemies."
         kattack <- keyActivatedPart NormalMode ExecuteAttack
-        f <- makeTaskPart
+        f <- makeTaskPart TutorialReq_Attack
         let contentText =
                 [ "Now assuming you have bow and quiver with arrows equipped "
                 , "(or maybe some other weapon) and have enough runic points "
@@ -252,15 +258,28 @@ entityActionsHook :: [DirectedEntityAction] -> Game ()
 entityActionsHook = unlessDone . mapM_ handleAction
 
 handleAction :: DirectedEntityAction -> Game ()
-handleAction (DirectedEntityAction _ act) = case act of
-    EntityAction_SelfPassTo   p _ -> satisfyFor p TutorialStep_PickingUpItems
-    EntityAction_Interact      {} -> satisfy      TutorialStep_Interaction
-    EntityAction_SelfAttacked _ p -> satisfyFor p TutorialStep_Attack
-    EntityAction_PlayerAction (PlayerAction_UpdateRune _ True) -> satisfyRunes
+handleAction (DirectedEntityAction eid act) = case act of
+    EntityAction_SelfPassTo   p _ -> satisfyPickUpItem p
+    EntityAction_Interact      {} -> satisfyInteract
+    EntityAction_SelfAttacked _ p -> satisfyAttack p
+    EntityAction_PlayerAction (PlayerAction_UpdateRune _ True) -> satisfyLoadRune
     _ -> return ()
     where
-    satisfyRunes = satisfy TutorialStep_RunicMode
-    satisfyFor p x = whenFocus p $ satisfy x
+    satisfyPickUpItem p = whenFocus p $ satisfy TutorialReq_PickUpItem
+    satisfyLoadRune = satisfy TutorialReq_LoadRune
+    satisfyAttack p = whenFocus p $ satisfy TutorialReq_Attack
+
+    satisfyInteract = do
+        me <- lookupEntity eid
+        whenJust me $ \e -> do
+            let ak    = e^?entity.oracleAgentType.traverse.agentKind
+            let isNPC = ak == Just AgentKind_NPC
+            let pk    = e^?entity.oracleContent
+
+            if | isNPC     -> satisfy TutorialReq_TalkToBertram
+               | isJust pk -> satisfy TutorialReq_InspectChest
+               | otherwise -> return ()
+
     whenFocus p = whenM ((p ==) <$> focusEntityId)
     satisfy x = tutorialState.satisfied %= Set.insert x
 
@@ -277,9 +296,8 @@ makeTransition nextStepCondition pageDescription = do
 --  where
 --  condOrTimer = orM [ nextStepCondition, isTimerUp TimerType_MaxPageTime ]
 
-currentStepSatisified :: Game Bool
-currentStepSatisified
-    = uses (tutorialState.satisfied) . Set.member =<< getCurrentStep
+isSatisfied :: TutorialReq -> Game Bool
+isSatisfied = uses (tutorialState.satisfied) . Set.member
 
 isTimerUp :: TimerType -> Game Bool
 isTimerUp = uses (tutorialState.timer) . Timer.isTimerUp
@@ -302,8 +320,8 @@ nextTutorialStep = do
  -- startTimer TimerType_MaxPageTime   $ timeInSeconds 10.5
     tutorialState.currentStep .= next cs
 
-getCurrentStep :: Game TutorialStep
-getCurrentStep = use (tutorialState.currentStep)
+-- getCurrentStep :: Game TutorialStep
+-- getCurrentStep = use (tutorialState.currentStep)
 
 -- getPreviousStep :: Game TutorialStep
 -- getPreviousStep = uses (tutorialState.currentStep) precStop

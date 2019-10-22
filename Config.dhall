@@ -6,6 +6,7 @@ let DebugFlag =
 
 in
 { runeSet = "japanese"
-, debugFlags = [DebugFlag.NoTutorial, DebugFlag.NoStory]
--- , debugFlags = [] : List DebugFlag
+-- , debugFlags = [DebugFlag.NoTutorial, DebugFlag.NoStory]
+-- , debugFlags = [DebugFlag.NoStory]
+, debugFlags = [] : List DebugFlag
 }

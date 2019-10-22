@@ -53,7 +53,8 @@ explainAction m a = case m of
         SelectItemToPickUp   -> "pickup (yank) item"
         SelectItemToDrop     -> "drop (put-down) item"
         SelectItemToFocus    -> "focus item"
-        SelectItemMoveTarget -> "move item"
+        SelectItemToMove     -> "move item"
+        SelectItemMoveTarget -> "move focused item to"
         PickupAllItems       -> "pickup all"
         DropAllItems         -> "drop all"
         _                    -> show a

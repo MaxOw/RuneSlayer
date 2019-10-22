@@ -39,6 +39,7 @@ data SelectKind
    = SelectKind_Pickup   (SelectValues EntityId)
    | SelectKind_Drop     (SelectValues EntityId)
    | SelectKind_Focus    (SelectValues EntityId)
+   | SelectKind_Move     (SelectValues EntityId)
    | SelectKind_MoveTo   (SelectValues ItemMoveTarget)
    | SelectKind_Action   (SelectValues (EntityId, InteractionName))
    deriving (Show, Generic)
@@ -164,7 +165,8 @@ defaultInputKeymap = buildInputKeymap defaultCommonInputSeqs
         , InputStr "pp" DropAllItems
         , InputStr "pi" SelectItemToDrop
 
-        , InputStr "m" SelectItemMoveTarget
+        , InputStr "m" SelectItemToMove
+        , InputStr "M" SelectItemMoveTarget
 
         , InputStr "f" SelectItemToFocus
         , InputStr "u" UseFocusedItem

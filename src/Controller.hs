@@ -14,9 +14,7 @@ import Types.Entity.Animation (AnimationKind)
 import Types.Entity.Common (EntityStatus (..))
 import Types.Debug (DebugFlag(..))
 import Types.EntityAction
-import Types.Equipment
 import Equipment (contentList)
-import GameState.Query (canFitIntoContainer)
 import InputState
 import InputKeymap (keyToChar)
 import GameState
@@ -136,6 +134,7 @@ handleActivation = \case
     SetAttackMode     m  -> setAttackMode m
     StartRunicMode       -> Runes.startRunicMode
     SelectItemToPickUp   -> selectItemToPickUp
+    SelectItemToMove     -> selectItemToMove
     SelectItemMoveTarget -> selectItemMoveTarget
     SelectItemToDrop     -> selectItemToDrop
     SelectItemToFocus    -> selectItemToFocus
@@ -166,6 +165,7 @@ handleActionFinalizers act = sequence_ $ map ($ act)
 finalize_clearInventoryState :: InputAction -> Game ()
 finalize_clearInventoryState = \case
     SelectItemToPickUp   -> return ()
+    SelectItemToMove     -> return ()
     SelectItemToDrop     -> return ()
     SelectItemToFocus    -> return ()
     SelectItemMoveTarget -> return ()
@@ -195,34 +195,13 @@ selectItemToPickUp = do
     cs <- fmap (view entityId) <$> focusItemsInContainer
     startSelect SelectKind_Pickup (es <> cs)
 
+selectItemToMove :: Game ()
+selectItemToMove = do
+    unfocusItem
+    startSelect SelectKind_Move =<< getFocusTargets
+
 selectItemMoveTarget :: Game ()
-selectItemMoveTarget = getFocusedItem >>= \case
-    Nothing -> return () -- Messages.addInfo "No item selected!"
-    Just fi -> lookupEntity fi >>= \case
-        Nothing -> return ()
-        Just fe -> startSelect SelectKind_MoveTo =<< getValidTargets fe
-    where
-    getValidTargets fe = do
-        let fs = toList $ fe^.entity.oracleFittingSlots.traverse
-        mb <- getBackpackTarget fe
-        mc <- getContainerTarget fe
-        -- TODO: remove current focus from the list of valid targets
-        -- ct <- getCurrentTarget fe
-        let dt = map ItemMoveTarget_EquipmentSlot fs
-              <> catMaybes [mb, mc, Just ItemMoveTarget_Ground]
-        return dt
-
-    getBackpackTarget = fitForTarget
-        (focusEquipmentSlot EquipmentSlot_Backpack)
-        ItemMoveTarget_Backpack
-
-    getContainerTarget = fitForTarget
-        getInventoryContainer
-        ItemMoveTarget_Container
-
-    fitForTarget getT mt fe = getT >>= \case
-        Nothing -> return Nothing
-        Just bi -> bool Nothing (Just mt) <$> canFitIntoContainer fe bi
+selectItemMoveTarget = startSelectMoveTo
 
 selectItemToDrop :: Game ()
 selectItemToDrop = do
@@ -231,11 +210,14 @@ selectItemToDrop = do
     startSelect SelectKind_Drop (es <> cs)
 
 selectItemToFocus :: Game ()
-selectItemToFocus = do
+selectItemToFocus = startSelect SelectKind_Focus =<< getFocusTargets
+
+getFocusTargets :: Game [EntityId]
+getFocusTargets = do
     ies <- fmap (view entityId) <$> focusItemsInInventory
     ces <- fmap (view entityId) <$> focusItemsInContainer
     res <- fmap (view entityId) <$> focusItemsInRange
-    startSelect SelectKind_Focus $ ies <> ces <> res
+    return $ ies <> ces <> res
 
 useFocusedItem :: Game ()
 useFocusedItem = getFocusedItem >>= \case

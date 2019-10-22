@@ -60,6 +60,7 @@ data InputAction
    | SetAttackMode AttackMode
    | StartRunicMode
    | SelectItemToPickUp
+   | SelectItemToMove
    | SelectItemMoveTarget
    | SelectItemToDrop
    | SelectItemToFocus

@@ -42,7 +42,7 @@ getInventoryKeysInfo = traverse f
     [ SelectItemToPickUp
     , SelectItemToDrop
     , SelectItemToFocus
-    , SelectItemMoveTarget
+    , SelectItemToMove
     , PickupAllItems
     , DropAllItems
     ]
@@ -160,6 +160,7 @@ hintForEntityId st e = case st^.inputState.selectState of
         SelectKind_Pickup v -> Map.lookup (e^.entityId) (v^.hintMap)
         SelectKind_Drop   v -> Map.lookup (e^.entityId) (v^.hintMap)
         SelectKind_Focus  v -> Map.lookup (e^.entityId) (v^.hintMap)
+        SelectKind_Move   v -> Map.lookup (e^.entityId) (v^.hintMap)
         SelectKind_MoveTo _ -> Nothing
         SelectKind_Action _ -> Nothing
 
@@ -170,6 +171,7 @@ hintForMoveTarget st mt = case st^.inputState.selectState of
         SelectKind_Pickup _ -> Nothing
         SelectKind_Drop   _ -> Nothing
         SelectKind_Focus  _ -> Nothing
+        SelectKind_Move   _ -> Nothing
         SelectKind_MoveTo v -> Map.lookup mt (v^.hintMap)
         SelectKind_Action _ -> Nothing
 

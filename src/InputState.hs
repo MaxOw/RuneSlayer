@@ -19,6 +19,7 @@ module InputState
     , toggleViewPanel, isPanelVisible
     , nextPage
     , showActionKeySeqs
+    , startSelectMoveTo
 
     , isPartialMatch
     ) where
@@ -30,16 +31,18 @@ import qualified Data.Map as Map
 import qualified Data.Map as PrefixMap
 
 import Engine (userState, Key)
+import Entity
 import Types (Game)
-import Types.EntityAction
 import Types.Entity.Common (EntityId)
 import Types.Entity.PassiveType (InteractionName)
 import Types.InputState
 import Types.Equipment
 import InputState.Actions
 import GameState
+import GameState.Query (canFitIntoContainer)
 import Focus
 import qualified Story
+import qualified Equipment
 
 --------------------------------------------------------------------------------
 
@@ -134,46 +137,61 @@ startSelect f vs = do
             go i = if i <= 0 then [[]]
                 else (:) <$> defaultSelectors <*> go (i-1)
 
+type GameSeq = Game (Maybe (Game ()))
+
 handleSelectKind :: SelectState -> Seq Char -> Game ()
 handleSelectKind s selseq = do
-    case s^.selectKind of
+    mSeqAction <- case s^.selectKind of
         SelectKind_Pickup v -> selectLookup v selectPickup
         SelectKind_Drop   v -> selectLookup v selectDrop
         SelectKind_Focus  v -> selectLookup v selectFocus
+        SelectKind_Move   v -> selectLookup v selectMove
         SelectKind_MoveTo v -> selectLookup v selectMoveTarget
         SelectKind_Action v -> selectLookup v selectAction
     unless (isPartialMatch smap selseq) endSelect
+    whenJust mSeqAction id
     where
     smap = s^.selectMap
-    selectLookup :: SelectValues a -> (a -> Game ()) -> Game ()
+    selectLookup
+        :: SelectValues a -> (a -> GameSeq) -> GameSeq
     selectLookup v f
-        | Vector.length vs == 1 =
-            whenJust (Vector.indexM vs 0) $ \a -> f a >> endSelect
+        | Vector.length vs == 1 = case Vector.indexM vs 0 of
+            Nothing -> return Nothing
+            Just  a -> f a >>= \mr -> endSelect >> return mr
         | otherwise = case PrefixMap.lookup (toList selseq) smap of
-            Nothing -> return ()
+            Nothing -> return Nothing
             Just i -> case Vector.indexM vs i of
-                Nothing -> return ()
+                Nothing -> return Nothing
                 Just a  -> f a
         where
         vs = v^.values
 
-selectPickup :: EntityId -> Game ()
-selectPickup eid = withFocus $ \fe -> do
-    mapM_ pickupItem =<< filterFitItems fe =<< lookupEntities [eid]
-    selectFocus eid
+selectPickup :: EntityId -> GameSeq
+selectPickup eid = do
+    withFocus $ \fe -> do
+        mapM_ pickupItem =<< filterFitItems fe =<< lookupEntities [eid]
+        void $ selectFocus eid
+    return Nothing
 
-selectDrop :: EntityId -> Game ()
-selectDrop eid = dropItem eid >> selectFocus eid
+selectDrop :: EntityId -> GameSeq
+selectDrop eid = dropItem eid >> selectFocus eid >> return Nothing
 
-selectFocus :: EntityId -> Game ()
-selectFocus = zoomInputState . assign (inventoryState.focusedItem) . Just
+selectMove :: EntityId -> GameSeq
+selectMove eid = selectFocus eid >> return (Just startSelectMoveTo)
 
-selectMoveTarget :: ItemMoveTarget -> Game ()
-selectMoveTarget m = whenJustM getFocusedItem $ \e -> case m of
-    ItemMoveTarget_Ground          -> dropItem e
-    ItemMoveTarget_Container       -> passToContainer e
-    ItemMoveTarget_Backpack        -> passToBackpack e
-    ItemMoveTarget_EquipmentSlot s -> passToSlot e s
+selectFocus :: EntityId -> GameSeq
+selectFocus eid = do
+    zoomInputState . assign (inventoryState.focusedItem) $ Just eid
+    return Nothing
+
+selectMoveTarget :: ItemMoveTarget -> GameSeq
+selectMoveTarget m = do
+    whenJustM getFocusedItem $ \e -> case m of
+        ItemMoveTarget_Ground          -> dropItem e
+        ItemMoveTarget_Container       -> passToContainer e
+        ItemMoveTarget_Backpack        -> passToBackpack e
+        ItemMoveTarget_EquipmentSlot s -> passToSlot e s
+    return Nothing
     where
     passToContainer e = whenJustM getInventoryContainer
         $ passItemTo e . view entityId
@@ -182,9 +200,10 @@ selectMoveTarget m = whenJustM getFocusedItem $ \e -> case m of
 
     passToSlot e s = withFocusId $ \fi -> passItemToSlot e fi s
 
-selectAction :: (EntityId, InteractionName) -> Game ()
-selectAction (eid, eua) = whenJustM (focusEntityId)
-    $ actOnEntity eid . EntityAction_Interact (Just eua)
+selectAction :: (EntityId, InteractionName) -> GameSeq
+selectAction (eid, eua) = do
+    whenJustM (focusEntityId) $ actOnEntity eid . EntityAction_Interact (Just eua)
+    return Nothing
 
 unfocusItem :: Game ()
 unfocusItem = zoomInputState $ inventoryState.focusedItem .= Nothing
@@ -215,3 +234,58 @@ nextPage :: Game ()
 nextPage = getMode >>= \case
     StoryDialogMode -> Story.nextPage
     _               -> return ()
+
+--------------------------------------------------------------------------------
+
+startSelectMoveTo :: Game ()
+startSelectMoveTo = getFocusedItem >>= \case
+    Nothing -> return () -- Messages.addInfo "No item selected!"
+    Just fi -> lookupEntity fi >>= \case
+        Nothing -> return ()
+        Just fe -> startSelect SelectKind_MoveTo =<< getValidTargets fe
+    where
+    getValidTargets fe = do
+        let fs = toList $ fe^.entity.oracleFittingSlots.traverse
+        mb <- getBackpackTarget fe
+        mc <- getContainerTarget fe
+        let mg = Just ItemMoveTarget_Ground
+        mct <- getCurrentTarget fe
+        let is = map (Just . ItemMoveTarget_EquipmentSlot) fs <> [mb, mc, mg]
+        return $ catMaybes $ filter (/= mct) is
+
+    getBackpackTarget = fitForTarget
+        (focusEquipmentSlot EquipmentSlot_Backpack)
+        ItemMoveTarget_Backpack
+
+    getContainerTarget = fitForTarget
+        getInventoryContainer
+        ItemMoveTarget_Container
+
+    fitForTarget getT mt fe = getT >>= \case
+        Nothing -> return Nothing
+        Just bi -> bool Nothing (Just mt) <$> canFitIntoContainer fe bi
+
+    -- what a mess...
+    getCurrentTarget fe = do
+        if isJust $ fe^.entity.oracleLocation
+        then return $ Just ItemMoveTarget_Ground
+        else do
+            mbp <- focusEquipmentSlot EquipmentSlot_Backpack
+            let bp = mbp^..traverse.entity.oracleContent.traverse.traverse
+            if any (fe^.entityId ==) bp
+            then return $ Just ItemMoveTarget_Backpack
+            else do
+                ct <- map (view entityId) <$> focusItemsInContainer
+                if any (fe^.entityId ==) ct
+                then return $ Just ItemMoveTarget_Container
+                else getCurrentEquipmentTarget fe
+
+    getCurrentEquipmentTarget fe = do
+        mf <- focusEntity
+        case mf^?traverse.oracleEquipment.traverse of
+            Nothing -> return Nothing
+            Just eq -> do
+                mapM_ print $ Equipment.slotsList eq
+                let ms = find ((fe^.entityId ==) . snd) $ Equipment.slotsList eq
+                return $ ItemMoveTarget_EquipmentSlot . fst <$> ms
+

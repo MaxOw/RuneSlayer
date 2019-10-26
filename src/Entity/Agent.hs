@@ -92,22 +92,33 @@ actOn x a = x & case a of
             po = Equipment.lookupSlot EquipmentSlot_PrimaryOther    e
             so = Equipment.lookupSlot EquipmentSlot_SecondaryOther  e
 
+-- Only update if close enougth to camera.
+limitUpdate :: Update Agent () -> Update Agent ()
+limitUpdate doUpdate = do
+    let maxUpdateDistance = distanceInMeters 16
+    loc <- use $ self.location
+    cei <- queryByTag EntityIndexTag_Camera
+    whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
+        when (isWithinDistance maxUpdateDistance loc cloc) $ doUpdate
+    self.processOnUpdate .= mempty
+
 update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
-update x ctx = runUpdate x ctx $ do
+update x ctx = runUpdate x ctx $ limitUpdate $ do
     decideAction
-    updatePlayerStatus -- This is a bit... not ideal.
     updateActiveAnimation
-    updateTimer
-    updateDelayedActions
-    integrateLocationWhenWalking
-    updateMoveTo
-    separateCollision
+    isEnemy <- (AgentKind_Enemy==) <$> useAgentKind
+    noTarget <- uses (self.target) isNothing
+    unless (isEnemy && noTarget) $ do
+        updatePlayerStatus -- This is a bit... not ideal.
+        updateTimer
+        updateDelayedActions
+        integrateLocationWhenWalking
+        updateMoveTo
+        separateCollision
 
     allMatch _EntityAction_AddItem (addItems notify . toList)
     mapM_ processAction =<< use (self.processOnUpdate)
     mapM_ processUpdateOnce =<< use (self.updateOnce)
-    self.processOnUpdate .= mempty
-
     where
     notify = whenM ((AgentKind_Player ==) <$> useAgentKind) $
         systemMessage "Not enough space in inventory."
@@ -181,7 +192,7 @@ decideAction = useAgentKind >>= \case
 runicActions :: Update Agent ()
 runicActions = do
     -- Detect hostiles
-    ds <- queryInRange EntityKind_Dynamic hostileDetectionRange
+    ds <- queryInRadius EntityKind_Dynamic hostileDetectionRange
     if any isHostile ds
     then runicMode
     else endRunicMode
@@ -426,7 +437,7 @@ updateMoveTo = whenJustM (use $ self.moveTo) $ \moveLoc -> do
 getAggroTarget :: Update Agent (Maybe EntityWithId)
 getAggroTarget = do
     trange <- use $ self.agentType.ff#autoTargetRange
-    ds <- queryInRange EntityKind_Dynamic trange
+    ds <- queryInRadius EntityKind_Dynamic trange
     loc <- use $ self.location
     ht <- use $ self.agentType.ff#hostileTowards
     sid <- useSelfId
@@ -438,16 +449,16 @@ getAggroTarget = do
         (distance (loc^._Wrapped) . view _Wrapped <$> e^.entity.oracleLocation)
 
 autoTarget :: Update Agent ()
-autoTarget = autoTargetWith $ \_ -> return ()
+autoTarget = autoTargetWith False $ \_ -> return ()
 
 autoTargetMark :: Update Agent ()
-autoTargetMark = autoTargetWith $ addWorldAction . WorldAction_MarkTarget
+autoTargetMark = autoTargetWith True $ addWorldAction . WorldAction_MarkTarget
 
-autoTargetWith :: (Maybe EntityId -> Update Agent ()) -> Update Agent ()
-autoTargetWith func = do
+autoTargetWith :: Bool -> (Maybe EntityId -> Update Agent ()) -> Update Agent ()
+autoTargetWith disengage func = do
     newTarget <- fmap (view entityId) <$> getAggroTarget
     currentTarget <- use $ self.target
-    when (newTarget /= currentTarget && isJust newTarget) $
+    when (newTarget /= currentTarget && (disengage || isJust newTarget)) $
       whenM (isCloserBy 0.1 newTarget currentTarget) $ do
         self.target .= newTarget
         func newTarget

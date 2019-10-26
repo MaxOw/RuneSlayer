@@ -1,3 +1,4 @@
+{-# Language BangPatterns #-}
 module EntityIndex
     ( EntityIndex, EntityIndexTag (..)
 
@@ -39,21 +40,24 @@ new :: MonadIO m => EntityIndexConfig -> m EntityIndex
 new conf = do
     let maxSizeDim = fromMaybe 1 $ maximumOf traverse $ conf^.size
     v <- VectorIndex.new
-    let g = def
+    -- let g = def
+    let makeG x = def
           & ff#gridSize .~ (floor <$> conf^.size)
-          & ff#cellSize .~ pure 2
+          & ff#cellSize .~ pure x
     let qt = def
           & size          .~ maxSizeDim
           & minCellSize   .~ 2
           & maxBucketSize .~ 4
-    sTile    <- SpatialIndex.createGrid g
+    sTile    <- SpatialIndex.createGrid $ makeG 2
+    -- sPassive <- SpatialIndex.createGrid $ makeG 2
+    -- sDynamic <- SpatialIndex.createGrid $ makeG 2
     sPassive <- SpatialIndex.createQuadTree qt
     sDynamic <- SpatialIndex.createQuadTree qt
     let f = \case
             EntityKind_Tile    -> sTile
             EntityKind_Passive -> sPassive
             EntityKind_Dynamic -> sDynamic
-    sShapes <- SpatialIndex.createGrid g
+    sShapes <- SpatialIndex.createGrid $ makeG 2
     lRef <- newIORef Nothing
     dRef <- newIORef mempty
     aRef <- newIORef mempty
@@ -73,6 +77,12 @@ noSetMoveVector :: EntityAction -> Bool
 noSetMoveVector (EntityAction_SetMoveVector {}) = False
 noSetMoveVector _                               = True
 
+getDynamicIndex :: MonadIO m => EntityIndex -> m (HashSet EntityId)
+getDynamicIndex eix = readIORef $ eix^.dynamicIndex
+
+{-
+-- COMMENTED OUT: This probably leaks memory.
+
 -- Only update dynamic entities within some distance from camera
 -- This is a brain dead optimization thats good for now but ideally should be
 -- replaced by something smarter later.
@@ -86,6 +96,7 @@ getDynamicIndex eix = do
             let dynRange = makeRangeSquare loc dynamicUpdateDist
             let conv = HashSet.fromList . map (view entityId)
             conv <$> liftIO (lookupInRange EntityKind_Dynamic dynRange eix)
+-}
 
 update :: MonadIO m
     => Resources
@@ -261,7 +272,7 @@ reindex eix (i, mo, mn) = case (mo, mn) of
 insert :: MonadIO m => Entity -> EntityIndex -> m EntityId
 insert e eix = do
     old <- readIORef (eix^.lastId)
-    let newUnique = maybe 0 (\x -> x^.unique+1) old
+    let !newUnique = maybe 0 (\x -> x^.unique+1) old
     let mkId = EntityId newUnique
     o <- VectorIndex.insertWithKey (flip EntityWithId e . mkId) (eix^.entities)
     let newId = mkId o

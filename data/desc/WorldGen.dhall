@@ -171,7 +171,8 @@ let npcBertramLoadout
         -- ]
       ]
 
-let units0 = [ spawnAt  11.0   8.0 agent.bat ]
+let units1 = [ spawnAt  11.0   8.0 agent.bat ]
+let units0 = [ spawnAt -9.3 10.2 agent.spider ]
 let units =
   [ spawnAt  11.0   8.0 agent.bat
   , spawnAt  10.0   8.3 agent.bat

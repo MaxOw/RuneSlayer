@@ -1,3 +1,4 @@
+{-# Language BangPatterns #-}
 module Game
     ( initSt, setupSt, endSt
     ) where
@@ -191,9 +192,10 @@ endSt = do
 loadResource :: Text -> Engine us (Maybe (Text, Img))
 loadResource r = do
     -- putStr $ "Loading resource: " <> r -- Resource.resource_path r
-    mi <- Engine.loadTextureToAtlas $ toString $ r -- Resource.resource_path r
     -- putStrLn $ if isJust mi then " [Success]" else " [Failure]" :: Text
-    return $ (r,) <$> mi
+    Engine.loadTextureToAtlas (toString r) >>= \case
+        Nothing -> return Nothing -- error $ "Missing resource " <> toString r
+        Just !i -> return $ Just (r, i)
 
 loadFonts :: Engine us ()
 loadFonts = do

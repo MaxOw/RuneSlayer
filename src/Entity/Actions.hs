@@ -281,7 +281,7 @@ separateCollision = do
         <*> x^.oracleStandingWeight
         <*> x^.oracleCollisionBits
     toTrip s = Just (s^.ff#shape, Weight $ 1/0, s^.ff#mask)
-    maxCollisionBBoxSize = Distance 3
+    maxCollisionBBoxSize = Distance 2
     mCol acb asw ma mb = do
         a <- ma
         (b, bsw, bcb) <- mb

@@ -98,7 +98,7 @@ Executable RuneSlayer
                 , free
 
                 , linear
-                , Carnot == 0.1.25.0
+                , Carnot == 0.1.25.1
                 , gl
                 , colour
                 , palette

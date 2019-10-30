@@ -10,5 +10,5 @@ data DebugFlag
    | DebugFlag_HideScroller
    | DebugFlag_ShowDynamicBoundingBoxes
    | DebugFlag_ShowCollisionShapes
-   deriving (Eq, Ord, Show)
+   deriving (Eq, Ord, Show, Generic)
 

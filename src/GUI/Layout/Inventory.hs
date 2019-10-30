@@ -14,9 +14,7 @@ import qualified Color
 --------------------------------------------------------------------------------
 
 layout_inventory :: Inventory -> Layout
-layout_inventory i = box ins
-    & align     .~ Center
-    & size.each .~ 0.8 @@ fill
+layout_inventory i = statusBox ins
     where
     ins = vrel [ (1 @@ fill, topb), borderSep, ( 42 @@ px, botb) ]
     topb = hcatb1 [ leftside, rightside ]
@@ -123,11 +121,12 @@ layout_description d = vrel lns
 layout_container :: Container -> Layout
 layout_container c = vrel [ (30 @@ px, tit), (1 @@ fill, con) ]
     where
-    titleText = c^.title <> c^.hint
-    titleLabel = textline ft titleText & align .~ MiddleLeft
+    titleText = [(ft, c^.title), (fh, c^.hint)]
+    titleLabel = textStyled titleText & align .~ MiddleLeft
     tit = setDefaultPadding $ container titleLabel
     con = layout_selectEntries $ c^.content
-    ft = makeFs 12 Color.darkgray
+    ft = makeFs   12 Color.darkgray
+    fh = makeFsAC 12 Style.textHintColor
 
 setDefaultPadding :: Layout -> Layout
 setDefaultPadding = set (padding.each) (8 @@ px)

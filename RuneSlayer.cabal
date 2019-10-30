@@ -87,6 +87,7 @@ Executable RuneSlayer
                 , JuicyPixels
                 , time
                 , Noise
+                , megaparsec
 
                 , aeson
                 , dhall == 1.24.0
@@ -98,7 +99,7 @@ Executable RuneSlayer
                 , free
 
                 , linear
-                , Carnot == 0.1.25.1
+                , Carnot == 0.1.26.5
                 , gl
                 , colour
                 , palette

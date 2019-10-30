@@ -40,6 +40,12 @@ box :: Layout -> Layout
 box x = border1 Color.gray $ composition [ fillColorA bg, x ]
     where bg = Color.withOpacity Color.black 0.6
 
+statusBox :: Layout -> Layout
+statusBox x = box x
+    & align        .~ Center
+    & width        .~ 1240 @@ px
+    & padding.each .~ 100 @@ px
+
 borderSep :: (Sizing, Layout)
 borderSep = (1 @@ px, fillColor Color.gray)
 

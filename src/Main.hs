@@ -19,7 +19,7 @@ main :: IO ()
 main = do
     putTextLn Version.infoFull
     -- runBenchmarks
-    win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (400, 400) False
+    win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (1400, 1400) False
 
     Engine.igniteEngine win $ Ignition
         { initializer      = initSt

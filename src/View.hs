@@ -228,7 +228,7 @@ prerenderUpdate :: Bool -> St -> Graphics RenderAction
 prerenderUpdate _forceRedraw st = do
     let s = st^.scroller
     vpos <- cameraPos
-    Scroller.update s vpos $ \bb -> do
+    Scroller.update s False vpos $ \bb -> do
         es <- lookupInRange EntityKind_Tile bb (st^.gameState.entities)
         return $ renderEntitiesRaw es st
     Scroller.makeRenderAction s

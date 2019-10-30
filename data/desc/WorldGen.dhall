@@ -203,7 +203,6 @@ let units =
   , spawnAt 11.8 9.9 agent.bat
   , spawnAt 11.8 9.0 agent.bat
   , spawnAt 11.0 9.4 agent.bat
-  , spawnAt 9.7 1.4 agent.bat
   , spawnAt 12.5 1.4 agent.bat
   , spawnAt 17.2 4.4 agent.bat
   , spawnAt 18.0 6.1 agent.bat

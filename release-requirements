@@ -3,13 +3,12 @@
 ## Version 0.1 #################################################################
 Requirements for first release: v0.1
 
-* Main Menu.                                                                 [ ]
 * Fix scroller lag.                                                          [X]
 * Benchmark and speedup rendering pipeline.                                  [X]
 
-* Declarative config via Dhall.                                              [ ]
+* Declarative config via Dhall.                                              [X]
   - Debug flags.                                                             (#)
-  - Keymaps.                                                                 ( )
+  - Keymaps.                                                                 (#)
 
 * Improve layout rendering.                                                  [X]
   - Rewrite all gui with alt layout                                          (#)
@@ -95,6 +94,8 @@ Requirements for first release: v0.1
   - Static Collisions/index                                                  (#)
 
 ## Version 0.2 #################################################################
+
+## Version X.X #################################################################
 
 * Saving and loading.                                                        [ ]
 * Merge actOn & update entity functions.                                     [ ]

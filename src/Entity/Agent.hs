@@ -95,20 +95,21 @@ actOn x a = x & case a of
 -- Only update if close enougth to camera.
 limitUpdate :: Update Agent () -> Update Agent ()
 limitUpdate doUpdate = do
-    let maxUpdateDistance = distanceInMeters 16
+    let maxAnimateDistance = distanceInMeters 18
     loc <- use $ self.location
     cei <- queryByTag EntityIndexTag_Camera
     whenJust (view (entity.oracleLocation) =<< cei) $ \cloc -> do
-        when (isWithinDistance maxUpdateDistance loc cloc) $ doUpdate
-    self.processOnUpdate .= mempty
+        let dist = calcDistance loc cloc
+        when (dist < maxAnimateDistance) $ do
+            updateActiveAnimation
+            pursueRange <- fromMaybe (1/0)
+                <$> preuse (self.agentType.unitType.traverse.ff#pursueRange)
+            when (dist < pursueRange) doUpdate
 
 update :: Agent -> EntityContext -> Q (Maybe Agent, [DirectedAction])
-update x ctx = runUpdate x ctx $ limitUpdate $ do
-    decideAction
-    updateActiveAnimation
-    isEnemy <- (AgentKind_Enemy==) <$> useAgentKind
-    noTarget <- uses (self.target) isNothing
-    unless (isEnemy && noTarget) $ do
+update x ctx = runUpdate x ctx $ do
+    limitUpdate $ do
+        decideAction
         updatePlayerStatus -- This is a bit... not ideal.
         updateTimer
         updateDelayedActions
@@ -116,9 +117,11 @@ update x ctx = runUpdate x ctx $ limitUpdate $ do
         updateMoveTo
         separateCollision
 
-    allMatch _EntityAction_AddItem (addItems notify . toList)
-    mapM_ processAction =<< use (self.processOnUpdate)
-    mapM_ processUpdateOnce =<< use (self.updateOnce)
+        allMatch _EntityAction_AddItem (addItems notify . toList)
+        mapM_ processAction =<< use (self.processOnUpdate)
+        mapM_ processUpdateOnce =<< use (self.updateOnce)
+
+    self.processOnUpdate .= mempty
     where
     notify = whenM ((AgentKind_Player ==) <$> useAgentKind) $
         systemMessage "Not enough space in inventory."

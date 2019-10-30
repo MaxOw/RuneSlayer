@@ -12,6 +12,10 @@ import Dhall
 import Linear
 import Engine.Common.Types (Size(MkSize))
 
+import Types.Config
+import Types.Debug
+import Types.InputAction
+import Types.InputKeymap
 import Types.EntityAction
 import Types.Entity.Common
 import Types.Entity.Animation
@@ -19,6 +23,7 @@ import Types.Entity.PassiveType
 import Types.Entity.Agent (AgentTypeName(..))
 import Types.Entity.TileSet
 import Types.Equipment
+import Types.MapEditor
 import Types.WorldGen
 
 --------------------------------------------------------------------------------
@@ -90,3 +95,18 @@ fromEntityActionDhall = F.hoist $ \case
         EntityValueDhall_Location  x -> EntityValue_Location  x
         EntityValueDhall_Direction x -> EntityValue_Direction x
 
+instance Interpret InputMode
+instance Interpret a => Interpret (KeymapEntry a)
+
+instance Interpret ConfigDebugFlag
+instance Interpret DebugMode
+instance Interpret Config
+
+instance Interpret TutorialAction
+instance Interpret MapEditorAction
+instance Interpret AttackMode
+instance Interpret PanelName
+instance Interpret AnimationKind
+instance Interpret DebugFlag
+instance Interpret MoveDirection
+instance Interpret InputAction

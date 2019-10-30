@@ -31,8 +31,8 @@ import Skills.Runes (RuneSet, buildRuneSet)
 import Types.Entity.Animation
 import qualified Entity.Animation as Animation
 
+import InputKeymap (buildInputKeymap, defaultBindings)
 import GameState.Query (isConfigDebugFlagOn)
--- import qualified Resource
 import qualified EntityIndex
 import EntityIndex (EntityIndexTag(..))
 import qualified Graphics.UI.GLFW as GLFW
@@ -231,9 +231,15 @@ initBaseSt :: Config -> EntityIndex -> Engine u St
 initBaseSt conf eix = do
     gs <- initGameState conf eix
     scro <- Scroller.new $ def & set scale (gs^.gameScale)
+
+    let prep = bool (defaultBindings<>) id $ conf^.ff#clearDefaultBindings
+    let km = case buildInputKeymap $ prep $ conf^.ff#bindings of
+            Left ers -> error $ unlines ers
+            Right kk -> kk
+
     return $ St
         { field_resources  = def
-        , field_inputState = defaultInputState
+        , field_inputState = set inputKeymap km defaultInputState
         , field_gameState  = gs
         , field_menuState  = def
         , field_scroller   = scro

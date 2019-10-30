@@ -38,7 +38,7 @@ let bat = defaultEnemyAgent //
   , corpse     = passives.batCorpse
   , reactivity = { Shadow = 1.0 }
 
-  , autoTargetRange = 5 -- meters
+  , autoTargetRange = 8 -- meters
 
   , bodyAnimation      = [ animations.bat ]
   , animateWhenStopped = True

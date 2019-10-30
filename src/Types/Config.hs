@@ -1,7 +1,7 @@
 module Types.Config where
 
 import Delude
-import Dhall (Interpret)
+import Types.InputKeymap (KeymapEntry)
 
 --------------------------------------------------------------------------------
 
@@ -16,13 +16,10 @@ data ConfigDebugFlag
    deriving (Generic, Enum)
 
 data Config = Config
-   { field_debugFlags :: BitSet32 ConfigDebugFlag
-   , field_runeSet    :: Text
+   { field_debugFlags           :: BitSet32 ConfigDebugFlag
+   , field_runeSet              :: Text
+   , field_clearDefaultBindings :: Bool
+   , field_bindings             :: [KeymapEntry Text]
    } deriving (Generic)
-
---------------------------------------------------------------------------------
-
 instance Default Config
-instance Interpret ConfigDebugFlag
-instance Interpret DebugMode
-instance Interpret Config
+

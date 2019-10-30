@@ -26,8 +26,7 @@ import Text.Printf
 import Engine.Common.Types (minPoint, maxPoint, mkBBoxCenter)
 import Entity
 import Types.Entity.Common
-    (Location, Distance, EntityId (..)
-    , EntityKind (..), isWithinDistance, distanceInMeters)
+    (Location, Distance, EntityId (..) , EntityKind (..), isWithinDistance)
 import Data.VectorIndex (VectorIndex)
 import qualified Data.VectorIndex as VectorIndex
 import qualified Data.SpatialIndex as SpatialIndex

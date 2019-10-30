@@ -40,9 +40,13 @@ type KeySeq = [Keypress]
 --------------------------------------------------------------------------------
 
 data InputKeymap = InputKeymap
-   { field_keymap          :: Map InputMode Keymap
-   , field_keymapCommon    :: Keymap
-   , field_actionmap       :: Map InputAction (Map InputMode [KeySeq])
-   , field_actionmapCommon :: Map InputAction [KeySeq]
+   { field_keymap    :: Map InputMode Keymap
+   , field_actionmap :: Map InputAction (Map InputMode [KeySeq])
    } deriving (Generic)
+instance Default InputKeymap
 
+data KeymapEntry a = KeymapEntry
+   { field_mode   :: Maybe InputMode
+   , field_keyseq :: a
+   , field_action :: Maybe InputAction
+   } deriving (Generic)

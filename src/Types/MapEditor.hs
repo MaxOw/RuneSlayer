@@ -14,7 +14,7 @@ data MapEditorAction
    | MapEditorAction_PrevCategory
    | MapEditorAction_SelectNext
    | MapEditorAction_SelectPrev
-   deriving (Eq, Ord, Show)
+   deriving (Eq, Ord, Show, Generic)
 
 data SelectorCategory
    = SelectorCategory_Passives

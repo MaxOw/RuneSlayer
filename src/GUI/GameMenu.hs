@@ -37,10 +37,13 @@ gameMenuLayout = Layout.composition <$> sequence
     , overlayMenuLayout ]
     where
     overlayMenuLayout = getMode >>= \case
-        StatusMode m -> statusMenuLayout m
+        InventoryMode   -> inventoryLayout
+        StoryDialogMode -> Story.display
+        RunicStatusMode -> runicStatusLayout
         RunicMode    -> Runes.display
      -- SpaceMode    -> spaceMenuLayout
         _            -> return mempty
+
 
 --------------------------------------------------------------------------------
 
@@ -184,10 +187,4 @@ spaceMenuLayout = return $ layoutBox desc []
 -}
 
 --------------------------------------------------------------------------------
-
-statusMenuLayout :: StatusMenu -> Game Layout
-statusMenuLayout m = case m of
-    StatusMenu_Inventory   -> inventoryLayout
-    StatusMenu_StoryDialog -> Story.display
-    StatusMenu_Runes       -> runicStatusLayout
 

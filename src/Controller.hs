@@ -57,7 +57,7 @@ interpretGameEvent (EventKey key _ keyState mods) = case keyState of
 interpretGameEvent _ = return ()
 
 handleKeyPressed :: Keypress -> Game ()
-handleKeyPressed kp = do
+handleKeyPressed kp = unless (isModKey kp) $ do
     print kp
     cm <- getMode
     mSelectState <- getSelectState
@@ -69,6 +69,18 @@ handleKeyPressed kp = do
     when (cm /= m) $ do
         finalizeMode cm
         initializeMode m
+
+isModKey :: Keypress -> Bool
+isModKey (Keypress k _) = any (==k)
+    [ Key'LeftShift
+    , Key'LeftControl
+    , Key'LeftAlt
+    , Key'LeftSuper
+    , Key'RightShift
+    , Key'RightControl
+    , Key'RightAlt
+    , Key'RightSuper
+    ]
 
 finalizeMode :: InputMode -> Game ()
 finalizeMode = \case
@@ -146,7 +158,6 @@ handleActivation = \case
     TutorialAction     a -> Tutorial.handleActivation a
     InputAction_NextPage -> nextPage
     InputAction_Escape   -> inputActionEscape
-    InputAction_Nothing  -> return ()
 
 handleDeactivation :: InputAction -> Game ()
 handleDeactivation = \case

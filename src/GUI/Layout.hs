@@ -141,7 +141,7 @@ layout_runicMode desc = vseprel (8 @@ px)
 
     answer = border1 Color.gray $ composition
         [ fillColorA bg
-        , textline fs (desc^.ff#answerText <> "▏")
+        , textlineNoCache fs (desc^.ff#answerText <> "▏")
             & align .~ MiddleLeft
             & padding.each .~ 8 @@ px
             & padding.left .~ 20 @@ px
@@ -170,9 +170,7 @@ layout_runicMode desc = vseprel (8 @@ px)
 --------------------------------------------------------------------------------
 
 layout_runesStatus :: RunesStatus -> Layout
-layout_runesStatus rs = box ins
-    & align     .~ Center
-    & size.each .~ 0.8 @@ fill
+layout_runesStatus rs = statusBox ins
     where
     ins = hcat [ leftside, rightside ]
 

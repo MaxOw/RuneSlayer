@@ -82,11 +82,8 @@ getSelectState = use (userState.inputState.selectState)
 getModeKeymap :: Game Keymap
 getModeKeymap = do
     currentInputMode <- getMode
-    common <- use (userState.inputState.inputKeymap.ff#keymapCommon)
     modeKeymap <- use (userState.inputState.inputKeymap.ff#keymap)
-    return $ case Map.lookup currentInputMode modeKeymap of
-        Nothing -> common
-        Just km -> PrefixMap.union km common -- left biased union
+    return $ fromMaybe PrefixMap.empty $ Map.lookup currentInputMode modeKeymap
 
 -- Mach keymap for current input mode and keypress hist
 -- Clear hist on success or total failure but leave it be on partial match

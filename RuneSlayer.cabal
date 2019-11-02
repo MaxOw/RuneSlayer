@@ -92,9 +92,7 @@ Executable RuneSlayer
                 , aeson
                 , dhall == 1.24.0
                 , dhall-json == 1.3.0
-                , winery
 
-                , higgledy
                 , recursion-schemes
                 , free
 
@@ -113,6 +111,5 @@ Executable RuneSlayer
                 , git-embed
                 , executable-hash
 
-                , reload-utils
                 , criterion
                 , criterion-measurement

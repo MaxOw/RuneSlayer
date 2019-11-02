@@ -1,0 +1,3 @@
+[submodule "Carnot"]
+	path = Carnot
+	url = https://github.com/MaxOw/Carnot

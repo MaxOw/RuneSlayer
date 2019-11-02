@@ -20,6 +20,7 @@ data Config = Config
    , field_runeSet              :: Text
    , field_clearDefaultBindings :: Bool
    , field_bindings             :: [KeymapEntry Text]
+   , field_dhallPath            :: Maybe Text
    } deriving (Generic)
 instance Default Config
 

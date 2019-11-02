@@ -51,9 +51,6 @@ import qualified Data.BitSet as BitSet
 -- import Types.Schema.WorldMap ()
 -- import Criterion.Measurement (secs)
 
-descPath :: FilePath
-descPath = "data/desc"
-
 printTimer :: MonadIO m => Float -> String -> m ()
 printTimer _st _msg = do
     _ed <- getTime
@@ -64,8 +61,9 @@ initSt :: Engine () St
 initSt = do
     timer0 <- getTime
     conf <- inputAuto @Config "" "./Config.dhall"
+    let dhallPath = getDhallPath conf
     printTimer timer0 "Timer0A"
-    wgconf <- inputAuto @WorldGenConfig descPath "./WorldGen.dhall"
+    wgconf <- inputAuto @WorldGenConfig dhallPath "./WorldGen.dhall"
     printTimer timer0 "Timer0"
 
     timer1 <- getTime
@@ -93,7 +91,7 @@ initSt = do
     let spawnItems = map spawnPassiveToAction $ wgconf^.ff#items
 
     timer3 <- getTime
-    pli <- loadDhall descPath "Player.dhall"
+    pli <- loadDhall dhallPath "Player.dhall"
     let ploc = wgconf^.ff#startLocation
     pid <- EntityIndex.insert (playerEntity rs pli ploc) eix
     EntityIndex.addTag EntityIndexTag_Camera pid eix
@@ -133,10 +131,11 @@ setupSt = do
 loadRuneSet :: MonadIO m => Config -> m RuneSet
 loadRuneSet conf = do
     let rsname = conf^.ff#runeSet
-    rus <- loadDhall descPath "RuneSets.dhall"
+    let dhallPath = getDhallPath conf
+    rus <- loadDhall dhallPath "RuneSets.dhall"
     case Map.lookup rsname rus of
         Nothing -> error $ "Unable to load RuneSet: " <> rsname
-        Just rp -> buildRuneSet <$> loadDhall descPath rp
+        Just rp -> buildRuneSet <$> loadDhall dhallPath rp
 
 {-
 makeRenderOverview :: WorldGenOutput -> Engine us RenderAction
@@ -147,14 +146,18 @@ makeRenderOverview out = case out^.overviewImage of
         return $ T.scale 4 $ Engine.renderImg img
 -}
 
+getDhallPath :: Config -> FilePath
+getDhallPath = toString . fromMaybe "dhall" . view (ff#dhallPath)
+
 loadResources :: Config -> Engine us Resources
-loadResources _conf = do
-    rs <- loadAllPaths
-    ss <- loadDhallMap  "Sprites.dhall"
-    ts <- loadDhallList "TileSets.dhall"
-    ps <- loadDhallList "PassiveTypes.dhall"
-    us <- loadDhallList "UnitTypes.dhall"
-    as <- loadDhallMap  "Animations.dhall"
+loadResources conf = do
+    let dhallPath = getDhallPath conf
+    rs <- loadAllPaths  dhallPath
+    ss <- loadDhallMap  dhallPath "Sprites.dhall"
+    ts <- loadDhallList dhallPath "TileSets.dhall"
+    ps <- loadDhallList dhallPath "PassiveTypes.dhall"
+    us <- loadDhallList dhallPath "UnitTypes.dhall"
+    as <- loadDhallMap  dhallPath "Animations.dhall"
 
     let res = def
             & imgMap        .~ HashMap.fromList rs
@@ -172,16 +175,16 @@ loadResources _conf = do
 buildMap :: (HasName x name, Eq name, Hashable name) => [x] -> HashMap name x
 buildMap = HashMap.fromList . map (\x -> (x^.name, x))
 
-loadAllPaths :: Engine us [(Text, Img)]
-loadAllPaths = do
-    hm <- liftIO $ dhallToMap descPath "ResourcePaths.dhall"
+loadAllPaths :: FilePath -> Engine us [(Text, Img)]
+loadAllPaths dhallPath = do
+    hm <- liftIO $ dhallToMap dhallPath "ResourcePaths.dhall"
     catMaybes <$> mapM loadResource (ordNub $ HashMap.elems hm)
 
-loadDhallList :: FromJSON a => FilePath -> Engine us [a]
-loadDhallList = fmap HashMap.elems . liftIO . dhallToMap descPath
+loadDhallList :: FromJSON a => FilePath -> FilePath -> Engine us [a]
+loadDhallList dp = fmap HashMap.elems . liftIO . dhallToMap dp
 
-loadDhallMap :: FromJSON a => FilePath -> Engine us (HashMap Text a)
-loadDhallMap = liftIO . dhallToMap descPath
+loadDhallMap :: FromJSON a => FilePath -> FilePath -> Engine us (HashMap Text a)
+loadDhallMap dp = liftIO . dhallToMap dp
 
 endSt :: Engine St ()
 endSt = do
@@ -251,8 +254,9 @@ initBaseSt conf eix = do
 
 initGameState :: Config -> EntityIndex -> Engine u GameState
 initGameState conf eix = do
+    let dhallPath = getDhallPath conf
     rs <- Runes.init =<< loadRuneSet conf
-    ss <- Story.init
+    ss <- Story.init dhallPath
     return $ GameState
         { field_entities       = eix
         , field_actions        = []

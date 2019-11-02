@@ -9,23 +9,19 @@ import Controller (handleEvent)
 import Model      (integrate)
 import View       (renderView)
 import Game       (initSt, setupSt, endSt)
-import Reload.Utils (reacquire)
 
 import qualified Version
--- import Dev.AltLayout (layoutDev)
--- import Benchmarks (runBenchmarks)
 
 main :: IO ()
 main = do
     putTextLn Version.infoFull
-    -- runBenchmarks
-    win <- reacquire 0 $ Engine.initWindow "RuneSlayer" (1400, 1400) False
+    win <- Engine.initWindow "RuneSlayer" (1400, 1400) False
 
     Engine.igniteEngine win $ Ignition
-        { initializer      = initSt
-        , stateSetup       = setupSt
-        , eventHandler     = handleEvent
-        , renderer         = renderView
-        , integrator       = integrate
-        , finalizer        = endSt
+        { initializer  = initSt
+        , stateSetup   = setupSt
+        , eventHandler = handleEvent
+        , renderer     = renderView
+        , integrator   = integrate
+        , finalizer    = endSt
         }

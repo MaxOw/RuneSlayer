@@ -1,51 +1,36 @@
-{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc865" }:
-let ghc = nixpkgs.haskell.packages.${compiler}.override {
-      overrides = self: super: {
-        # TODO: get packages from github
-        # generic-lens-labels = loadLocal self "generic-lens-labels";
-        # named               = loadLocal self "named";
-        # concat-satisfy        = loadLocal self "concat/satisfy";
-        # concat-known          = loadLocal self "concat/known";
-        # concat-inline         = loadLocal self "concat/inline";
-        # concat-classes        = loadLocal self "concat/classes";
-        # concat-plugin         = loadLocal self "concat/plugin";
-        # concat-graphics       = loadLocal self "concat/graphics";
-        # concat-examples       = loadLocal self "concat/examples";
+let
+  bootstrap = import <nixpkgs> {};
+  nixpkgs_json = builtins.fromJSON (builtins.readFile ./nix/nixpkgs.json);
+  src = bootstrap.fetchFromGitHub {
+    owner = "NixOS";
+    repo  = "nixpkgs";
+    inherit (nixpkgs_json) rev sha256;
+  };
+  pkgs = import src {};
 
-        reload-utils    = loadDirec self "${./../reload-utils}";
-        Carnot          = loadDirec self "${./../Carnot}";
-        # dhall           = loadUrl self dhall-url;
-        dhall           = super.dhall_1_24_0;
-        dhall-json      = dontCheck super.dhall-json_1_3_0;
-        # higgledy        = loadUrl self cabal://higgledy-0.3.0.0;
-        higgledy        = loadLocal self "higgledy";
-        winery          = loadLocal self "winery";
+  compiler = "ghc865";
+  ghc = pkgs.haskell.packages.${compiler}.override {
+      overrides = self: super: {
+        Carnot     = loadLocal self ./Carnot;
+        dhall      = super.dhall_1_24_0;
+        dhall-json = pkgs.haskell.lib.dontCheck super.dhall-json_1_3_0;
       };
     };
+  tools = with ghc; [ cabal-install ghcid ];
 
-    overrideDeriv = drv: f: drv.override (args: args // {
-      mkDerivation = drv: args.mkDerivation (drv // f drv);
+  loadLocal = self: name: self.callPackage (cabal2nixResultLocal (name)) {};
+  overrideCabal = pkg: pkgs.haskell.lib.overrideCabal pkg
+    ({buildDepends ? [], ...}: {
+      buildDepends = buildDepends ++ tools;
     });
-    dontCheck = drv: overrideDeriv drv (drv: { doCheck = false; });
+  cabal2nixResult = url: pkgs.runCommand "cabal2nixResult" {
+    buildCommand = ''
+      cabal2nix --no-check --jailbreak --no-haddock ${url} > $out
+    '';
+    buildInputs = [ pkgs.cabal2nix ];
+  } "";
+  cabal2nixResultLocal = path: cabal2nixResult "file://${path}";
+  package = ghc.callPackage (cabal2nixResultLocal ./.) {};
+  drv = overrideCabal package;
 
-    loadUrl = self: name: self.callPackage (cabal2nixResult name) {};
-    loadLocal = self: name:
-      self.callPackage (cabal2nixResultLocal (./deps + "/${name}")) {};
-    loadDirec = self: name:
-      self.callPackage (cabal2nixResultLocal (name)) {};
-    tools = with ghc; [ cabal-install ghcid ];
-    overrideCabal = pkg: nixpkgs.haskell.lib.overrideCabal pkg
-      ({buildDepends ? [], ...}: {
-        buildDepends = buildDepends ++ tools;
-      });
-    cabal2nixResultLocal = src:          cabal2nixResult "file://${src}";
-    cabal2nixResultCabal = name-version: cabal2nixResult "cabal://${name-version}";
-    cabal2nixResult = url: nixpkgs.runCommand "cabal2nixResult" {
-      buildCommand = ''
-        cabal2nix --no-check --jailbreak --no-haddock ${url} > $out
-      '';
-      buildInputs = [ nixpkgs.cabal2nix ];
-    } "";
-    package = ghc.callPackage (cabal2nixResultLocal ./.) { };
-    drv = overrideCabal package;
-in if nixpkgs.lib.inNixShell then drv.env else drv
+in if pkgs.lib.inNixShell then drv.env else drv

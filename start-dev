@@ -1,3 +1,0 @@
-ghcid -W --test 'main'
-# ghcid -W --test 'layoutDev'
-# ghcid -W --test 'main' --command "cabal repl --ghc-options '-fobject-code -O2'"

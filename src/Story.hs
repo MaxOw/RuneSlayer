@@ -35,9 +35,9 @@ import GUI.Layout (layout_storyDialog)
 
 --------------------------------------------------------------------------------
 
-init :: MonadIO m => m StoryState
-init = do
-    ss <- inputAuto "data/desc" "./StoryDialog.dhall"
+init :: MonadIO m => FilePath -> m StoryState
+init dhallPath = do
+    ss <- inputAuto dhallPath "./StoryDialog.dhall"
     return $ StoryState
         { field_currentStep   = StoryStep_Start
         , field_started       = mempty

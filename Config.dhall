@@ -113,4 +113,5 @@ in
 , debugFlags = [] : List DebugFlag
 , clearDefaultBindings = False
 , bindings = bindings
+, dhallPath = Some "dhall"
 }

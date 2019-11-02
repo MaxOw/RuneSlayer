@@ -27,14 +27,14 @@ in
 
 , helmetAnimation = makeCharPath "head/helms/male/metal_helm_male"
 
-, daggerAnimation = makeCharPath "weapons/right hand/male/dagger_male"
-, spearAnimation  = makeCharPath "weapons/right hand/male/spear_male"
-, bowAnimation    = makeCharPath "weapons/right hand/either/bow"
-, arrowAnimation  = makeCharPath "weapons/left hand/either/arrow"
+, daggerAnimation = makeCharPath "weapons/right_hand/male/dagger_male"
+, spearAnimation  = makeCharPath "weapons/right_hand/male/spear_male"
+, bowAnimation    = makeCharPath "weapons/right_hand/either/bow"
+, arrowAnimation  = makeCharPath "weapons/left_hand/either/arrow"
 , quiverAnimation = makeCharPath "behind_body/equipment/quiver"
 
-, oversizeSpearAnimation = makeCharPath "weapons/oversize/two hand/either/spear"
-, oversizeSwordAnimation = makeCharPath "weapons/oversize/right hand/male/longsword_male"
+, oversizeSpearAnimation = makeCharPath "weapons/oversize/two_hand/either/spear"
+, oversizeSwordAnimation = makeCharPath "weapons/oversize/right_hand/male/longsword_male"
 
 , bat = makeUnitPath "bat"
 , spider01 = makeUnitPath "spiders/spider01"

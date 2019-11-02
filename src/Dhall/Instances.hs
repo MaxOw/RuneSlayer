@@ -101,6 +101,8 @@ instance Interpret a => Interpret (KeymapEntry a)
 instance Interpret ConfigDebugFlag
 instance Interpret DebugMode
 instance Interpret Config
+instance Interpret FontDesc
+instance Interpret FontsConfig
 
 instance Interpret TutorialAction
 instance Interpret MapEditorAction

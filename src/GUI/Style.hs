@@ -14,8 +14,9 @@ import qualified Solarized
 baseFontSize :: FontSize
 baseFontSize = 10
 
+-- TODO: Make this configurable from dhall
 baseFontHierarchy :: [FontFamilyName]
-baseFontHierarchy = ["Arial"]
+baseFontHierarchy = ["LiberationSans", "SourceHanSerif"]
 
 baseFontStyle :: FontStyle
 baseFontStyle = makeFontStyle baseFontHierarchy baseFontSize

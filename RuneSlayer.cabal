@@ -88,6 +88,7 @@ Executable RuneSlayer
                 , time
                 , Noise
                 , megaparsec
+                , filepath
 
                 , aeson
                 , dhall == 1.24.0

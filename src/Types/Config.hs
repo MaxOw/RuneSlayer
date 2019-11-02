@@ -24,3 +24,17 @@ data Config = Config
    } deriving (Generic)
 instance Default Config
 
+data FontDesc = FontDesc
+   { field_name       :: Text
+   , field_regular    :: FilePath
+   , field_bold       :: Maybe FilePath
+   , field_italic     :: Maybe FilePath
+   , field_boldItalic :: Maybe FilePath
+   } deriving (Generic)
+
+data FontsConfig = FontsConfig
+   { field_fontsPath   :: Maybe FilePath
+   , field_fonts       :: [FontDesc]
+   , field_defaultFont :: Text
+   } deriving (Generic)
+

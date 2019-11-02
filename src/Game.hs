@@ -4,13 +4,14 @@ module Game
     ) where
 
 import Delude hiding (context)
+import System.FilePath ((</>))
 import qualified Data.Map.Strict as Map
 import qualified Data.HashMap.Strict as HashMap
 import qualified Engine
 import Engine.Graphics.Utils (delObject)
 import Graphics.GL (glDeleteTextures)
 import Engine (Img, userState, texture, context, getTime)
-import Engine (FontName, fontBase, fontBold, fontBoldItalic, fontItalic)
+import Engine (fontBase, fontBold, fontBoldItalic, fontItalic)
 import Engine.Types (Engine, graphics)
 import Types.GameState
 import Types.InputState (defaultInputState)
@@ -72,10 +73,9 @@ initSt = do
     printTimer timer1 "Timer1"
 
     timer2 <- getTime
-    loadFonts
+    loadFonts conf
     rs <- loadResources conf
     Engine.fullyUpdateAtlas
-    Engine.setDefaultFonts ["Arial"] 10
     printTimer timer2 "Timer2"
 
     let mes = MapEditor.init rs
@@ -200,23 +200,22 @@ loadResource r = do
         Nothing -> return Nothing -- error $ "Missing resource " <> toString r
         Just !i -> return $ Just (r, i)
 
-loadFonts :: Engine us ()
-loadFonts = do
-    loadFontFamily "Arial" ".ttf"
-    loadFontBase "SourceHanSerif" "-Regular" ".otf"
+loadFonts :: Config -> Engine us ()
+loadFonts conf = do
+    let dhallPath = getDhallPath conf
+    fc <- inputAuto @FontsConfig dhallPath "./Fonts.dhall"
+    let fpath = fromMaybe "data/fonts" $ fc^.ff#fontsPath
+    forM_ (fc^.ff#fonts) (loadFontDesc fpath)
+    Engine.setDefaultFonts [fc^.ff#defaultFont] 10
 
-loadFontBase :: FontName -> Text -> Text -> Engine us ()
-loadFontBase fname ftype ext = void $ Engine.loadFontFamily fname $ def
-    & fontBase .~ toString ("data/fonts/" <> fname <> ftype <> ext)
-
-loadFontFamily :: FontName -> Text -> Engine us ()
-loadFontFamily fname ext = void $ Engine.loadFontFamily fname $ def
-    & fontBase              .~ mkFontPath fname ""
-    & fontBold              .~ Just (mkFontPath fname "-Bold")
-    & fontBoldItalic        .~ Just (mkFontPath fname "-Bold-Italic")
-    & fontItalic            .~ Just (mkFontPath fname "-Italic")
+loadFontDesc :: FilePath -> FontDesc -> Engine us ()
+loadFontDesc fpath fd = void $ Engine.loadFontFamily (fd^.name) $ def
+    & fontBase              .~ mkFontPath (fd^.ff#regular)
+    & fontBold              .~ (mkFontPath <$> fd^.ff#bold)
+    & fontBoldItalic        .~ (mkFontPath <$> fd^.ff#boldItalic)
+    & fontItalic            .~ (mkFontPath <$> fd^.ff#italic)
     where
-    mkFontPath n s = toString $ "data/fonts/" <> n <> s <> ext
+    mkFontPath = toString . (fpath </>)
 
 spawnAgentToAction :: Spawn AgentTypeName EntityAction -> DirectedAction
 spawnAgentToAction a = directAtWorld

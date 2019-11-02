@@ -1,3 +1,6 @@
 [submodule "Carnot"]
 	path = Carnot
 	url = https://github.com/MaxOw/Carnot
+[submodule "data"]
+	path = data
+	url = https://github.com/MaxOw/RuneSlayer-data0

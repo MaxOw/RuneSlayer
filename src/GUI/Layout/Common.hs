@@ -2,21 +2,22 @@ module GUI.Layout.Common where
 
 import Delude
 import Engine.Layout.Alt hiding (left)
-import Engine.FontsManager.Types (FontStyle)
+import Engine.FontsManager.Types (FontFamilyName, FontStyle)
 import qualified Color
+import qualified GUI.Style as Style
 
 --------------------------------------------------------------------------------
 
 makeFs :: Int -> Color -> FontStyle
-makeFs s c = makeFontStyle ["Arial", "SourceHanSerif"] s
+makeFs s c = makeFontStyle Style.baseFontHierarchy s
     & color .~ Color.opaque c
 
 makeFsa :: Int -> Color -> Float -> FontStyle
-makeFsa s c o = makeFontStyle ["Arial", "SourceHanSerif"] s
+makeFsa s c o = makeFontStyle Style.baseFontHierarchy s
     & color .~ Color.withOpacity c o
 
 makeFsAC :: Int -> AlphaColor -> FontStyle
-makeFsAC s ac = makeFontStyle ["Arial", "SourceHanSerif"] s
+makeFsAC s ac = makeFontStyle Style.baseFontHierarchy s
     & color .~ ac
 
 basePadding :: Sizing

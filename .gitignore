@@ -12,3 +12,4 @@ ignore
 *.prof
 beam
 deps
+.rgignore

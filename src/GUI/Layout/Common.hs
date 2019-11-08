@@ -2,7 +2,7 @@ module GUI.Layout.Common where
 
 import Delude
 import Engine.Layout.Alt hiding (left)
-import Engine.FontsManager.Types (FontFamilyName, FontStyle)
+import Engine.FontsManager.Types (FontStyle)
 import qualified Color
 import qualified GUI.Style as Style
 

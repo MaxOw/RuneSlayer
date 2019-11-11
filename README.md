@@ -79,62 +79,10 @@ Then:
 $ cabal configure; cabal build # also may take a while
 $ dist/build/RuneSlayer/RuneSlayer # to run it
 ```
-
-# Going forward
-
-For this project to be successful in what it's embarking to do it will require
-to have a great amount of content. Normally when a game has 80 hours of content
-most people would say it's quite a lot. On the other hand, after spending 1000
-hours learning a language, generally speaking, you will still be a beginner.
-Everyone can see the discrepancy between these two numbers. That's why I would
-like for this project to develop a community of contributors that would allow it
-to grow organically to everyones benefit.
-
-Therefor, in the future, I would like to semi-restrict access to this project to
-contributors only. I say "semi-restrict" because since this repo is in public
-and it will continue to stay in public anyone can just download and build it
-themselves. It will only be a moral restriction. That's of course a talk for the
-future, once there will be enough here that it's actually useful to anyone and
-there is still a bit of a way to get there.
-
-Let me also specify here what I mean by "contributor": often people tend to have
-in excess of one of the two: time or money. If you have time, the more you can
-contribute of course the better but even if you will just put 1-2 hours a month
-fixing some typos or writing some flavor text, you will be morally recognized as
-an official contributor in my eyes. Of course since that's just a moral
-requirement you can ultimately judge that yourself, that was just a guideline.
-For people with money I think some subscription model (like $20 a month or
-something) would be nice. If you are an artist you can contribute art. If you
-have money you can contribute that so we could hire an artist to make us some
-art. Either way we all get more content.
-
-Obviously, this project is a bit niche (I think) and there is quite high
-probability that there wont be enough weirdos like me to form any sort of
-community. In which case the whole point is moot, but this was just a "what if",
-"ideal scenario" sort of thing.
-
-Also there is a possibility that I will get bored/tired with this project at
-some point and then I will likely release it under some permissive copyright (or
-copyleft) license, but for now it is what it is for the reasons stated above.
-
 # License
 Copyright (c) 2018-2019, Maksymilian Owsianny
 
-With exception of points henceforth specified, all rights reserved.
-
-You are free to build this code and use the generated binary, or use the
-binaries provided here for your own personal use.
-
-You are free to fork this code as a means of contributing back to this project,
-however you are not free to fork it as a means of splitting the community, that
-is if you disagree with the choices I make regarding this project and want to
-take it in some other direction.
-
-Anything you contribute to this project you grant me all rights, with exception
-of the right of being called the author of that contribution. Afterwords you
-will not be able to restrict any of my rights to that contribution, and
-similarly I will not be able to restrict yours as if we were to coincidentally
-create exactly the same work independently.
+All rights reserved.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT

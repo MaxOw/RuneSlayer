@@ -65,9 +65,16 @@ Then clone this repo & submodules:
 $ git clone --recursive https://github.com/MaxOw/RuneSlayer
 ```
 
-Start nix-shell (when running this command for the first time, even with binary
-caches this will probably take a while so go make yourself some coffee / read
-some news).
+And build it with `nix-build` (when running this command for the first time,
+even with binary caches this will probably take a while so go make yourself some
+coffee / read some news).
+
+```
+$ nix-build
+$ result/bin/RuneSlayer # to run it
+```
+
+Alternatively if you'd like to enter development environment:
 
 ```
 $ nix-shell
@@ -76,7 +83,7 @@ $ nix-shell
 Then:
 
 ```
-$ cabal configure; cabal build # also may take a while
+$ cabal configure; cabal build
 $ dist/build/RuneSlayer/RuneSlayer # to run it
 ```
 # License

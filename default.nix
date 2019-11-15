@@ -16,7 +16,7 @@ let
         dhall-json = pkgs.haskell.lib.dontCheck super.dhall-json_1_3_0;
       };
     };
-  tools = with ghc; [ cabal-install ghcid ];
+  tools = with ghc; [ cabal-install ghcid pkgs.git ];
 
   loadLocal = self: name: self.callPackage (cabal2nixResultLocal (name)) {};
   overrideCabal = pkg: pkgs.haskell.lib.overrideCabal pkg

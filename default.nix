@@ -1,3 +1,4 @@
+{ enableProfiling ? true }:
 let
   bootstrap = import <nixpkgs> {};
   nixpkgs_json = builtins.fromJSON (builtins.readFile ./nix/nixpkgs.json);
@@ -17,11 +18,14 @@ let
       };
     };
   tools = with ghc; [ cabal-install ghcid pkgs.git ];
+  flags = [ "--ghc-option=-Werror" ];
 
   loadLocal = self: name: self.callPackage (cabal2nixResultLocal (name)) {};
   overrideCabal = pkg: pkgs.haskell.lib.overrideCabal pkg
-    ({buildDepends ? [], ...}: {
+    ({buildDepends ? [], configureFlags ? [], ...}: {
       buildDepends = buildDepends ++ tools;
+      enableLibraryProfiling = enableProfiling;
+      configureFlags = configureFlags ++ flags;
     });
   cabal2nixResult = url: pkgs.runCommand "cabal2nixResult" {
     buildCommand = ''

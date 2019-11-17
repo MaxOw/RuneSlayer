@@ -1,0 +1,14 @@
+
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: nixos/nix:2.3
+    steps:
+      - checkout
+
+      - run:
+          name: Build
+          command: nix-build --arg enableProfiling false
+

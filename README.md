@@ -1,3 +1,4 @@
+[![CircleCI][circleci-badge]][circleci-buildlog]
 
 # About RuneSlayer
 
@@ -104,3 +105,5 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 [screenshot0]: https://raw.githubusercontent.com/MaxOw/RuneSlayer-media0/master/screenshoot0_cropped.png
+[circleci-badge]: https://circleci.com/gh/MaxOw/RuneSlayer.svg?style=svg
+[circleci-buildlog]: https://circleci.com/gh/MaxOw/RuneSlayer
